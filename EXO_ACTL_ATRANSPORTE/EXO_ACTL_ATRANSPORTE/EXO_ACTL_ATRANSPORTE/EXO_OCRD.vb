@@ -100,6 +100,7 @@ Public Class EXO_OCRD
             Return False
         End Try
     End Function
+
     Private Function EventHandler_Form_Load(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
@@ -112,18 +113,53 @@ Public Class EXO_OCRD
 
             oForm.Visible = False
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            oItem = oForm.Items.Add("btnLNEGRA", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
-            oItem.Left = oForm.Items.Item("2").Left + 80
-            oItem.Width = oForm.Items.Item("2").Width + 25
+
+            oItem = oForm.Items.Add("btnAgencia", SAPbouiCOM.BoFormItemTypes.it_BUTTON_COMBO)
+            oItem.Left = oForm.Items.Item("2").Left + 180
+            oItem.Width = oForm.Items.Item("2").Width + 75
             oItem.Top = oForm.Items.Item("2").Top
             oItem.Height = oForm.Items.Item("2").Height
             oItem.Enabled = False
-            Dim oBtnAct As SAPbouiCOM.Button
-            oBtnAct = CType(oItem.Specific, Button)
-            oBtnAct.Caption = "Lista Negra"
+            Dim oBtnAg As SAPbouiCOM.ButtonCombo
+            oBtnAg = CType(oItem.Specific, ButtonCombo)
+            oBtnAg.Caption = "Agencias"
+            oBtnAg.ExpandType = BoExpandType.et_DescriptionOnly
+            oBtnAg.ValidValues.Add("Servicios - Delegación", "Servicios - Delegación")
+            oBtnAg.ValidValues.Add("Bultos Ag. vs Bultos", "Bultos Ag. vs Bultos")
+            oBtnAg.ValidValues.Add("Conductores", "Conductores")
+            oBtnAg.ValidValues.Add("Vehículos", "Vehículos")
+            oBtnAg.Item.AffectsFormMode = False
+            oBtnAg.Item.LinkTo = "540002072"
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+
+
+            'oItem = oForm.Items.Add("btnSRVDEL", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            'oItem.Left = oForm.Items.Item("2").Left + 175
+            'oItem.Width = oForm.Items.Item("2").Width + 70
+            'oItem.Top = oForm.Items.Item("2").Top
+            'oItem.Height = oForm.Items.Item("2").Height
+            'oItem.Enabled = False
+            'Dim oBtnAct As SAPbouiCOM.Button
+            'oBtnAct = CType(oItem.Specific, Button)
+            'oBtnAct.Caption = "Servicios - Delegación"
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+
+            'oItem = oForm.Items.Add("btnBLTAG", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            'oItem.Left = oForm.Items.Item("2").Left + 315
+            'oItem.Width = oForm.Items.Item("2").Width + 70
+            'oItem.Top = oForm.Items.Item("2").Top
+            'oItem.Height = oForm.Items.Item("2").Height
+            'oItem.Enabled = False
+            'Dim obtnBLTAG As SAPbouiCOM.Button
+            'obtnBLTAG = CType(oItem.Specific, Button)
+            'obtnBLTAG.Caption = "Bultos Ag. vs Bultos"
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
             oForm.Visible = True
 
             EventHandler_Form_Load = True
@@ -142,7 +178,7 @@ Public Class EXO_OCRD
     End Function
     Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim sTipoIc As String = "" : Dim sIC As String = "" : Dim sNombre As String = ""
+        Dim sPropiedad As String = "" : Dim sIC As String = "" : Dim sNombre As String = ""
         Dim sMensaje As String = ""
         Dim sExiste As String = ""
         EventHandler_ItemPressed_After = False
@@ -151,32 +187,60 @@ Public Class EXO_OCRD
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             'Comprobamos que exista el directorio y sino, lo creamos
             sIC = oForm.DataSources.DBDataSources.Item("OCRD").GetValue("CardCode", 0).ToString.Trim
-            sTipoIc = oForm.DataSources.DBDataSources.Item("OCRD").GetValue("CardType", 0).ToString.Trim
+            sPropiedad = oForm.DataSources.DBDataSources.Item("OCRD").GetValue("QryGroup1", 0).ToString.Trim
             sNombre = oForm.DataSources.DBDataSources.Item("OCRD").GetValue("CardName", 0).ToString.Trim
             Select Case pVal.ItemUID
-                Case "btnLNEGRA"
-                    If sTipoIc = "C" Then
+                Case "btnAgencia"
+                    Return Acciones_Agencias(objGlobal, oForm)
+                Case "btnSRVDEL"
+                    If sPropiedad = "Y" Then
                         If oForm.Mode = BoFormMode.fm_OK_MODE Then
                             'Si no existe, creamos el IC
-                            sExiste = objGlobal.refDi.SQL.sqlStringB1("SELECT ""Code"" FROM ""@EXO_LNEGRA"" WHERE ""Code""='" & sIC & "' ")
+                            sExiste = objGlobal.refDi.SQL.sqlStringB1("SELECT ""Code"" FROM ""@EXO_SERVICIOS"" WHERE ""Code""='" & sIC & "' ")
 
                             If sExiste = "" Then
-                                EXO_LNEGRA._sIC = sIC
-                                EXO_LNEGRA._sDes = sNombre
+                                EXO_TSERVICIOS._sIC = sIC
+                                EXO_TSERVICIOS._sDes = sNombre
                                 'Presentamos UDO Y escribimos los datos de la cabecera
-                                objGlobal.funcionesUI.cargaFormUdoBD("EXO_LNEGRA")
+                                objGlobal.funcionesUI.cargaFormUdoBD("EXO_SERVICIOS")
                             Else
-                                EXO_LNEGRA._sIC = ""
-                                EXO_LNEGRA._sDes = ""
+                                EXO_TSERVICIOS._sIC = ""
+                                EXO_TSERVICIOS._sDes = ""
                                 'Presentamos la pantalla los los datos                              
-                                objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_LNEGRA", sIC)
+                                objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_SERVICIOS", sIC)
                             End If
                         Else
                             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, guarde primero los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             objGlobal.SBOApp.MessageBox("Por favor, guarde primero los datos")
                         End If
                     Else
-                        sMensaje = "IC: " & sNombre & " no es cliente. No puede acceder a la Lista Negra de Agencias de transporte."
+                        sMensaje = "IC: " & sNombre & " no es Agencia. No puede acceder a los Servicios - Delegación."
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        objGlobal.SBOApp.MessageBox(sMensaje)
+                    End If
+                Case "btnBLTAG"
+                    If sPropiedad = "Y" Then
+                        If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                            'Si no existe, creamos el IC
+                            sExiste = objGlobal.refDi.SQL.sqlStringB1("SELECT ""Code"" FROM ""@EXO_BULTOAG"" WHERE ""Code""='" & sIC & "' ")
+
+                            If sExiste = "" Then
+                                EXO_TSERVICIOS._sIC = sIC
+                                EXO_TSERVICIOS._sDes = sNombre
+                                'Presentamos UDO Y escribimos los datos de la cabecera
+                                objGlobal.funcionesUI.cargaFormUdoBD("EXO_BULTOAG")
+                            Else
+                                EXO_TSERVICIOS._sIC = ""
+                                EXO_TSERVICIOS._sDes = ""
+                                'Presentamos la pantalla los los datos                              
+                                objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_BULTOAG", sIC)
+                            End If
+                        Else
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, guarde primero los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox("Por favor, guarde primero los datos")
+                        End If
+                    Else
+                        sMensaje = "IC: " & sNombre & " no es Agencia. No puede acceder a Bultos Ag. vs Bultos."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                         objGlobal.SBOApp.MessageBox(sMensaje)
                     End If
@@ -194,5 +258,26 @@ Public Class EXO_OCRD
 
         End Try
     End Function
+    Private Function Acciones_Agencias(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form) As Boolean
+        Acciones_Agencias = False
+        Dim ocombo As SAPbouiCOM.ButtonCombo = Nothing
+        Dim Accion As String = ""
+        Try
+            ocombo = CType(oForm.Items.Item("btnAgencia").Specific, SAPbouiCOM.ButtonCombo)
+            If ocombo.Selected Is Nothing Then
+                Return False
+            End If
+            Accion = ocombo.Selected.Value.Trim
+            Select Case Accion
+                Case "N" 'Nuevo
 
+                Case "E" 'Editar
+
+            End Select
+
+            Acciones_Agencias = True
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Function
 End Class
