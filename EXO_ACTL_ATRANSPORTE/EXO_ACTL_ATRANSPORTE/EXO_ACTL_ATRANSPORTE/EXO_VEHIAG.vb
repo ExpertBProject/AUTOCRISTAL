@@ -1,13 +1,11 @@
-﻿Imports System.IO
-Imports System.Xml
+﻿Imports System.Xml
 Imports SAPbouiCOM
-Public Class EXO_BULTOAG
+Public Class EXO_VEHIAG
     Inherits EXO_UIAPI.EXO_DLLBase
 #Region "Variables Globales"
     Public Shared _sIC As String = ""
     Public Shared _sDes As String = ""
 #End Region
-
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)
         If actualizar Then
@@ -18,9 +16,9 @@ Public Class EXO_BULTOAG
         If objGlobal.refDi.comunes.esAdministrador Then
             Dim oXML As String = ""
 
-            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_BULTOAG.xml")
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_VEHIAG.xml")
             objGlobal.refDi.comunes.LoadBDFromXML(oXML)
-            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_BULTOAG", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_VEHIAG", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
@@ -40,7 +38,7 @@ Public Class EXO_BULTOAG
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_BULTOAG"
+                        Case "UDO_FT_EXO_VEHIAG"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
@@ -64,7 +62,7 @@ Public Class EXO_BULTOAG
                     End Select
                 ElseIf infoEvento.BeforeAction = True Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_BULTOAG"
+                        Case "UDO_FT_EXO_VEHIAG"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
@@ -85,7 +83,7 @@ Public Class EXO_BULTOAG
             Else
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_BULTOAG"
+                        Case "UDO_FT_EXO_VEHIAG"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
                                     If EventHandler_Form_Visible(objGlobal, infoEvento) = False Then
@@ -94,12 +92,14 @@ Public Class EXO_BULTOAG
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
 
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
-
+                                    If EventHandler_Choose_FromList_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                             End Select
                     End Select
                 Else
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_BULTOAG"
+                        Case "UDO_FT_EXO_VEHIAG"
 
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
@@ -145,16 +145,8 @@ Public Class EXO_BULTOAG
 
                 If _sIC <> "" Then
                     oForm.Mode = BoFormMode.fm_ADD_MODE
-                    oForm.DataSources.DBDataSources.Item("@EXO_BULTOAG").SetValue("Code", 0, _sIC)
-                    oForm.DataSources.DBDataSources.Item("@EXO_BULTOAG").SetValue("Name", 0, _sDes)
-                End If
-                'Introducimos los valores en los combos
-                CargarCombos(objGlobal, oForm)
-
-                If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then 'Para que el combo enseñe la descripción
-                    If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
-                        objGlobal.SBOApp.ActivateMenuItem("1304")
-                    End If
+                    oForm.DataSources.DBDataSources.Item("@EXO_VEHIAG").SetValue("Code", 0, _sIC)
+                    oForm.DataSources.DBDataSources.Item("@EXO_VEHIAG").SetValue("Name", 0, _sDes)
                 End If
 
             End If
@@ -198,14 +190,48 @@ Public Class EXO_BULTOAG
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
-    Private Sub CargarCombos(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form)
-        Dim sSQL As String = ""
-        Try
-            sSQL = "SELECT ""PkgCode"" ""Código"", ""PkgType"" ""Bulto"" FROM OPKG ORDER BY ""Bulto"" "
-            objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").ValidValues, sSQL)
+    Private Function EventHandler_Choose_FromList_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oCFLEvento As IChooseFromListEvent = Nothing
+        Dim oDataTable As SAPbouiCOM.DataTable = Nothing
+        Dim oForm As SAPbouiCOM.Form = Nothing
 
+        EventHandler_Choose_FromList_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            If oForm.Mode = SAPbouiCOM.BoFormMode.fm_FIND_MODE Then
+                oForm = Nothing
+
+                Return True
+            End If
+
+            oCFLEvento = CType(pVal, IChooseFromListEvent)
+
+            oDataTable = oCFLEvento.SelectedObjects
+            If Not oDataTable Is Nothing Then
+                Select Case oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).ObjectType
+                    Case "EXO_VEHICULOS"
+                        Try
+                            Dim sDes As String = oDataTable.GetValue("Name", 0).ToString
+                            oForm.DataSources.DBDataSources.Item("@EXO_VEHIAGL").SetValue("U_EXO_DES", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
+                            CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sDes
+                        Catch ex As Exception
+                            oForm.DataSources.DBDataSources.Item("@EXO_VEHIAGL").SetValue("U_EXO_DES", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
+                        End Try
+
+                        If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then oForm.Mode = SAPbouiCOM.BoFormMode.fm_UPDATE_MODE
+                End Select
+            End If
+
+            EventHandler_Choose_FromList_After = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
         Catch ex As Exception
             Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.FormDatatable(oDataTable)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
-    End Sub
+    End Function
 End Class

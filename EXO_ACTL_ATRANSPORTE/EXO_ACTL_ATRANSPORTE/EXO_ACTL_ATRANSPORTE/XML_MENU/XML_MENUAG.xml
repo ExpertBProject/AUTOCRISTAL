@@ -1,0 +1,10 @@
+﻿<Application>
+  <Menus>
+    <action type="add">
+      <Menu Checked="0" Enabled="1" FatherUID="43528" Image="" String="Agencias" Type="2" UniqueID="EXO-MnAGD"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnAGD" Image="" String="Plataformas" Type="1" UniqueID="EXO-MnAGPL"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnAGD" Image="" String="Vehículos" Type="1" UniqueID="EXO-MnAGVH"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnAGD" Image="" String="Conductores" Type="1" UniqueID="EXO-MnAGCD"></Menu>
+    </action>
+  </Menus>
+</Application>

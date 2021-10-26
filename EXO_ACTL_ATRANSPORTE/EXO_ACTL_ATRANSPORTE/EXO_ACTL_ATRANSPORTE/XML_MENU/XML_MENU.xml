@@ -3,7 +3,7 @@
     <action type="add">
       <Menu Checked="0" Enabled="1" FatherUID="3072" Image="" String="Lista de Precios Ag. de Transportes" Type="2" UniqueID="EXO-MnLPAT"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnLPAT" Image="" String="Detalle de Tarifas" Type="1" UniqueID="EXO-MnDTar"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnLPAT" Image="" String="Tarifa de Agencias" Type="1" UniqueID="EXO-MnDTAG"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnLPAT" Image="" String="Tarifa de Agencias" Type="1" UniqueID="EXO-MnDTAG"></Menu>      
     </action>
   </Menus>
 </Application>

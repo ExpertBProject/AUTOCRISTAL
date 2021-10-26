@@ -113,13 +113,17 @@
   <ItemGroup>
     <Compile Include="EXO_BULTOAG.vb" />
     <Compile Include="EXO_CONDUCTORES.vb" />
+    <Compile Include="EXO_CONAG.vb" />
     <Compile Include="EXO_DTARIFAS.vb" />
     <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_OCRD.vb" />
     <Compile Include="EXO_PATIMP.vb" />
+    <Compile Include="EXO_PLATAFORMAS.vb" />
+    <Compile Include="EXO_PLATAAG.vb" />
     <Compile Include="EXO_TAGENCIA.vb" />
     <Compile Include="EXO_TSERVICIOS.vb" />
     <Compile Include="EXO_VEHICULOS.vb" />
+    <Compile Include="EXO_VEHIAG.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -201,6 +205,21 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDO_EXO_VEHICULOS.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_PLATAFORMAS.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_MENU\XML_MENUAG.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_PLATAAG.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_VEHIAG.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_CONAG.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
