@@ -1,5 +1,4 @@
-﻿Imports System.IO
-Imports System.Xml
+﻿Imports System.Xml
 Imports SAPbouiCOM
 Public Class EXO_OWTQ
     Inherits EXO_UIAPI.EXO_DLLBase
@@ -145,6 +144,28 @@ Public Class EXO_OWTQ
             oItem.Width = oForm.Items.Item("1470000099").Width
             oItem.LinkTo = "cbTipoSol"
             CType(oItem.Specific, SAPbouiCOM.StaticText).Caption = "Tipo Solicitud"
+
+            oItem = oForm.Items.Add("cbStatusP", SAPbouiCOM.BoFormItemTypes.it_COMBO_BOX)
+            oItem.LinkTo = "234000002"
+            oItem.Top = oForm.Items.Item("234000002").Top + oForm.Items.Item("234000002").Height + 2
+            oItem.Left = oForm.Items.Item("234000002").Left
+            oItem.Height = oForm.Items.Item("234000002").Height
+            oItem.Width = oForm.Items.Item("234000002").Width
+            oItem.DisplayDesc = True
+            oItem.Enabled = True
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            CType(oItem.Specific, SAPbouiCOM.ComboBox).DataBind.SetBound(True, "OWTQ", "U_EXO_STATUSP")
+            oItem = oForm.Items.Add("lblStatusP", BoFormItemTypes.it_STATIC)
+            oItem.Top = oForm.Items.Item("cbStatusP").Top
+            oItem.Left = oForm.Items.Item("234000001").Left
+            oItem.Height = oForm.Items.Item("234000001").Height
+            oItem.Width = oForm.Items.Item("234000001").Width
+            oItem.LinkTo = "cbStatusP"
+            CType(oItem.Specific, SAPbouiCOM.StaticText).Caption = "Status Picking"
+
+
             oForm.Visible = True
 
             EventHandler_Form_Load = True
