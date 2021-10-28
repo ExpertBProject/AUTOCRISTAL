@@ -38,7 +38,9 @@ Public Class EXO_OWTQ
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-
+                                    If EventHandler_ItemPressed_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
                                     If EventHandler_Validate_After(infoEvento) = False Then
                                         Return False
@@ -165,7 +167,18 @@ Public Class EXO_OWTQ
             oItem.LinkTo = "cbStatusP"
             CType(oItem.Specific, SAPbouiCOM.StaticText).Caption = "Status Picking"
 
-
+            oItem = oForm.Items.Add("btnUS", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            oItem.Left = oForm.Items.Item("2").Left + 175
+            oItem.Width = oForm.Items.Item("2").Width + 70
+            oItem.Top = oForm.Items.Item("2").Top
+            oItem.Height = oForm.Items.Item("2").Height
+            oItem.Enabled = False
+            Dim oBtnAct As SAPbouiCOM.Button
+            oBtnAct = CType(oItem.Specific, Button)
+            oBtnAct.Caption = "Usuarios asignados"
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
             oForm.Visible = True
 
             EventHandler_Form_Load = True
@@ -179,7 +192,7 @@ Public Class EXO_OWTQ
 
             Throw ex
         Finally
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_Validate_After(ByRef pVal As ItemEvent) As Boolean
@@ -240,6 +253,66 @@ Public Class EXO_OWTQ
             Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+    Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sMensaje As String = ""
+        Dim sDocEntry As String = "" : Dim sSerie As String = "" : Dim sDocnum As String = "" : Dim sAlmacen As String = "" : Dim sAlmacenD As String = ""
+        Dim sExiste As String = ""
+        EventHandler_ItemPressed_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            'Comprobamos que exista el directorio y sino, lo creamos
+            sDocEntry = oForm.DataSources.DBDataSources.Item("OWTQ").GetValue("DocEntry", 0).ToString.Trim
+            sSerie = oForm.DataSources.DBDataSources.Item("OWTQ").GetValue("Series", 0).ToString.Trim
+            sDocnum = oForm.DataSources.DBDataSources.Item("OWTQ").GetValue("DocNum", 0).ToString.Trim
+            sAlmacen = oForm.DataSources.DBDataSources.Item("OWTQ").GetValue("ToWhsCode", 0).ToString.Trim
+            sAlmacenD = oForm.DataSources.DBDataSources.Item("OWTQ").GetValue("Filler", 0).ToString.Trim
+            Select Case pVal.ItemUID
+                Case "btnUS"
+                    If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                        If sAlmacen = sAlmacenD Then
+                            'Si no existe, creamos el IC
+                            sExiste = objGlobal.refDi.SQL.sqlStringB1("SELECT ""DocEntry"" FROM ""@EXO_USSOL"" WHERE ""Code""='" & sDocEntry & "' ")
+
+                            If sExiste = "" Then
+                                EXO_USSOL._sDocEntry = sDocEntry
+                                EXO_USSOL._sSerie = sSerie
+                                EXO_USSOL._sDocNum = sDocnum
+                                EXO_USSOL._sAlmacen = sAlmacen
+                                'Presentamos UDO Y escribimos los datos de la cabecera
+                                objGlobal.funcionesUI.cargaFormUdoBD("EXO_USSOL")
+                            Else
+                                EXO_USSOL._sDocEntry = ""
+                                EXO_USSOL._sSerie = ""
+                                EXO_USSOL._sDocNum = ""
+                                EXO_USSOL._sAlmacen = sAlmacen
+                                'Presentamos la pantalla los los datos                              
+                                objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_USSOL", sDocEntry)
+                            End If
+                        Else
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Sólo está activo para la asignación de usuarios de Traslados internos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox("Sólo está activo para la asignación de usuarios de Traslados internos.")
+                        End If
+
+                    Else
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, guarde primero los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        objGlobal.SBOApp.MessageBox("Por favor, guarde primero los datos")
+                    End If
+            End Select
+
+            EventHandler_ItemPressed_After = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+
         End Try
     End Function
 End Class

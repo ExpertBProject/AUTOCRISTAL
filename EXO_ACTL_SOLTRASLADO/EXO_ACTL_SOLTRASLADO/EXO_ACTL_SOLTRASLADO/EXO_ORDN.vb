@@ -1,21 +1,10 @@
 ﻿Imports System.Xml
 Imports SAPbouiCOM
-Public Class EXO_OWHS
+Public Class EXO_ORDN
     Inherits EXO_UIAPI.EXO_DLLBase
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)
-        If actualizar Then
-            cargaCampos()
-        End If
-    End Sub
-    Private Sub cargaCampos()
-        If objGlobal.refDi.comunes.esAdministrador Then
-            Dim oXML As String = ""
 
-            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OWHS.xml")
-            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
-            objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_OWHS", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-        End If
     End Sub
     Public Overrides Function filtros() As EventFilters
         Dim filtrosXML As Xml.XmlDocument = New Xml.XmlDocument
@@ -33,12 +22,14 @@ Public Class EXO_OWHS
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "62"
+                        Case "180"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-
+                                    If EventHandler_ItemPressed_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
 
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
@@ -51,7 +42,7 @@ Public Class EXO_OWHS
                     End Select
                 ElseIf infoEvento.BeforeAction = True Then
                     Select Case infoEvento.FormTypeEx
-                        Case "62"
+                        Case "180"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
@@ -71,7 +62,7 @@ Public Class EXO_OWHS
             Else
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "62"
+                        Case "180"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
 
@@ -88,7 +79,7 @@ Public Class EXO_OWHS
                     End Select
                 Else
                     Select Case infoEvento.FormTypeEx
-                        Case "62"
+                        Case "180"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
 
@@ -121,53 +112,71 @@ Public Class EXO_OWHS
             oForm.Visible = False
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
-            oItem = oForm.Items.Add("cbSucursal", SAPbouiCOM.BoFormItemTypes.it_COMBO_BOX)
-            oItem.LinkTo = "1320002021"
-            oItem.Top = oForm.Items.Item("1320002021").Top + oForm.Items.Item("1320002021").Height + 2
-            oItem.Left = oForm.Items.Item("1320002021").Left
-            oItem.Height = oForm.Items.Item("1320002021").Height
-            oItem.Width = oForm.Items.Item("1320002021").Width
-            oItem.DisplayDesc = True
-            oItem.FromPane = 1 : oItem.ToPane = 1
-            oItem.Enabled = True
-            CType(oItem.Specific, SAPbouiCOM.ComboBox).DataBind.SetBound(True, "OWHS", "U_EXO_SUCURSAL")
-            oItem = oForm.Items.Add("lbSucursal", BoFormItemTypes.it_STATIC)
-            oItem.Top = oForm.Items.Item("cbSucursal").Top
-            oItem.Left = oForm.Items.Item("1320002020").Left
-            oItem.Height = oForm.Items.Item("1320002020").Height
-            oItem.Width = oForm.Items.Item("1320002020").Width
-            oItem.FromPane = 1 : oItem.ToPane = 1
-            oItem.LinkTo = "cbSucursal"
-            CType(oItem.Specific, SAPbouiCOM.StaticText).Caption = "Sucursal"
-
-
-            'Introducimos los valores en los combos
-            CargarCombos(objGlobal, oForm)
-
+            oItem = oForm.Items.Add("btnSol", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            oItem.Left = oForm.Items.Item("2").Left + oForm.Items.Item("2").Width + 5
+            oItem.Width = oForm.Items.Item("2").Width + 70
+            oItem.Top = oForm.Items.Item("2").Top
+            oItem.Height = oForm.Items.Item("2").Height
+            oItem.Enabled = False
+            Dim oBtnAct As SAPbouiCOM.Button
+            oBtnAct = CType(oItem.Specific, Button)
+            oBtnAct.Caption = "Crear Sol. de Traslado"
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
             oForm.Visible = True
 
             EventHandler_Form_Load = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
             If oForm IsNot Nothing Then oForm.Visible = True
-
             Throw exCOM
         Catch ex As Exception
             If oForm IsNot Nothing Then oForm.Visible = True
-
             Throw ex
         Finally
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
-    Private Sub CargarCombos(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form)
-        Dim sSQL As String = ""
-        Try
-            sSQL = "SELECT ""Name"" ""Código"", ""Remarks"" ""Sucursal"" FROM OUBR ORDER BY ""Name"" "
-            objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbSucursal").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+    Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sMensaje As String = ""
+        Dim sDocEntry As String = "" : Dim sDocNum As String = ""
+        EventHandler_ItemPressed_After = False
 
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            Select Case pVal.ItemUID
+                Case "btnSol"
+                    If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                        EXO_GLOBALES.Crear_Sol_Traslado(objGlobal, oForm, sDocEntry, sDocNum)
+                        EXO_GLOBALES.ASIGNAR_DOCREF(objGlobal, oForm, sDocEntry, sDocNum)
+                        'Actualizamos la pantalla
+                        If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then
+                            objGlobal.SBOApp.ActivateMenuItem("1304")
+
+                            sMensaje = "Fin del Proceso."
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox(sMensaje)
+                        End If
+
+                    Else
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, guarde primero los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        objGlobal.SBOApp.MessageBox("Por favor, guarde primero los datos")
+                    End If
+            End Select
+
+            EventHandler_ItemPressed_After = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
         Catch ex As Exception
             Throw ex
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+
         End Try
-    End Sub
+    End Function
 End Class

@@ -103,9 +103,13 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_OHTY.vb" />
+    <Compile Include="EXO_ORDN.vb" />
     <Compile Include="EXO_OWHS.vb" />
     <Compile Include="EXO_OWTQ.vb" />
+    <Compile Include="EXO_OWTR.vb" />
+    <Compile Include="EXO_USSOL.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -169,6 +173,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDFs_OWHS.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_USSOL.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
