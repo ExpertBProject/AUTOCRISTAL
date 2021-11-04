@@ -1,24 +1,13 @@
-﻿Imports SAPbouiCOM
-Public Class EXO_MODELOS
+﻿Imports System.Xml
+Imports SAPbouiCOM
+Public Class EXO_CTRLDLN
     Inherits EXO_UIAPI.EXO_DLLBase
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)
 
-        If actualizar Then
-            cargaCampos()
-        End If
         cargamenu()
     End Sub
-    Private Sub cargaCampos()
-        If objGlobal.refDi.comunes.esAdministrador Then
-            Dim oXML As String = ""
-            Dim udoObj As EXO_Generales.EXO_UDO = Nothing
 
-            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_MODELOS.xml")
-            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
-            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_MODELOS", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-        End If
-    End Sub
     Private Sub cargamenu()
         Dim Path As String = ""
         Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
@@ -26,6 +15,7 @@ Public Class EXO_MODELOS
         Dim res As String = objGlobal.SBOApp.GetLastBatchResults
 
     End Sub
+
     Public Overrides Function filtros() As EventFilters
         Dim filtrosXML As Xml.XmlDocument = New Xml.XmlDocument
         filtrosXML.LoadXml(objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
@@ -42,18 +32,14 @@ Public Class EXO_MODELOS
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Try
-            'Recuperar el formulario
-            oForm = objGlobal.SBOApp.Forms.ActiveForm
             If infoEvento.BeforeAction = True Then
 
             Else
+
                 Select Case infoEvento.MenuUID
-                    Case "EXO-MnMMOL"
-                        objGlobal.funcionesUI.cargaFormUdoBD("EXO_MODELOS")
-                    Case "1282" ' Si estamos en añadir y es visible
-                        If oForm.TypeEx = "UDO_FT_EXO_MODELOS" And oForm.Visible = True Then
-                            'Buscamos el code más alto y ponemos el siguiente
-                            CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()
+                    Case "EXO-MnCDLN"
+                        If CargarFormCTRLDLN() = False Then
+                            Exit Function
                         End If
                 End Select
             End If
@@ -70,14 +56,38 @@ Public Class EXO_MODELOS
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function BucarCodeSiguiente() As String
+    Public Function CargarFormCTRLDLN() As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
+        Dim oFP As SAPbouiCOM.FormCreationParams = Nothing
+
+        CargarFormCTRLDLN = False
+
         Try
-            sSQL = "SELECT ifnull(MAX(Cast(""Code"" as integer)),0)+1 ""Codigo"" FROM ""@EXO_MODELOS"" "
-            Dim sCode As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-            Return sCode
+            oFP = CType(objGlobal.SBOApp.CreateObject(SAPbouiCOM.BoCreatableObjectType.cot_FormCreationParams), SAPbouiCOM.FormCreationParams)
+            oFP.XmlData = objGlobal.leerEmbebido(Me.GetType(), "EXO_CTRLDLN.srf")
+            'oFP.XmlData = oFP.XmlData.Replace("modality=""0""", "modality=""1""")
+            Try
+                oForm = objGlobal.SBOApp.Forms.AddEx(oFP)
+
+            Catch ex As Exception
+                If ex.Message.StartsWith("Form - already exists") = True Then
+                    objGlobal.SBOApp.StatusBar.SetText("El formulario ya está abierto.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    Exit Function
+                ElseIf ex.Message.StartsWith("Se produjo un error interno") = True Then 'Falta de autorización
+                    Exit Function
+                End If
+            End Try
+
+            CargarFormCTRLDLN = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Catch ex As Exception
-            Throw ex
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Visible = True
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
     Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
@@ -85,14 +95,14 @@ Public Class EXO_MODELOS
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_MODELOS"
+                        Case "EXO_CTRLDLN"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-                                    If EventHandler_ItemPressed_After(infoEvento) = False Then
-                                        Return False
-                                    End If
+                                    'If EventHandler_ItemPressed_After(infoEvento) = False Then
+                                    '    Return False
+                                    'End If
                                 Case SAPbouiCOM.BoEventTypes.et_CLICK
 
                                 Case SAPbouiCOM.BoEventTypes.et_DOUBLE_CLICK
@@ -109,7 +119,7 @@ Public Class EXO_MODELOS
                     End Select
                 ElseIf infoEvento.BeforeAction = True Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_MODELOS"
+                        Case "EXO_CTRLDLN"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
@@ -130,7 +140,7 @@ Public Class EXO_MODELOS
             Else
                 If infoEvento.BeforeAction = False Then
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_MODELOS"
+                        Case "EXO_CTRLDLN"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
                                     If EventHandler_Form_Visible(objGlobal, infoEvento) = False Then
@@ -144,7 +154,7 @@ Public Class EXO_MODELOS
                     End Select
                 Else
                     Select Case infoEvento.FormTypeEx
-                        Case "UDO_FT_EXO_MODELOS"
+                        Case "EXO_CTRLDLN"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
 
@@ -152,6 +162,7 @@ Public Class EXO_MODELOS
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
 
+                                Case SAPbouiCOM.BoEventTypes.et_LOST_FOCUS
                             End Select
                     End Select
                 End If
@@ -168,52 +179,20 @@ Public Class EXO_MODELOS
     End Function
     Private Function EventHandler_Form_Visible(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-
+        Dim sSQL As String = ""
         EventHandler_Form_Visible = False
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True Then
-                If oForm.TypeEx = "UDO_FT_EXO_MODELOS" And oForm.Visible = True Then
-                    'Buscamos el code más alto y ponemos el siguiente
-                    CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()
-                End If
+                EXO_GLOBALES.Cargar_Grid_Ped_Pdte_Asignar(objGlobal, oForm)
             End If
-
             EventHandler_Form_Visible = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
             objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
-        Finally
-            EXO_CleanCOM.CLiberaCOM.Form(oForm)
-        End Try
-    End Function
-    Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
-        Dim oForm As SAPbouiCOM.Form = Nothing
-        EventHandler_ItemPressed_After = False
-
-        Try
-            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-
-            If pVal.ItemUID = "1" Then
-                If oForm.Mode = BoFormMode.fm_ADD_MODE Then
-                    If oForm.Visible = True Then
-                        If oForm.TypeEx = "UDO_FT_EXO_MODELOS" And oForm.Visible = True Then
-                            'Buscamos el code más alto y ponemos el siguiente
-                            CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()
-                        End If
-                    End If
-                End If
-            End If
-
-            EventHandler_ItemPressed_After = True
-
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try

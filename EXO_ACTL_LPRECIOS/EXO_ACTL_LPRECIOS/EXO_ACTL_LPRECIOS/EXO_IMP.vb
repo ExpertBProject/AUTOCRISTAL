@@ -121,7 +121,6 @@ Public Class EXO_IMP
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-
             Select Case pVal.ItemUID
                 Case "btn_Fich"
 #Region "Coger y leer fichero"
@@ -152,6 +151,7 @@ Public Class EXO_IMP
                         TratarFichero(sArchivo, oForm)
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - Fin de la Actualización...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 #End Region
+
                     End If
 #End Region
             End Select
@@ -164,7 +164,8 @@ Public Class EXO_IMP
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             oForm.Freeze(False)
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+            oForm.Items.Item("2").Click()
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Sub TratarFichero(ByVal sArchivo As String, ByRef oForm As SAPbouiCOM.Form)

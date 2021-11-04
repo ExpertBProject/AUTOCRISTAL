@@ -4,8 +4,8 @@
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Marcas" Type="1" UniqueID="EXO-MnMMAR"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Modelos" Type="1" UniqueID="EXO-MnMMOL"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Tipos de luna" Type="1" UniqueID="EXO-MnMLUN"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Tintes" Type="1" UniqueID="EXO-MnMTIN"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Tinte superior" Type="1" UniqueID="EXO-MnMVIS"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Colores" Type="1" UniqueID="EXO-MnMTIN"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Bandas" Type="1" UniqueID="EXO-MnMVIS"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Cuerpo del vehículo" Type="1" UniqueID="EXO-MnMCUE"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Carrocería del vehículo" Type="1" UniqueID="EXO-MnMCAR"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Posición de la Luna" Type="1" UniqueID="EXO-MnMPLU"></Menu>

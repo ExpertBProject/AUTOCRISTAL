@@ -88,14 +88,12 @@ Public Class EXO_EUROCODES
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
                                     If EventHandler_Form_Visible(objGlobal, infoEvento) = False Then
-                                        GC.Collect()
                                         Return False
                                     End If
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
 
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
                                     If EventHandler_Choose_FromList_After(infoEvento) = False Then
-
                                         Return False
                                     End If
                             End Select
@@ -151,6 +149,7 @@ Public Class EXO_EUROCODES
                     oForm.DataSources.DBDataSources.Item("@EXO_EUROCODES").SetValue("Code", 0, _sArticulo)
                     oForm.DataSources.DBDataSources.Item("@EXO_EUROCODES").SetValue("Name", 0, _sDes)
                 End If
+
             End If
 
             EventHandler_Form_Visible = True
@@ -160,7 +159,7 @@ Public Class EXO_EUROCODES
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oItem, Object))
         End Try

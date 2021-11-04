@@ -230,9 +230,28 @@ Public Class EXO_PLATAFORMAS
                 Select Case oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).ObjectType
                     Case "130"
                         Try
-                            Dim sDes As String = oDataTable.GetValue("Name", 0).ToString
-                            oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
-                            CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sDes
+                            CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).FlushToDataSource()
+                            For i = 0 To oDataTable.Rows.Count - 1
+                                Dim sCode As String = oDataTable.GetValue("Code", i).ToString
+                                Dim sDes As String = oDataTable.GetValue("Name", i).ToString
+
+                                Try
+                                    ' CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
+                                    CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
+
+                                Catch ex As Exception
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").InsertRecord(pVal.Row - 1 + i)
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").Offset = pVal.Row - 1 + i
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
+                                    'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
+                                    'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
+                                End Try
+                            Next
+                            CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).LoadFromDataSource()
+
                         Catch ex As Exception
                             oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
                         End Try

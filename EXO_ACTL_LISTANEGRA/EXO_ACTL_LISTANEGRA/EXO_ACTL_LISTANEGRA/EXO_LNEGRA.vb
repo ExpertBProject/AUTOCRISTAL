@@ -154,6 +154,7 @@ Public Class EXO_LNEGRA
                     oForm.DataSources.DBDataSources.Item("@EXO_LNEGRA").SetValue("Code", 0, _sIC)
                     oForm.DataSources.DBDataSources.Item("@EXO_LNEGRA").SetValue("Name", 0, _sDes)
                 End If
+
             End If
 
             EventHandler_Form_Visible = True
