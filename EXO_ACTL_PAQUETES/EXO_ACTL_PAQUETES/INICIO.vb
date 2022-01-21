@@ -15,6 +15,7 @@ Public Class INICIO
         If actualizar Then
             cargaDatos()
         End If
+        InsertarReport()
         cargamenu()
     End Sub
 
@@ -41,7 +42,38 @@ Public Class INICIO
 
         End If
     End Sub
+    Private Sub InsertarReport()
+#Region "Variables"
+        Dim sArchivo As String = ""
+        Dim sReport As String = ""
+#End Region
+        Try
+            sArchivo = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+#Region "Report Etiqueta Agrupaciones de Bultos"
+            sReport = "Et_ABultos.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+#Region "Report Etiqueta Paquete"
+            sReport = "Et_Paquete.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
 
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Sub
     Private Sub cargamenu()
         Dim Path As String = ""
         Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
@@ -78,6 +110,9 @@ Public Class INICIO
                 Case "UDO_FT_EXO_PAQ"
                     Clase = New EXO_PAQ(objGlobal)
                     Return CType(Clase, EXO_PAQ).SBOApp_ItemEvent(infoEvento)
+                Case "UDO_FT_EXO_ABULTOS"
+                    Clase = New EXO_ABULTOS(objGlobal)
+                    Return CType(Clase, EXO_ABULTOS).SBOApp_ItemEvent(infoEvento)
 
             End Select
 
@@ -121,8 +156,8 @@ Public Class INICIO
             Else
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnABUL"
-                        Clase = New EXO_ABUL(objGlobal)
-                        Return CType(Clase, EXO_ABUL).SBOApp_MenuEvent(infoEvento)
+                        Clase = New EXO_ABULTOS(objGlobal)
+                        Return CType(Clase, EXO_ABULTOS).SBOApp_MenuEvent(infoEvento)
 
                 End Select
             End If
