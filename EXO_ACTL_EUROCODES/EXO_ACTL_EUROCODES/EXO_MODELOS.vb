@@ -43,7 +43,7 @@ Public Class EXO_MODELOS
 
         Try
             'Recuperar el formulario
-            oForm = objGlobal.SBOApp.Forms.ActiveForm
+
             If infoEvento.BeforeAction = True Then
 
             Else
@@ -51,6 +51,7 @@ Public Class EXO_MODELOS
                     Case "EXO-MnMMOL"
                         objGlobal.funcionesUI.cargaFormUdoBD("EXO_MODELOS")
                     Case "1282" ' Si estamos en añadir y es visible
+                        oForm = objGlobal.SBOApp.Forms.ActiveForm
                         If oForm.TypeEx = "UDO_FT_EXO_MODELOS" And oForm.Visible = True Then
                             'Buscamos el code más alto y ponemos el siguiente
                             CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()

@@ -327,11 +327,11 @@ Public Class EXO_EUROCODES
                         Select Case infoEvento.EventType
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
-                                Borra_Des(oForm)
+                               ' Borra_Des(oForm)
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
-                                Borra_Des(oForm)
+                               ' Borra_Des(oForm)
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD
-                                Borra_Des(oForm)
+                               ' Borra_Des(oForm)
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_DELETE
 
                         End Select
@@ -343,7 +343,7 @@ Public Class EXO_EUROCODES
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
                                 'If oForm.Visible = True Then
-                                Carga_Des(oForm)
+                               ' Carga_Des(oForm)
                                 'End If
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
 
