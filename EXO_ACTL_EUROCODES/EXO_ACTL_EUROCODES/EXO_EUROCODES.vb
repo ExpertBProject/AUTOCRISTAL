@@ -104,7 +104,9 @@ Public Class EXO_EUROCODES
 
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
-
+                                    If EventHandler_Choose_FromList_Before(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_PICKER_CLICKED
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
@@ -162,6 +164,71 @@ Public Class EXO_EUROCODES
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oItem, Object))
+        End Try
+    End Function
+    Private Function EventHandler_Choose_FromList_Before(ByRef pVal As ItemEvent) As Boolean
+        Dim oCFLEvento As IChooseFromListEvent = Nothing
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim oConds As SAPbouiCOM.Conditions = Nothing
+        Dim oCond As SAPbouiCOM.Condition = Nothing
+        Dim oRs As SAPbobsCOM.Recordset = Nothing
+        Dim sItemCode As String
+        Dim oXml As System.Xml.XmlDocument = New System.Xml.XmlDocument
+        Dim oNodes As System.Xml.XmlNodeList = Nothing
+        Dim oNode As System.Xml.XmlNode = Nothing
+        Dim sGroupCode As String = ""
+        Dim bEsADR As Boolean = False
+        Dim bDebeSerADR As Boolean = False
+        Dim h As Integer = 1
+
+        EventHandler_Choose_FromList_Before = False
+
+        Try
+            oForm = Me.objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            If pVal.ItemUID = "14_U_E" Then 'Marca
+                oCFLEvento = CType(pVal, IChooseFromListEvent)
+
+                oConds = New SAPbouiCOM.Conditions
+                oCond = oConds.Add
+                oCond.Alias = "U_EXO_COD"
+                oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                Dim sCode As String = Left(CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString.Trim, 2)
+                oCond.CondVal = sCode
+                'oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+
+                oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            ElseIf pVal.ItemUID = "15_U_E" Then 'Modelo
+                oCFLEvento = CType(pVal, IChooseFromListEvent)
+
+                oConds = New SAPbouiCOM.Conditions
+                oCond = oConds.Add
+                oCond.Alias = "U_EXO_COD"
+                oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                Dim sCode As String = Left(CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString.Trim, 4)
+                oCond.CondVal = sCode
+                'oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+
+                oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            ElseIf pVal.ItemUID = "17_U_E" Then 'Luna
+                oCFLEvento = CType(pVal, IChooseFromListEvent)
+
+                oConds = New SAPbouiCOM.Conditions
+                oCond = oConds.Add
+                oCond.Alias = "Code"
+                oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                Dim sCode As String = Mid(CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString.Trim, 5, 1)
+                oCond.CondVal = sCode
+                'oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+
+                oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            End If
+
+            EventHandler_Choose_FromList_Before = True
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_Choose_FromList_After(ByRef pVal As ItemEvent) As Boolean
@@ -275,10 +342,9 @@ Public Class EXO_EUROCODES
                         Select Case infoEvento.EventType
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
-                                If oForm.Visible = True Then
-                                    Carga_Des(oForm)
-                                End If
-
+                                'If oForm.Visible = True Then
+                                Carga_Des(oForm)
+                                'End If
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD

@@ -1,6 +1,7 @@
 ﻿<Application>
   <Menus>
     <action type="add">
+      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="" Type="3" UniqueID="EXO-MnCSEPE1"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Marcas" Type="1" UniqueID="EXO-MnMMAR"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Modelos" Type="1" UniqueID="EXO-MnMMOL"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Tipos de luna" Type="1" UniqueID="EXO-MnMLUN"></Menu>
@@ -9,6 +10,7 @@
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Cuerpo del vehículo" Type="1" UniqueID="EXO-MnMCUE"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Carrocería del vehículo" Type="1" UniqueID="EXO-MnMCAR"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Posición de la Luna" Type="1" UniqueID="EXO-MnMPLU"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="" Type="3" UniqueID="EXO-MnCSEPE2"></Menu>
     </action>
   </Menus>
 </Application>

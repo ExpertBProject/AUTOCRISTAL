@@ -153,29 +153,30 @@ Public Class EXO_OITM
     End Function
     Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim sArtículo As String = ""
+        Dim sArticulo As String = ""
         Dim sDes As String = ""
-        Dim sExiste As String = ""
+        Dim sSQL As String = "" : Dim sExiste As String = ""
         EventHandler_ItemPressed_After = False
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-            sArtículo = oForm.DataSources.DBDataSources.Item("OITM").GetValue("ItemCode", 0).ToString.Trim
+            sArticulo = oForm.DataSources.DBDataSources.Item("OITM").GetValue("ItemCode", 0).ToString.Trim
             sDes = oForm.DataSources.DBDataSources.Item("OITM").GetValue("ItemName", 0).ToString.Trim
             If pVal.ItemUID = "btn_ECODE" Then
                 If oForm.Mode = BoFormMode.fm_OK_MODE Then
                     'Si no existe, creamos el artículo
-                    sExiste = objGlobal.refDi.SQL.sqlStringB1("SELECT ""ItemCode"" FROM ""@EXO_EUROCODES"" WHERE ""Code""='" & sArtículo & "' ")
+                    sSQL = "SELECT ""Code"" FROM ""@EXO_EUROCODES"" WHERE ""Code""='" & sArticulo & "' "
+                    sExiste = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                     If sExiste = "" Then
                         'Presentamos UDO Y escribimos los datos de la cabecera
-                        EXO_EUROCODES._sArticulo = sArtículo
+                        EXO_EUROCODES._sArticulo = sArticulo
                         EXO_EUROCODES._sDes = sDes
                         objGlobal.funcionesUI.cargaFormUdoBD("EXO_EUROCODES")
                     Else
                         'Presentamos la pantalla los los datos
                         EXO_EUROCODES._sArticulo = ""
                         EXO_EUROCODES._sDes = ""
-                        objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_EUROCODES", sArtículo)
+                        objGlobal.funcionesUI.cargaFormUdoBD_Clave("EXO_EUROCODES", sArticulo)
                     End If
                 Else
                     objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, guarde primero los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
