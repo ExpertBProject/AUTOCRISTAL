@@ -59,15 +59,9 @@ Public Class INICIO
 
         Try
             Select Case infoEvento.FormTypeEx
-                'Case "60016"
-                '    Clase = New EXO_60016(objGlobal)
-                '    Return CType(Clase, EXO_60016).SBOApp_ItemEvent(infoEvento)
-                'Case "UDO_FT_EXO_PAQ"
-                '    Clase = New EXO_PAQ(objGlobal)
-                '    Return CType(Clase, EXO_PAQ).SBOApp_ItemEvent(infoEvento)
-                'Case "UDO_FT_EXO_ABULTOS"
-                '    Clase = New EXO_ABULTOS(objGlobal)
-                '    Return CType(Clase, EXO_ABULTOS).SBOApp_ItemEvent(infoEvento)
+                Case "EXO_PNEC"
+                    Clase = New EXO_PNEC(objGlobal)
+                    Return CType(Clase, EXO_PNEC).SBOApp_ItemEvent(infoEvento)
 
             End Select
 
