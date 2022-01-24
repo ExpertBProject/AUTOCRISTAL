@@ -51,10 +51,10 @@ Public Class EXO_PNEC
                     Exit Function
                 End If
             End Try
-            'sSQL = "SELECT DISTINCT ""Category"" ""COD"", ""Category"" ""ANNO"" FROM ""OFPR"" order by ""Category"" "
-            'objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbPER").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-            'CType(oForm.Items.Item("cbPER").Specific, SAPbouiCOM.ComboBox).ExpandType = BoExpandType.et_ValueOnly
-            'CType(oForm.Items.Item("cbPER").Specific, SAPbouiCOM.ComboBox).Select(Now.Year.ToString, BoSearchKey.psk_ByValue)
+            sSQL = "SELECT 'Y' as ""Sel"", ""WhsCode"", ""WhsName"" FROM ""OWHS"" order by ""WhsCode"" "
+            'Cargamos grid
+            oForm.DataSources.DataTables.Item("DTALM").ExecuteQuery(sSQL)
+            FormateaGridALM(oForm)
             oForm.Items.Item("btnGen").Enabled = False
             CargarForm = True
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -66,4 +66,34 @@ Public Class EXO_PNEC
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
+    Private Sub FormateaGridALM(ByRef oform As SAPbouiCOM.Form)
+        Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
+        Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
+        Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
+        Dim sSQL As String = ""
+        Try
+            oform.Freeze(True)
+            CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+            oColumnChk = CType(CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
+            oColumnChk.Editable = True
+            oColumnChk.Width = 30
+
+            For i = 1 To 2
+                CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                oColumnTxt = CType(CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                oColumnTxt.Editable = False
+            Next
+
+
+
+            CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oform.Freeze(False)
+        End Try
+    End Sub
 End Class

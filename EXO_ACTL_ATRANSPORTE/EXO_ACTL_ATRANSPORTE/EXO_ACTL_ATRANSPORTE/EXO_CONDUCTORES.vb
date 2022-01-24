@@ -53,8 +53,7 @@ Public Class EXO_CONDUCTORES
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Try
-            'Recuperar el formulario
-            oForm = objGlobal.SBOApp.Forms.ActiveForm
+
             If infoEvento.BeforeAction = True Then
 
             Else
@@ -62,6 +61,8 @@ Public Class EXO_CONDUCTORES
                     Case "EXO-MnAGCD"
                         objGlobal.funcionesUI.cargaFormUdoBD("EXO_CONDUCTORES")
                     Case "1282" ' Si estamos en añadir y es visible
+                        'Recuperar el formulario
+                        oForm = objGlobal.SBOApp.Forms.ActiveForm
                         If oForm.TypeEx = "UDO_FT_EXO_CONDUCTORES" And oForm.Visible = True Then
                             'Buscamos el code más alto y ponemos el siguiente
                             CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()
