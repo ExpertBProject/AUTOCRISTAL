@@ -196,11 +196,11 @@ Public Class EXO_PNEC
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-
+            sAgrupar = oForm.DataSources.UserDataSources.Item("UDAGRUPAR").ValueEx.ToString
             Select Case pVal.ItemUID
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
-                        sAgrupar = oForm.DataSources.UserDataSources.Item("UDAGRUPAR").ValueEx.ToString
+
                         If sAgrupar = "N" Then
 #Region "Agrupado"
                             sSQL = "SELECT "
@@ -224,6 +224,13 @@ Public Class EXO_PNEC
                         End If
 
                     End If
+                Case "chkAgrupar"
+                    Select Case sAgrupar
+                        Case "Y"
+                            oForm.Items.Item("txtALM").Enabled = True : CType(oForm.Items.Item("txtALM").Specific, EditText).ChooseFromListUID = "CFLALM"
+                            oForm.Items.Item("txtProv").Enabled = True : CType(oForm.Items.Item("txtALM").Specific, EditText).ChooseFromListUID = "CFLPROV"
+                        Case "N" : CType(oForm.Items.Item("txtDIAS").Specific, EditText).Active = True : oForm.Items.Item("txtProv").Enabled = False : oForm.Items.Item("txtALM").Enabled = False
+                    End Select
             End Select
 
             EventHandler_ItemPressed_After = True
