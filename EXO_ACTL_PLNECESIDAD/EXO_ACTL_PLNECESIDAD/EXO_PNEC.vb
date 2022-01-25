@@ -191,7 +191,7 @@ Public Class EXO_PNEC
     Private Function EventHandler_ItemPressed_After(ByVal pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
-
+        Dim sAgrupar As String = "N"
         EventHandler_ItemPressed_After = False
 
         Try
@@ -200,7 +200,28 @@ Public Class EXO_PNEC
             Select Case pVal.ItemUID
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
+                        sAgrupar = oForm.DataSources.UserDataSources.Item("UDAGRUPAR").ValueEx.ToString
+                        If sAgrupar = "N" Then
+#Region "Agrupado"
+                            sSQL = "SELECT "
+                            For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM").Rows.Count - 1
+                                Dim iEncuentra As Integer = 0
+                                If oForm.DataSources.DataTables.Item("DTALM").GetValue("Sel", i).ToString = "Y" Then
+                                    If iEncuentra = 0 Then
+                                        sSQL &= "()"
+                                    Else
+                                        sSQL &= ", ()"
+                                    End If
+                                    iEncuentra += 1
+                                End If
+                            Next
 
+#End Region
+                        Else
+#Region "Sin agrupar"
+
+#End Region
+                        End If
 
                     End If
             End Select
