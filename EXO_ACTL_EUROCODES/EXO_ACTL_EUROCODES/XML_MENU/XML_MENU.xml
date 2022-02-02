@@ -11,6 +11,9 @@
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Carrocería del vehículo" Type="1" UniqueID="EXO-MnMCAR"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="Datos maestros de Posición de la Luna" Type="1" UniqueID="EXO-MnMPLU"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="11520" Image="" String="" Type="3" UniqueID="EXO-MnCSEPE2"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="3072" Image="" String="" Type="3" UniqueID="EXO-MnCSEPE3"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="3072" Image="" String="EUROCODES" Type="1" UniqueID="EXO-MnEURC"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="3072" Image="" String="" Type="3" UniqueID="EXO-MnCSEPE4"></Menu>
     </action>
   </Menus>
 </Application>

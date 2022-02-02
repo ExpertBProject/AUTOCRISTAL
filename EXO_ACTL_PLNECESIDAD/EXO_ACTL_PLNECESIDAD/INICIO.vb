@@ -21,10 +21,10 @@ Public Class INICIO
 
         If objGlobal.refDi.comunes.esAdministrador Then
 
-            'sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_PAQ.xml")
-            'objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_PAQ", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            'objGlobal.refDi.comunes.LoadBDFromXML(sXML)
-            'res = objGlobal.SBOApp.GetLastBatchResults
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OCRD.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OCRD", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
 
         End If
     End Sub

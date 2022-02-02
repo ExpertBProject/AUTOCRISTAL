@@ -137,12 +137,12 @@ Public Class EXO_EUROCODES
             If oForm.Visible = True Then
                 oItem = oForm.Items.Item("0_U_E")
                 oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
-                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
                 oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
 
                 oItem = oForm.Items.Item("1_U_E")
                 oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
-                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
                 oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
 
 
@@ -399,4 +399,37 @@ Public Class EXO_EUROCODES
             Throw ex
         End Try
     End Sub
+    Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+
+        Try
+
+            If infoEvento.BeforeAction = True Then
+
+            Else
+                Select Case infoEvento.MenuUID
+                    Case "EXO-MnEURC"
+                        objGlobal.funcionesUI.cargaFormUdoBD("EXO_EUROCODES")
+                    Case "1282" ' Si estamos en añadir y es visible
+                        ''Recuperar el formulario
+                        'oForm = objGlobal.SBOApp.Forms.ActiveForm
+                        'If oForm.TypeEx = "UDO_FT_EXO_CONDUCTORES" And oForm.Visible = True Then
+                        '    'Buscamos el code más alto y ponemos el siguiente
+                        '    CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = BucarCodeSiguiente()
+                        'End If
+                End Select
+            End If
+
+            Return MyBase.SBOApp_MenuEvent(infoEvento)
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Return False
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Return False
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+        End Try
+    End Function
 End Class

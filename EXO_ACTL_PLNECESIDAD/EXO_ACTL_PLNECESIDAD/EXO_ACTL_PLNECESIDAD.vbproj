@@ -107,6 +107,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_PNEC.vb" />
     <Compile Include="INICIO.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -165,12 +166,16 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml" />
+    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_MENU\XML_MENU.xml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDFs_OCRD.xml" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FORMS\EXO_PNEC.srf" />
   </ItemGroup>
