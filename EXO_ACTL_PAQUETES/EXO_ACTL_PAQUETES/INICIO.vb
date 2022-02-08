@@ -14,6 +14,7 @@ Public Class INICIO
 
         If actualizar Then
             cargaDatos()
+            ParametrizacionGeneral()
         End If
         InsertarReport()
         cargamenu()
@@ -41,6 +42,14 @@ Public Class INICIO
             res = objGlobal.SBOApp.GetLastBatchResults
 
         End If
+    End Sub
+    Private Sub ParametrizacionGeneral()
+
+        If Not objGlobal.refDi.OGEN.existeVariable("SERVIDOR_HANA") Then
+            objGlobal.refDi.OGEN.fijarValorVariable("SERVIDOR_HANA", "10.10.1.13:30015")
+            objGlobal.SBOApp.StatusBar.SetText("Creado Variable ""SERVIDOR_HANA"".", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+        End If
+
     End Sub
     Private Sub InsertarReport()
 #Region "Variables"

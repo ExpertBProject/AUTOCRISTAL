@@ -221,7 +221,7 @@ Public Class EXO_ABULTOS
             oCRReport.DataSourceConnections.Clear()
 
             'Establecemos las conexiones a la BBDD
-            sServer = "10.10.1.13:30015" ' objGlobal.compañia.Server
+            sServer = objGlobal.funcionesUI.refDi.OGEN.valorVariable("SERVIDOR_HANA") ' objGlobal.compañia.Server
             'sServer = objGlobal.refDi.SQL.dameCadenaConexion.ToString
             sBBDD = objGlobal.compañia.CompanyDB
             sUser = objGlobal.refDi.SQL.usuarioSQL
@@ -296,6 +296,7 @@ Public Class EXO_ABULTOS
         Catch ex As Exception
             Throw ex
         Finally
+            objGlobal.SBOApp.StatusBar.SetText("Fin del proceso de impresión.", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_None)
             oCRReport = Nothing
             oFileDestino = Nothing
         End Try
