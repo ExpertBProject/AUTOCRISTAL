@@ -15,8 +15,9 @@ Public Class INICIO
         If actualizar Then
             cargaDatos()
             ParametrizacionGeneral()
+            InsertarReport()
         End If
-        InsertarReport()
+
         cargamenu()
     End Sub
 

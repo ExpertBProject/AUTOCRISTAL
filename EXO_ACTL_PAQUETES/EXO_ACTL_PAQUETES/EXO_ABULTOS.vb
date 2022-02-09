@@ -280,7 +280,7 @@ Public Class EXO_ABULTOS
                     If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
                         objGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
                         oCRReport.PrintOptions.PrinterName = sImpresora
-                        oCRReport.PrintToPrinter(nCopias, False, 0, 0)
+                        oCRReport.PrintToPrinter(nCopias, False, 0, 999)
                     Else
                         objGlobal.SBOApp.StatusBar.SetText("La impresora seleccionada en el usuario no se encuentra o está offline. Por favor verifique la parametrización.", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
                     End If
