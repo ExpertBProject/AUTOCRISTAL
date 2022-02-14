@@ -1,0 +1,9 @@
+﻿<Application>
+  <Menus>
+    <action type="add">
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="" Type="3" UniqueID="EXO-MnETUB1"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="Impresión de etiquetas de Ubicaciones" Type="1" UniqueID="EXO-MnETUB"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="" Type="3" UniqueID="EXO-MnETUB2"></Menu>
+    </action>
+  </Menus>
+</Application>

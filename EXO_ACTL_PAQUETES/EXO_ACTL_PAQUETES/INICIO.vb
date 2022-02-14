@@ -47,6 +47,7 @@ Public Class INICIO
     Private Sub ParametrizacionGeneral()
 
         If Not objGlobal.refDi.OGEN.existeVariable("SERVIDOR_HANA") Then
+            ' objGlobal.refDi.OGEN.fijarValorVariable("SERVIDOR_HANA", "xper-hanades02:30015")
             objGlobal.refDi.OGEN.fijarValorVariable("SERVIDOR_HANA", "10.10.1.13:30015")
             objGlobal.SBOApp.StatusBar.SetText("Creado Variable ""SERVIDOR_HANA"".", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
@@ -59,6 +60,16 @@ Public Class INICIO
 #End Region
         Try
             sArchivo = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+#Region "Logo"
+            sReport = "Logo.png"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
 #Region "Report Etiqueta Agrupaciones de Bultos"
             sReport = "Et_ABultos.rpt"
             'Si no existe lo importamos

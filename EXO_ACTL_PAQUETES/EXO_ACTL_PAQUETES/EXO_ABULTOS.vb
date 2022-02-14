@@ -279,6 +279,7 @@ Public Class EXO_ABULTOS
                     sImpresora = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                     If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
                         objGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
+                        oCRReport.PrintOptions.NoPrinter = False
                         oCRReport.PrintOptions.PrinterName = sImpresora
                         oCRReport.PrintToPrinter(nCopias, False, 0, 999)
                     Else

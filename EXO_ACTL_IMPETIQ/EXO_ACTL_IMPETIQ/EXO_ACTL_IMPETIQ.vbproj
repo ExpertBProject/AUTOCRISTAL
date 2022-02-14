@@ -112,6 +112,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EXO_ETUBI.vb" />
     <Compile Include="EXO_IMPET.vb" />
     <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="INICIO.vb" />
@@ -150,6 +151,7 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
+    <EmbeddedResource Include="REPORT\code128.ttf" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="SAPbobsCOM">
@@ -172,14 +174,25 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml" />
+    <EmbeddedResource Include="REPORT\Et_Ubicaciones.rpt" />
+    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="REPORT\Logo.png" />
+  </ItemGroup>
   <ItemGroup>
     <Service Include="{C0C07587-41A7-46C8-8FBD-3F9C8EBE2DDC}" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UT_EXO_ETIQUETA.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_MENU\XML_MENU.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FORMS\EXO_ETUBI.srf" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

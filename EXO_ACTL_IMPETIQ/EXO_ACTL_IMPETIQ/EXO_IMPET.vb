@@ -14,7 +14,7 @@ Public Class EXO_IMPET
 
             If infoEvento.BeforeAction = True Then
                 Select Case oForm.TypeEx
-                    Case "142", "143"
+                    Case "142", "143", "1250000940", "940", "180", "150"
                         If objGlobal.SBOApp.Menus.Exists("EXO-ETIMS") Then
                             objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMS")
                         End If
@@ -44,10 +44,18 @@ Public Class EXO_IMPET
                             oMenus = oMenuItem.SubMenus
                             oMenus.AddEx(oCreationPackage)
                         End If
+                    Case Else
+                        If objGlobal.SBOApp.Menus.Exists("EXO-ETIMS") Then
+                            objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMS")
+                        End If
+
+                        If objGlobal.SBOApp.Menus.Exists("EXO-ETIMP") Then
+                            objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMP")
+                        End If
                 End Select
             Else
                 Select Case oForm.TypeEx
-                    Case "142", "143"
+                    Case "142", "143", "1250000940", "940", "180", "150"
                         If infoEvento.ItemUID = "" Then
                             'If infoEvento.Row > 0 Then
                             '    _iLineNumRightClick = infoEvento.Row
@@ -81,10 +89,11 @@ Public Class EXO_IMPET
                 Select Case infoEvento.MenuUID
                     Case "EXO-ETIMP"
                         Select Case oForm.TypeEx
-                            Case "142", "143"
+                            Case "142", "143", "1250000940", "940", "180"
                                 Return Menu_Imprimir_Etiquetas(oForm)
+                            Case "150"
+                                Return Menu_Imprimir_Etiquetas_ART(oForm)
                         End Select
-
                 End Select
             End If
 
@@ -102,7 +111,12 @@ Public Class EXO_IMPET
         Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
         Dim sCrystal As String = "Etiquetas.rpt"
         Dim sCode As String = ""
-        Dim sTable_Cab As String = CType(oForm.Items.Item("8").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
+        Dim sTable_Cab As String = ""
+        Try
+            sTable_Cab = CType(oForm.Items.Item("8").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
+        Catch ex As Exception
+            sTable_Cab = CType(oForm.Items.Item("11").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
+        End Try
         Dim sTable_Lin As String = Right(sTable_Cab, sTable_Cab.Length - 1) & "1"
         Dim sSQL As String = ""
         Dim odtArticulos As Data.DataTable = Nothing : Dim iCopias As Integer = 1
@@ -111,38 +125,47 @@ Public Class EXO_IMPET
         Menu_Imprimir_Etiquetas = False
 
         Try
-            rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
-            sCode = oForm.DataSources.DBDataSources.Item(sTable_Cab).GetValue("DocEntry", 0).ToUpper
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable_Cab).GetValue("DocEntry", 0).ToUpper
 #Region "Rellena datos Tabla TMP"
-            sSQL = "DELETE FROM ""@EXO_ETIQUETA"" WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserSignature.ToString & "' "
-            objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                sSQL = "DELETE FROM ""@EXO_ETIQUETA"" WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserSignature.ToString & "' "
+                objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
-            sSQL = "SELECT L.""ItemCode"", ifnull(BT.""Quantity"",L.""Quantity"") ""Cantidad"", I.""QryGroup7"", ifnull(BT.""BatchNum"",'') ""Lote"", "
-            sSQL &= " I.""SuppCatNum"" ""Fabricante"" "
-            sSQL &= " From " & sTable_Lin & " L INNER JOIN OITM I ON L.""ItemCode""=I.""ItemCode"" "
-            sSQL &= " LEFT JOIN " & sTable_Cab & " C ON C.""DocEntry""=L.""DocEntry"" "
-            sSQL &= " LEFT JOIN IBT1 BT ON BT.""BaseEntry"" = L.""DocEntry"" And BT.""BaseLinNum"" = L.""LineNum"" And  BT.""BaseType"" = C.""ObjType"" "
-            sSQL &= " WHERE L.""DocEntry""=" & sCode
-            sSQL &= " ORDER BY L.""LineNum"" "
-            odtArticulos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-            For Each MiDataRow As DataRow In odtArticulos.Rows
-                If MiDataRow("QryGroup7").ToString = "Y" Then
-                    iCopias = 1
-                Else
-                    iCopias = CType(MiDataRow("Cantidad").ToString, Integer)
-                End If
-                For i = 1 To iCopias
-                    sSQL = "Select ifnull(MAX(CAST(""Code"" As Integer)),0)+1 FROM ""@EXO_ETIQUETA"" "
-                    sCodeET = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                    sSQL = "insert into ""@EXO_ETIQUETA"" values('" & sCodeET & "','" & i.ToString & " de " & iCopias & "','" & MiDataRow("ItemCode").ToString & "',"
-                    sSQL &= "'" & MiDataRow("Lote").ToString & "','" & MiDataRow("Fabricante").ToString & "','" & objGlobal.compañia.UserSignature & "')"
-                    objGlobal.refDi.SQL.sqlUpdB1(sSQL)
+                sSQL = "SELECT L.""ItemCode"", I.""ItemName"", ifnull(BT.""Quantity"",L.""Quantity"") ""Cantidad"", I.""QryGroup7"", ifnull(BT.""BatchNum"",'') ""Lote"", "
+                sSQL &= " ifnull(LT.""MnfSerial"",'') ""Fabricante"", ifnull(B.""BinCode"",'') ""Ubicacion"" "
+                sSQL &= " From " & sTable_Lin & " L INNER JOIN OITM I ON L.""ItemCode""=I.""ItemCode"" "
+                sSQL &= " LEFT JOIN " & sTable_Cab & " C ON C.""DocEntry""=L.""DocEntry"" "
+                sSQL &= " LEFT JOIN IBT1 BT ON BT.""BaseEntry"" = L.""DocEntry"" And BT.""BaseLinNum"" = L.""LineNum"" And  BT.""BaseType"" = C.""ObjType"" "
+                sSQL &= " LEFT JOIN OBTN LT ON LT.""ItemCode"" =BT.""ItemCode"" and LT.""DistNumber""=BT.""BatchNum"" "
+                sSQL &= " LEFT JOIN OWHS OW ON OW.""WhsCode""=L.""WhsCode"" "
+                sSQL &= " LEFT JOIN OBIN B ON B.""AbsEntry""=OW.""DftBinAbs"" "
+                sSQL &= " WHERE L.""DocEntry""=" & sCode
+                sSQL &= " ORDER BY L.""LineNum"" "
+                odtArticulos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                For Each MiDataRow As DataRow In odtArticulos.Rows
+                    If MiDataRow("QryGroup7").ToString = "Y" Then
+                        iCopias = 1
+                    Else
+                        iCopias = CType(MiDataRow("Cantidad").ToString, Integer)
+                    End If
+                    For i = 1 To iCopias
+                        sSQL = "Select ifnull(MAX(CAST(""Code"" As Integer)),0)+1 FROM ""@EXO_ETIQUETA"" "
+                        sCodeET = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        sSQL = "insert into ""@EXO_ETIQUETA"" values('" & sCodeET & "','" & sCodeET & " - " & i.ToString & " de " & iCopias & "','" & MiDataRow("ItemCode").ToString & "',"
+                        sSQL &= "'" & MiDataRow("Lote").ToString & "','" & MiDataRow("Fabricante").ToString & "','" & objGlobal.compañia.UserSignature & "',"
+                        sSQL &= "'" & MiDataRow("ItemName").ToString & "','" & MiDataRow("Ubicacion").ToString & "')"
+                        objGlobal.refDi.SQL.sqlUpdB1(sSQL)
+                    Next
                 Next
-            Next
 #End Region
-            sTipoImp = "IMP"
-            'Imprimimos la etiqueta
-            EXO_GLOBALES.GenerarImpCrystal(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+            End If
+
 
 
             Menu_Imprimir_Etiquetas = True
@@ -156,5 +179,70 @@ Public Class EXO_IMPET
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(odtArticulos, Object))
         End Try
     End Function
+    Private Function Menu_Imprimir_Etiquetas_ART(ByRef oForm As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
+        Dim sCrystal As String = "Etiquetas.rpt"
+        Dim sCode As String = ""
+        Dim sTable As String = "OITM"
+        Dim sSQL As String = ""
+        Dim odtArticulos As Data.DataTable = Nothing : Dim iCopias As Integer = 1
+        Dim sCodeET As String = ""
+#End Region
+        Menu_Imprimir_Etiquetas_ART = False
+
+        Try
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable).GetValue("ItemCode", 0).ToString
+#Region "Rellena datos Tabla TMP"
+                sSQL = "DELETE FROM ""@EXO_ETIQUETA"" WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserSignature.ToString & "' "
+                objGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+                sSQL = "SELECT I.""ItemCode"", I.""ItemName"", '1' ""Cantidad"", I.""QryGroup7"", ifnull(CAST(LT.""DistNumber"" as Varchar),'') ""Lote"", "
+                sSQL &= " ifnull(LT.""MnfSerial"",'') ""Fabricante"", ifnull(B.""BinCode"",'') ""Ubicacion""  "
+                sSQL &= " From OITM I "
+                sSQL &= " LEFT JOIN OBTN LT ON LT.""ItemCode"" =I.""ItemCode""  "
+                sSQL &= " LEFT JOIN OWHS OW ON OW.""WhsCode""=I.""DfltWH"" "
+                sSQL &= " LEFT JOIN OBIN B ON B.""AbsEntry""=OW.""DftBinAbs"" "
+                sSQL &= " WHERE I.""ItemCode""='" & sCode & "' "
+                odtArticulos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                For Each MiDataRow As DataRow In odtArticulos.Rows
+                    If MiDataRow("QryGroup7").ToString = "Y" Then
+                        iCopias = 1
+                    Else
+                        iCopias = CType(MiDataRow("Cantidad").ToString, Integer)
+                    End If
+                    For i = 1 To iCopias
+                        sSQL = "Select ifnull(MAX(CAST(""Code"" As Integer)),0)+1 FROM ""@EXO_ETIQUETA"" "
+                        sCodeET = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        sSQL = "insert into ""@EXO_ETIQUETA"" values('" & sCodeET & "','" & sCodeET & " - " & i.ToString & " de " & iCopias & "','" & MiDataRow("ItemCode").ToString & "',"
+                        sSQL &= "'" & MiDataRow("Lote").ToString & "','" & MiDataRow("Fabricante").ToString & "','" & objGlobal.compañia.UserSignature & "',"
+                        sSQL &= "'" & MiDataRow("ItemName").ToString & "','" & MiDataRow("Ubicacion").ToString & "')"
+                        objGlobal.refDi.SQL.sqlUpdB1(sSQL)
+                    Next
+                Next
+#End Region
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+            End If
+
+
+
+            Menu_Imprimir_Etiquetas_ART = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(odtArticulos, Object))
+        End Try
+    End Function
+
 
 End Class

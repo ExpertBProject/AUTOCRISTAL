@@ -311,6 +311,7 @@ Public Class EXO_GLOBALES
                     sImpresora = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                     If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
                         oObjGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
+                        oCRReport.PrintOptions.NoPrinter = False
                         oCRReport.PrintOptions.PrinterName = sImpresora
                         oCRReport.PrintToPrinter(nCopias, False, 0, 9999)
                     Else
@@ -328,10 +329,124 @@ Public Class EXO_GLOBALES
         Catch ex As Exception
             Throw ex
         Finally
-            oObjGlobal.SBOApp.StatusBar.SetText("Fin del proceso de impresión.", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_None)
+            oObjGlobal.SBOApp.StatusBar.SetText("Fin del proceso de impresión.", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success)
             oCRReport = Nothing
             oFileDestino = Nothing
         End Try
     End Sub
+    Public Shared Sub GenerarImpCrystal_Rangos(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal rutaCrystal As String, ByVal sCrystal As String,
+                                               ByVal sDesde As String, ByVal sHasta As String, ByVal sFileName As String, ByRef sReport As String,
+                                               ByVal sTipoImp As String, ByVal sUsuario As String)
 
+        Dim oCRReport As ReportDocument = Nothing
+        Dim oFileDestino As DiskFileDestinationOptions = Nothing
+        Dim sServer As String = ""
+        Dim sDriver As String = ""
+        Dim sBBDD As String = ""
+        Dim sUser As String = ""
+        Dim sPwd As String = ""
+        Dim sConnection As String = ""
+        Dim oLogonProps As NameValuePairs2 = Nothing
+
+        Dim conrepor As DataSourceConnections = Nothing
+        Dim sImpresora As String = "" : Dim nCopias As Integer = 1
+        Dim sSQL As String = ""
+        Try
+            oCRReport = New ReportDocument()
+
+            oCRReport.Load(rutaCrystal & "\" & sCrystal)
+
+            oCRReport.DataSourceConnections.Clear()
+
+            'Establecemos los parámetros para el report.
+            If sDesde = "" Then
+                sDesde = "1"
+            End If
+            If sHasta = "" Then
+                sHasta = "999999999999999"
+            End If
+            oCRReport.SetParameterValue("Desde", sDesde)
+            oCRReport.SetParameterValue("Hasta", sHasta)
+
+            'Establecemos las conexiones a la BBDD
+            sServer = oObjGlobal.funcionesUI.refDi.OGEN.valorVariable("SERVIDOR_HANA") ' objGlobal.compañia.Server
+            'sServer = objGlobal.refDi.SQL.dameCadenaConexion.ToString
+            sBBDD = oObjGlobal.compañia.CompanyDB
+            sUser = oObjGlobal.refDi.SQL.usuarioSQL
+            sPwd = oObjGlobal.refDi.SQL.claveSQL
+
+            sDriver = "HDBODBC"
+            sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
+            'sConnection = "DRIVER={" & sDriver & "};" & sServer & ";DATABASE=" & sBBDD & ";"
+            oObjGlobal.SBOApp.StatusBar.SetText("Conectando: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+            oLogonProps = oCRReport.DataSourceConnections(0).LogonProperties
+            oLogonProps.Set("Provider", sDriver)
+            oLogonProps.Set("Connection String", sConnection)
+
+            oCRReport.DataSourceConnections(0).SetLogonProperties(oLogonProps)
+            oCRReport.DataSourceConnections(0).SetConnection(sServer, sBBDD, False)
+
+            For Each oSubReport As ReportDocument In oCRReport.Subreports
+                For Each oConnection As IConnectionInfo In oSubReport.DataSourceConnections
+                    oConnection.SetConnection(sServer, sBBDD, False)
+                    oConnection.SetLogon(sUser, sPwd)
+                Next
+            Next
+
+            Select Case sTipoImp
+                Case "PDF"
+#Region "Exportar a PDF"
+                    'Preparamos para la exportación
+                    sReport = sFileName & "\Et_Ubicaciones_" & sDesde & "_" & sHasta & ".pdf"
+                    'Compruebo si existe y lo borro
+                    If IO.File.Exists(sReport) Then
+                        IO.File.Delete(sReport)
+                    End If
+                    oObjGlobal.SBOApp.StatusBar.SetText("Generando pdf para envio impresión...Espere por favor", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+
+                    oCRReport.ExportOptions.ExportFormatType = CrystalDecisions.Shared.ExportFormatType.PortableDocFormat
+
+                    oFileDestino = New CrystalDecisions.Shared.DiskFileDestinationOptions
+                    oFileDestino.DiskFileName = sReport
+
+                    'Le pasamos al reporte el parámetro destino del reporte (ruta)
+                    oCRReport.ExportOptions.DestinationOptions = oFileDestino
+
+                    'Le indicamos que el reporte no es para mostrarse en pantalla, sino, que es para guardar en disco
+                    oCRReport.ExportOptions.ExportDestinationType = CrystalDecisions.Shared.ExportDestinationType.DiskFile
+
+                    'Finalmente exportamos el reporte a PDF
+                    oCRReport.Export()
+                    '            oCRReport.ExportToDisk(ExportFormatType.PortableDocFormat, sReport)
+#End Region
+                Case "IMP"
+#Region "Imprimir a impresora"
+                    'Buscamos la impresora
+                    sSQL = "SELECT ""Fax"" FROM OUSR WHERE ""USERID""='" & oObjGlobal.compañia.UserSignature.ToString & "' "
+                    sImpresora = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
+                        oObjGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
+                        oCRReport.PrintOptions.NoPrinter = False
+                        oCRReport.PrintOptions.PrinterName = sImpresora
+                        oCRReport.PrintToPrinter(nCopias, False, 0, 9999)
+                    Else
+                        oObjGlobal.SBOApp.StatusBar.SetText("La impresora seleccionada en el usuario no se encuentra o está offline. Por favor verifique la parametrización.", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
+                    End If
+#End Region
+            End Select
+
+            'Cerramos
+            oCRReport.Close()
+            oCRReport.Dispose()
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oObjGlobal.SBOApp.StatusBar.SetText("Fin del proceso de impresión.", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success)
+            oCRReport = Nothing
+            oFileDestino = Nothing
+        End Try
+    End Sub
 End Class
