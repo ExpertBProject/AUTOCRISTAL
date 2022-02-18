@@ -1,0 +1,6 @@
+﻿<?xml version="1.0"?>
+<Connection>
+  <FICHEROS RUTA="E:\Desarrollo\Usuarios\brodrigo\GIT\Lingotes\Ficheros"/>
+  <HANA Server="xper-hanades02:30015" DbUser="B1SLDUSER" DbPwd="12629iYk" databaseName="SBO_AUTOCRISTAL_TEST" providerName="Sap.Data.Hana"/>
+  <DI Server="TS1@xper-hanades02.hanab1.local:30013" LicenseServer="xper-hanades02:40000" CompanyDB="SBO_AUTOCRISTAL_TEST" UserName="omartinez" Password="Osma@2015" DbPassword="12629iYk" DbUserName="B1SLDUSER"/> 
+</Connection>

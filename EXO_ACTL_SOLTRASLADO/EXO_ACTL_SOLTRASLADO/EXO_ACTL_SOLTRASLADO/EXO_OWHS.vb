@@ -163,7 +163,7 @@ Public Class EXO_OWHS
     Private Sub CargarCombos(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form)
         Dim sSQL As String = ""
         Try
-            sSQL = "SELECT ""Name"" ""Código"", ""Remarks"" ""Sucursal"" FROM OUBR ORDER BY ""Name"" "
+            sSQL = "SELECT ""Code"" ""Código"", ""Remarks"" ""Sucursal"" FROM OUBR ORDER BY ""Name"" "
             objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbSucursal").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
         Catch ex As Exception
