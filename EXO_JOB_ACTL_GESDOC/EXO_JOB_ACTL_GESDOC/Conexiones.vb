@@ -57,20 +57,22 @@ Public Class Conexiones
                 Select Case Reader.NodeType
                     Case XmlNodeType.Element
                         Select Case Reader.Name.ToString.Trim
-                            Case sClave
+                            Case "DI"
                                 oCompany = New SAPbobsCOM.Company
 
                                 oCompany.language = SAPbobsCOM.BoSuppLangs.ln_Spanish
                                 oCompany.Server = Reader.GetAttribute("Server").ToString.Trim
                                 oCompany.LicenseServer = Reader.GetAttribute("LicenseServer").ToString.Trim
-                                oCompany.UserName = sUsuario
-                                oCompany.Password = sPassword
+                                'oCompany.UserName = sUsuario
+                                'oCompany.Password = sPassword
+                                oCompany.UserName = Reader.GetAttribute("UserName").ToString.Trim
+                                oCompany.Password = Reader.GetAttribute("Password").ToString.Trim
                                 oCompany.UseTrusted = False
                                 oCompany.DbPassword = Reader.GetAttribute("DbPassword").ToString.Trim
                                 oCompany.DbUserName = Reader.GetAttribute("DbUserName").ToString.Trim
                                 oCompany.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB
-                                'oCompany.CompanyDB = Reader.GetAttribute("CompanyDB").ToString.Trim
-                                oCompany.CompanyDB = sBBDD
+                                oCompany.CompanyDB = Reader.GetAttribute("CompanyDB").ToString.Trim
+                                'oCompany.CompanyDB = sBBDD
                                 If oCompany.Connect <> 0 Then
                                     oLog.escribeMensaje("Error en la conexión a la compañia:" & oCompany.GetLastErrorDescription.Trim, EXO_Log.EXO_Log.Tipo.error)
                                     Throw New System.Exception("Error en la conexión a la compañia:" & oCompany.GetLastErrorDescription.Trim)
@@ -180,7 +182,7 @@ Public Class Conexiones
                 Select Case Reader.NodeType
                     Case XmlNodeType.Element
                         Select Case Reader.Name.ToString.Trim
-                            Case sClave
+                            Case "HANA"
                                 If db Is Nothing OrElse db.State = ConnectionState.Closed Then
                                     db = New HanaConnection
                                     db.ConnectionString = "Server=" & Reader.GetAttribute("Server").ToString.Trim & ";UserID=" & Reader.GetAttribute("DbUser").ToString & ";Password=" & Reader.GetAttribute("DbPwd").ToString & ";"
