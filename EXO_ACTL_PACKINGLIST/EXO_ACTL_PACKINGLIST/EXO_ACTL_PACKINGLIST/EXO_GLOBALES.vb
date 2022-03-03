@@ -301,7 +301,7 @@ Public Class EXO_GLOBALES
 
                                     'Comprobamos que el bulto exista
                                     If sTBulto <> "" Then
-                                        sExiste = objglobal.refDi.SQL.sqlStringB1("SELECT ""UomCode"" FROM ""OUOM"" Where ""UomCode""='" & sTBulto & "' ")
+                                        sExiste = objglobal.refDi.SQL.sqlStringB1("SELECT ""PkgType"" FROM ""OPKG"" Where ""PkgType""='" & sTBulto & "' ")
                                         If sExiste = "" Then
                                             sMensaje = "En la línea " & iLinea.ToString & ", el tipo de bulto " & sTBulto & " no está definido en SAP. Revise el fichero."
                                             objglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
