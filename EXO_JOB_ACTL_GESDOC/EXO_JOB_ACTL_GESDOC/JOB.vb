@@ -40,6 +40,11 @@ Module JOB
                 End If
                 Procesos.LecturaFicheros(oDBSAP, oCompany, oLog)
 
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("", EXO_Log.EXO_Log.Tipo.informacion)
             End If
 
         Catch ex As Exception
@@ -50,11 +55,7 @@ Module JOB
             End If
             oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
         Finally
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("", EXO_Log.EXO_Log.Tipo.informacion)
+
             Conexiones.Disconnect_SQLHANA(oDBSAP)
         End Try
     End Sub

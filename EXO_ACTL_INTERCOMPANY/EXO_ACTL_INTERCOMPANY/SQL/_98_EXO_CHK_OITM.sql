@@ -15,6 +15,8 @@ BEGIN
   declare  vCode NVARCHAR(50);
   declare vU_EXO_BBDD NVARCHAR(50);  
    declare vHAYDATO INTEGER ; 
+   DECLARE vU_EXO_INTERCOM NVARCHAR(3);
+   
    DECLARE CURSOR c_EMP FOR
             SELECT T0."Code" CODE, T0."U_EXO_BBDD" BBDD FROM "@EXO_OADMINTERL"  T0;
    IF :pObject_type = '4' THEN
@@ -27,20 +29,25 @@ BEGIN
           		END IF;
            	END;
            
-          
+          --COMPROBAR SI EL ARITUCLO PERTENECE UNA SUBFAMILIA
+			SELECT COALESCE(T2."U_EXO_INTERCOM", '') INTO vU_EXO_INTERCOM
+			FROM "OITM" T1
+			INNER JOIN "OITB" T2 ON T1."ItmsGrpCod" = T2."ItmsGrpCod"
+			WHERE T1."ItemCode" = :plist_of_cols_val_tab_del ;
+           	IF :vU_EXO_INTERCOM = 'Y' THEN
            
-           	FOR c_row_EMP AS c_EMP DO
-            	vCode := c_row_EMP.CODE;  
-                vU_EXO_BBDD := c_row_EMP.BBDD;   
-              
-                SELECT  COUNT(*) INTO vHAYDATO FROM  "REPLICATE" WHERE  "DBNAMEORIG" = vCode AND  "DBNAMEDEST"= vU_EXO_BBDD AND "CODETABLE" =  :pList_of_cols_val_tab_del  
-                AND "TABLENAME"='OITM';
-                IF (:vHAYDATO) = '0' THEN
-					INSERT INTO "REPLICATE" ("DBNAMEORIG","DBNAMEDEST","TABLECATEGORY","TABLENAME","CODETABLE","CODETABLE2","CODETABLE3", "CODETABLE4","DATEADD")
-					VALUES (vCode,vU_EXO_BBDD,:pObject_type,'OITM',:pList_of_cols_val_tab_del,'','','',TO_NVARCHAR(CURRENT_DATE, 'YYYY/MM/DD'));
-				END IF;
-			END FOR;
-                       
+	           	FOR c_row_EMP AS c_EMP DO
+	            	vCode := c_row_EMP.CODE;  
+	                vU_EXO_BBDD := c_row_EMP.BBDD;   
+	              
+	                SELECT  COUNT(*) INTO vHAYDATO FROM  "REPLICATE" WHERE  "DBNAMEORIG" = vCode AND  "DBNAMEDEST"= vU_EXO_BBDD AND "CODETABLE" =  :pList_of_cols_val_tab_del  
+	                AND "TABLENAME"='OITM';
+	                IF (:vHAYDATO) = '0' THEN
+						INSERT INTO "REPLICATE" ("DBNAMEORIG","DBNAMEDEST","TABLECATEGORY","TABLENAME","CODETABLE","CODETABLE2","CODETABLE3", "CODETABLE4","DATEADD")
+						VALUES (vCode,vU_EXO_BBDD,:pObject_type,'OITM',:pList_of_cols_val_tab_del,'','','',TO_NVARCHAR(CURRENT_DATE, 'YYYY/MM/DD'));
+					END IF;
+				END FOR;
+          END IF;         
       END IF;
    END IF;
 END;

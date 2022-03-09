@@ -20,7 +20,9 @@ Public Class Procesos
         Dim oUserFields As SAPbobsCOM.UserFields = Nothing
         Dim refDI As EXO_DIAPI.EXO_DIAPI = Nothing
         Dim oCompany As SAPbobsCOM.Company = Nothing
-
+        Dim tipoServidor As SAPbobsCOM.BoDataServerTypes = SAPbobsCOM.BoDataServerTypes.dst_HANADB
+        Dim tipocliente As EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente = EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente.Clasico
+        Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OSHP.txt", 1)
 
@@ -28,10 +30,10 @@ Public Class Procesos
             Conexiones.Connect_Company(oCompany, "DI", Conexiones.sBBDD, Conexiones.sUser, Conexiones.sPwd, olog)
             Try
                 refDI = New EXO_DIAPI.EXO_DIAPI(oCompany, olog)
-            Catch ex As Exception
-                'refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
-            End Try
 
+            Catch ex As Exception
+                refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
+            End Try
 
 
             sSQL = "SELECT t1.""DBNAMEORIG"", t1.""DBNAMEDEST"", t1.""TABLENAME"", t1.""CODETABLE"", t1.""CODETABLE2"" " &
@@ -170,6 +172,9 @@ Public Class Procesos
         Dim oUserFields As SAPbobsCOM.UserFields = Nothing
         Dim refDI As EXO_DIAPI.EXO_DIAPI = Nothing
         Dim oCompany As SAPbobsCOM.Company = Nothing
+        Dim tipoServidor As SAPbobsCOM.BoDataServerTypes = SAPbobsCOM.BoDataServerTypes.dst_HANADB
+        Dim tipocliente As EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente = EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente.Clasico
+        Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
 
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OITB.txt", 1)
@@ -179,7 +184,7 @@ Public Class Procesos
             Try
                 refDI = New EXO_DIAPI.EXO_DIAPI(oCompany, olog)
             Catch ex As Exception
-                'refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
+                refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
             End Try
 
 
@@ -266,13 +271,12 @@ Public Class Procesos
                                 oOITB2.LeadTime = oOITB.LeadTime
                                 oOITB2.ToleranceDays = oOITB.ToleranceDays
                                 oOITB2.InventorySystem = oOITB.InventorySystem
-                                oOITB2.OrderInterval = oOITB.OrderInterval
                                 'oOITB2.CycleCode = 1
-                                For h As Integer = 0 To oUserFields.Fields.Count - 1
-                                    If oOITB.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
-                                        oOITB.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
-                                    End If
-                                Next
+                                'For h As Integer = 0 To oUserFields.Fields.Count - 1
+                                '    If oOITB2.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
+                                '        oOITB2.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
+                                '    End If
+                                'Next
 
                                 If oOITB2.Add() <> 0 Then
                                     Throw New Exception(oCompanyD.GetLastErrorCode & " / " & oCompanyD.GetLastErrorDescription)
@@ -304,13 +308,13 @@ Public Class Procesos
                                     oOITB2.LeadTime = oOITB.LeadTime
                                     oOITB2.ToleranceDays = oOITB.ToleranceDays
                                     oOITB2.InventorySystem = oOITB.InventorySystem
-                                    oOITB2.ComponentWarehouse = oOITB.ComponentWarehouse
+                                    'oOITB2.ComponentWarehouse = oOITB.ComponentWarehouse
 
-                                    For h As Integer = 0 To oUserFields.Fields.Count - 1
-                                        If oOITB.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
-                                            oOITB.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
-                                        End If
-                                    Next
+                                    'For h As Integer = 0 To oUserFields.Fields.Count - 1
+                                    '    If oOITB2.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
+                                    '        oOITB2.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
+                                    '    End If
+                                    'Next
 
                                     If oOITB2.Update() <> 0 Then
                                         Throw New Exception(oCompanyD.GetLastErrorCode & " / " & oCompanyD.GetLastErrorDescription)
@@ -362,6 +366,9 @@ Public Class Procesos
         Dim oUserFields As SAPbobsCOM.UserFields = Nothing
         Dim refDI As EXO_DIAPI.EXO_DIAPI = Nothing
         Dim oCompany As SAPbobsCOM.Company = Nothing
+        Dim tipoServidor As SAPbobsCOM.BoDataServerTypes = SAPbobsCOM.BoDataServerTypes.dst_HANADB
+        Dim tipocliente As EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente = EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente.Clasico
+        Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
 
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OMRC.txt", 1)
@@ -504,6 +511,9 @@ Public Class Procesos
         Dim oUserFields As SAPbobsCOM.UserFields = Nothing
         Dim refDI As EXO_DIAPI.EXO_DIAPI = Nothing
         Dim oCompany As SAPbobsCOM.Company = Nothing
+        Dim tipoServidor As SAPbobsCOM.BoDataServerTypes = SAPbobsCOM.BoDataServerTypes.dst_HANADB
+        Dim tipocliente As EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente = EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente.Clasico
+        Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
 
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OITG.txt", 1)
@@ -512,7 +522,7 @@ Public Class Procesos
             Try
                 refDI = New EXO_DIAPI.EXO_DIAPI(oCompany, olog)
             Catch ex As Exception
-                'refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
+                refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
             End Try
 
 
@@ -648,7 +658,9 @@ Public Class Procesos
 
         Dim refDI As EXO_DIAPI.EXO_DIAPI = Nothing
         Dim oCompany As SAPbobsCOM.Company = Nothing
-
+        Dim tipoServidor As SAPbobsCOM.BoDataServerTypes = SAPbobsCOM.BoDataServerTypes.dst_HANADB
+        Dim tipocliente As EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente = EXO_DIAPI.EXO_DIAPI.EXO_TipoCliente.Clasico
+        Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
 
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OITM.txt", 1)
@@ -657,7 +669,7 @@ Public Class Procesos
             Try
                 refDI = New EXO_DIAPI.EXO_DIAPI(oCompany, olog)
             Catch ex As Exception
-                'refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
+                refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
             End Try
 
 
@@ -835,7 +847,6 @@ Public Class Procesos
 
                             sSQL = "DELETE FROM ""REPLICATE"" WHERE ""DBNAMEORIG"" = '" & sDBO & "' AND ""DBNAMEDEST"" = '" & sDBD & "' AND ""TABLENAME"" = '" & oDt.Rows.Item(i).Item("TABLENAME").ToString & "' AND ""CODETABLE"" = '" & oDt.Rows.Item(i).Item("CODETABLE").ToString & "'"
                             refDI.SQL.executeNonQuery(sSQL)
-                            'Conexiones.ExecuteSqlDB(oDB, sSQL)
 
                         End If
 

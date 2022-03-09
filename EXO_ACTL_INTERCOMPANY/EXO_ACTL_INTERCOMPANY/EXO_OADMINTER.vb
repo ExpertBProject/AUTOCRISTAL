@@ -191,6 +191,59 @@ Public Class EXO_OADMINTER
             Return False
         End Try
     End Function
+    Public Overrides Function SBOApp_FormDataEvent(ByVal infoEvento As BusinessObjectInfo) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+
+        Try
+            'Recuperar el formulario
+            oForm = objGlobal.SBOApp.Forms.Item(infoEvento.FormUID)
+
+            If infoEvento.BeforeAction = True Then
+                Select Case infoEvento.FormTypeEx
+                    Case "UDO_FT_EXO_OADMINTERC"
+                        Select Case infoEvento.EventType
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_DELETE
+
+                        End Select
+                End Select
+            Else
+                Select Case infoEvento.FormTypeEx
+                    Case "UDO_FT_EXO_OADMINTERC"
+                        Select Case infoEvento.EventType
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD
+
+                            Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
+
+                        End Select
+                End Select
+            End If
+
+            Return MyBase.SBOApp_FormDataEvent(infoEvento)
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+
+            Return False
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+
+            Return False
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
     Private Function EventHandler_Form_Visible(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
@@ -207,6 +260,7 @@ Public Class EXO_OADMINTER
                 & " FROM     ""SBOCOMMON"".""SRGC"""
                 objGlobal.funcionesUI.cargaCombo(oMat.Columns.Item("C_0_1").ValidValues, sSQL)
                 oMat.Columns.Item("C_0_1").ExpandType = BoExpandType.et_ValueDescription
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
             End If
             EventHandler_Form_Visible = True

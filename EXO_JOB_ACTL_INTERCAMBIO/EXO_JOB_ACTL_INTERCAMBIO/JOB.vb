@@ -7,9 +7,7 @@ Module JOB
         Dim sError As String
         Dim sPath As String = ""
         Dim sSQL As String = ""
-        Dim oDBSAP As HanaConnection = Nothing : Dim odtDatos As System.Data.DataTable = Nothing
-        Dim sBBDD As String = "" : Dim sUsuario As String = "" : Dim sPassword As String = ""
-        Dim oCompany As SAPbobsCOM.Company = Nothing
+
 
 #End Region
         Try
@@ -30,28 +28,35 @@ Module JOB
                 oLog.escribeMensaje("", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-                oLog.escribeMensaje("#####           INICIO INTERCOMPANY ARTICULOS         #####", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#####           INICIO INTERCOMPANY               #####", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
 
-                'Conexiones.Connect_SQLHANA(oDBSAP, "HANA", oLog)
-                'Conexiones.Connect_Company(oCompany, "DI", Conexiones.sBBDD, Conexiones.sUser, Conexiones.sPwd, oLog)
 
                 ''Articulos - Clases de expedicion
+                oLog.escribeMensaje("Antes de tratar clases de expedición", EXO_Log.EXO_Log.Tipo.informacion)
                 Procesos.OSHP()
 
                 ''Articulos - Fabricantes
+                oLog.escribeMensaje("Antes de tratar fabricantes", EXO_Log.EXO_Log.Tipo.informacion)
                 Procesos.OMRC()
 
                 ''Articulos - atributos propiedades del articulo
+                oLog.escribeMensaje("Antes de tratar propiedades artículos", EXO_Log.EXO_Log.Tipo.informacion)
                 Procesos.OITG()
 
                 ''Articulos - grupos de articulos /familias
+                oLog.escribeMensaje("Antes de tratar grupos de articulos", EXO_Log.EXO_Log.Tipo.informacion)
                 Procesos.OITB()
 
                 ''Articulos
+                oLog.escribeMensaje("Antes de tratar artículos", EXO_Log.EXO_Log.Tipo.informacion)
                 Procesos.OITM()
 
-
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("", EXO_Log.EXO_Log.Tipo.informacion)
 
             End If
 
@@ -63,12 +68,8 @@ Module JOB
             End If
             oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
         Finally
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-            oLog.escribeMensaje("", EXO_Log.EXO_Log.Tipo.informacion)
-            Conexiones.Disconnect_SQLHANA(oDBSAP)
+
+            'Conexiones.Disconnect_SQLHANA(oDBSAP)
         End Try
     End Sub
 End Module
