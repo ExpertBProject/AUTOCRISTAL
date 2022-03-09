@@ -4,14 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{ADEAAB9A-53B2-4328-B9EF-B4F888A01142}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{AAC73E53-A411-4819-980D-A556378D356A}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
     <StartupObject>
     </StartupObject>
-    <RootNamespace>EXO_ACTL_INTERCOMPANY</RootNamespace>
-    <AssemblyName>EXO_ACTL_INTERCOMPANY</AssemblyName>
+    <RootNamespace>EXO_JOB_ACTL_INTERCAMBIO</RootNamespace>
+    <AssemblyName>EXO_JOB_ACTL_INTERCAMBIO</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <MyType>Windows</MyType>
+    <MyType>WindowsFormsWithCustomSubMain</MyType>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
@@ -23,10 +23,8 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>EXO_ACTL_INTERCOMPANY.xml</DocumentationFile>
-    <NoWarn>
-    </NoWarn>
-    <WarningsAsErrors>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036</WarningsAsErrors>
+    <DocumentationFile>EXO_JOB_ACTL_INTERCAMBIO.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,10 +33,8 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>EXO_ACTL_INTERCOMPANY.xml</DocumentationFile>
-    <NoWarn>
-    </NoWarn>
-    <WarningsAsErrors>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036</WarningsAsErrors>
+    <DocumentationFile>EXO_JOB_ACTL_INTERCAMBIO.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <OptionExplicit>On</OptionExplicit>
@@ -47,7 +43,7 @@
     <OptionCompare>Binary</OptionCompare>
   </PropertyGroup>
   <PropertyGroup>
-    <OptionStrict>On</OptionStrict>
+    <OptionStrict>Off</OptionStrict>
   </PropertyGroup>
   <PropertyGroup>
     <OptionInfer>On</OptionInfer>
@@ -57,44 +53,34 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\x64\Debug\</OutputPath>
-    <DocumentationFile>EXO_ACTL_INTERCOMPANY.xml</DocumentationFile>
-    <NoWarn>
-    </NoWarn>
+    <DocumentationFile>EXO_JOB_ACTL_INTERCAMBIO.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <WarningsAsErrors>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036</WarningsAsErrors>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\x64\Release\</OutputPath>
-    <DocumentationFile>EXO_ACTL_INTERCOMPANY.xml</DocumentationFile>
+    <DocumentationFile>EXO_JOB_ACTL_INTERCAMBIO.xml</DocumentationFile>
     <Optimize>true</Optimize>
-    <NoWarn>
-    </NoWarn>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <WarningsAsErrors>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036</WarningsAsErrors>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EXO_BasicDLL">
-      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_BasicDLL.dll</HintPath>
-    </Reference>
-    <Reference Include="EXO_CleanCOM">
-      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_CleanCOM.dll</HintPath>
-    </Reference>
     <Reference Include="EXO_DIAPI">
-      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_DIAPI.dll</HintPath>
-    </Reference>
-    <Reference Include="EXO_Generales">
-      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_Generales.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\desarrollo\EXO_DIAPI.dll</HintPath>
     </Reference>
     <Reference Include="EXO_Log">
       <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_Log.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_UIAPI">
-      <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.4\x64\EXO_UIAPI.dll</HintPath>
+    <Reference Include="Sap.Data.Hana.v4.5, Version=2.7.26.0, Culture=neutral, PublicKeyToken=0326b8ea63db4bc4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\sap\hdbclient\ado.net\v4.5\Sap.Data.Hana.v4.5.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -121,8 +107,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EXO_OADMINTER.vb" />
-    <Compile Include="EXO_OITB.vb" />
+    <Compile Include="Conexiones.vb" />
+    <Compile Include="JOB.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -138,15 +124,13 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Procesos.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="XML_MENUS\XML_MENU.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
@@ -163,13 +147,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="SQL\CREATE_TABLE_REPLICATE.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="SQL\_98_EXO_CHK_OITB.sql" />
-    <EmbeddedResource Include="SQL\_98_EXO_CHK_OITG.sql" />
-    <EmbeddedResource Include="SQL\_98_EXO_CHK_OMRC.sql" />
-    <EmbeddedResource Include="SQL\_98_EXO_CHK_OSHP.sql" />
+    <Content Include="Connections.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="SAPbobsCOM">
@@ -191,25 +171,7 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UDO_EXO_OADMINTER.xml">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UDFs_OITB.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="SQL\_98_EXO_CHK_OITM.sql" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" E:\Desarrollo\Usuarios\shernandez\EXO_Kernel_10.0.1.4\x64\desarrollo\DLLs\$(TargetFileName)"
-copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"</PostBuildEvent>
-  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
