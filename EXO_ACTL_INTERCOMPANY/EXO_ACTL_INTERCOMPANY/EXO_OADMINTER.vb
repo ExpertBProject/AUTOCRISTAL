@@ -15,9 +15,9 @@ Public Class EXO_OADMINTER
             Dim oXML As String = ""
             Dim udoObj As EXO_Generales.EXO_UDO = Nothing
 
-            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_OADMINTER.xml")
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_OADMINTERC.xml")
             objGlobal.refDi.comunes.LoadBDFromXML(oXML)
-            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_OADMINTER", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_OADMINTERC", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 
 
         End If
@@ -206,9 +206,13 @@ Public Class EXO_OADMINTER
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
-
+                                If Valida_Campos_Lineas(oForm) = False Then
+                                    Return False
+                                End If
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD
-
+                                If Valida_Campos_Lineas(oForm) = False Then
+                                    Return False
+                                End If
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_DELETE
 
                         End Select
@@ -249,6 +253,8 @@ Public Class EXO_OADMINTER
         Dim sSQL As String = ""
         Dim oMat As SAPbouiCOM.Matrix = Nothing
         Dim oCombo As SAPbouiCOM.ComboBox = Nothing
+        Dim oRs As SAPbobsCOM.Recordset = Nothing
+        Dim sCode As String = ""
 
         EventHandler_Form_Visible = False
 
@@ -262,6 +268,22 @@ Public Class EXO_OADMINTER
                 oMat.Columns.Item("C_0_1").ExpandType = BoExpandType.et_ValueDescription
                 objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
+
+                oRs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+                oRs.DoQuery("SELECT ""Code"" FROM ""@EXO_OADMINTERC""  ")
+
+                If oRs.RecordCount > 0 Then
+                    sCode = oRs.Fields.Item("Code").Value.ToString()
+
+                End If
+                If sCode <> "" Then
+                    oForm.Mode = SAPbouiCOM.BoFormMode.fm_FIND_MODE
+                    'oForm.Items.Item("0_U_E").SetAutoManagedAttribute(BoAutoManagedAttr.ama_Editable, 4, BoModeVisualBehavior.mvb_True)
+                    CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.ComboBox).Select(sCode, BoSearchKey.psk_ByValue)
+                    oForm.Items.Item("1").Click(BoCellClickType.ct_Regular)
+                Else
+                    oForm.Mode = SAPbouiCOM.BoFormMode.fm_ADD_MODE
+                End If
             End If
             EventHandler_Form_Visible = True
 
@@ -299,6 +321,39 @@ Public Class EXO_OADMINTER
             Return False
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+        End Try
+    End Function
+    Private Function Valida_Campos_Lineas(ByRef oForm As SAPbouiCOM.Form) As Boolean
+        Valida_Campos_Lineas = False
+        Dim sEmpresa As String = ""
+        Dim intCont As Integer = 0
+
+        Try
+            If oForm.Visible = True Then
+                For i = 1 To CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).RowCount
+                    intCont = 0
+                    sEmpresa = CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(i).Specific, SAPbouiCOM.ComboBox).Value
+                    'for de todo, tengo que encontrar una
+                    For j = 1 To CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).RowCount
+                        If sEmpresa = CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(j).Specific, SAPbouiCOM.ComboBox).Value Then
+                            intCont = intCont + 1
+                        End If
+                    Next
+                    If intCont > 1 Then
+                        'esta dos veces metida la empresa, aviso de que no puede guardar así hasta que no quite una
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - La empresa " & sEmpresa & " no puede estar definida más de una vez", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        objGlobal.SBOApp.MessageBox(" La empresa " & sEmpresa & " no puede estar definida más de una vez.")
+                        Exit Function
+                    End If
+
+                Next
+            End If
+
+            Valida_Campos_Lineas = True
+        Catch ex As Exception
+            Throw ex
+        Finally
+
         End Try
     End Function
 End Class

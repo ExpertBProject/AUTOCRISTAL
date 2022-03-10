@@ -192,11 +192,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UDO_EXO_OADMINTER.xml">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDFs_OITB.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -204,6 +199,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SQL\_98_EXO_CHK_OITM.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_OADMINTERC.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
