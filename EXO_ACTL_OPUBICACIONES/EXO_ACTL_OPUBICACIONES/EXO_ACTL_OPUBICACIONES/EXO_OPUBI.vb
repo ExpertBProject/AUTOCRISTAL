@@ -423,6 +423,7 @@ Public Class EXO_OPUBI
         Dim sExiste As String = "" ' Para comprobar si existen los datos
         Dim sErrorDes As String = ""
         Dim sDocAdd As String = ""
+        Dim sMensaje As String = ""
 #End Region
 
         Try
@@ -432,46 +433,48 @@ Public Class EXO_OPUBI
             objGlobal.compañia.StartTransaction()
             For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
                 If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
-
+                    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "WARNING")
+                    sMensaje = "Falta definir cómo crear el documento"
+                    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sMensaje)
                     'grabar el documento
-                    If oDoc.Add() <> 0 Then 'Si ocurre un error en la grabación entra
-                        sErrorDes = objGlobal.compañia.GetLastErrorCode & " / " & objGlobal.compañia.GetLastErrorDescription
-                        objGlobal.SBOApp.StatusBar.SetText(sErrorDes, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                        oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "ERROR")
-                        oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sErrorDes)
-                        oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, "")
-                    Else
-                        sDocAdd = objGlobal.compañia.GetNewObjectKey() 'Recoge el último documento creado
-                        oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, sDocAdd)
-                        'Buscamos el documento para crear un mensaje
-                        sDocAdd = EXO_GLOBALES.GetValueDB(oCompany, """" & sTabla & """", """DocNum""", """DocEntry""=" & sDocAdd)
-                        If sModo = "F" Then
-                            sModo = ""
-                        Else
-                            sModo = " borrador "
-                        End If
-                        oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "OK")
-                        oForm.DataSources.DataTables.Item(sData).SetValue("Nº Documento", i, sDocAdd)
-                        Select Case sTipoFac
-                            Case "13" 'Factura de ventas
-                                sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de ventas Nº" & sDocAdd
-                            Case "14" 'Abono de ventas
-                                sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de ventas Nº" & sDocAdd
-                            Case "18" 'Factura de compras
-                                sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de compras Nº" & sDocAdd
-                            Case "19" 'Abono de compras
-                                sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de compras Nº" & sDocAdd
-                            Case "22" 'Pedido de compras
-                                sMensaje = "(EXO) - Ha sido creado el pedido " & sModo & " de compras Nº" & sDocAdd
-                        End Select
-                        oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sMensaje)
-                        objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                    End If
+                    'If oDoc.Add() <> 0 Then 'Si ocurre un error en la grabación entra
+                    '    sErrorDes = objGlobal.compañia.GetLastErrorCode & " / " & objGlobal.compañia.GetLastErrorDescription
+                    '    objGlobal.SBOApp.StatusBar.SetText(sErrorDes, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "ERROR")
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sErrorDes)
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, "")
+                    'Else
+                    '    sDocAdd = objGlobal.compañia.GetNewObjectKey() 'Recoge el último documento creado
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, sDocAdd)
+                    '    'Buscamos el documento para crear un mensaje
+                    '    sDocAdd = EXO_GLOBALES.GetValueDB(oCompany, """" & sTabla & """", """DocNum""", """DocEntry""=" & sDocAdd)
+                    '    If sModo = "F" Then
+                    '        sModo = ""
+                    '    Else
+                    '        sModo = " borrador "
+                    '    End If
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "OK")
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Nº Documento", i, sDocAdd)
+                    '    Select Case sTipoFac
+                    '        Case "13" 'Factura de ventas
+                    '            sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de ventas Nº" & sDocAdd
+                    '        Case "14" 'Abono de ventas
+                    '            sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de ventas Nº" & sDocAdd
+                    '        Case "18" 'Factura de compras
+                    '            sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de compras Nº" & sDocAdd
+                    '        Case "19" 'Abono de compras
+                    '            sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de compras Nº" & sDocAdd
+                    '        Case "22" 'Pedido de compras
+                    '            sMensaje = "(EXO) - Ha sido creado el pedido " & sModo & " de compras Nº" & sDocAdd
+                    '    End Select
+                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sMensaje)
+                    '    objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                    'End If
                 End If
             Next
 
-            If Company.InTransaction = True Then
-                Company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+            If objGlobal.compañia.InTransaction = True Then
+                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
             End If
 
             CrearDocumento = True
