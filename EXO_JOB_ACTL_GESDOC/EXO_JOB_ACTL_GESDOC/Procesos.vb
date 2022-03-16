@@ -29,7 +29,7 @@ Public Class Procesos
                     Dim sExtension As String = sArchivo.Extension
                     If sExtension.ToLower = ".pdf" Then
                         'adjuntar
-                        If sArchivo.Name.Length = 15 Then
+                        If sArchivo.Name.Length >= 15 Then
                             sObjType = Mid(sArchivo.Name, 1, 2)
                             sDocEntry = Mid(sArchivo.Name, 4, 8)
                             Procesos.Attach_SAP(oCompany.CompanyDB, oCompany, sDocEntry, sObjType, sRutaLectura & "\" & sArchivo.ToString, db, oLog)
