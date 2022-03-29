@@ -383,6 +383,10 @@ Public Class EXO_PNEC
                         sSQLGrid = ""
                         sSQL = "SELECT OITM.""ItemCode"",OITM.""ItemName"" FROM OITM INNER JOIN OITB ON OITB.""ItmsGrpCod""=OITM.""ItmsGrpCod"" WHERE OITB.""U_EXO_GESNEC""='Si' "
                         sSQL &= " AND OITM.""QryGroup2""<>'Y' "
+                        If sProveedorPR.Trim <> "" Then
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Proveedor:" & sProveedorPR, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            sSQL &= " AND OITM.""CardCode""='" & sProveedorPR.Trim & "' "
+                        End If
                         dtArticulos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                         If dtArticulos.Rows.Count > 0 Then
                             sMensaje = "Cargando datos..."
@@ -398,6 +402,7 @@ Public Class EXO_PNEC
                                 End If
 
                                 For a As Integer = 0 To dtArticulos.Rows.Count - 1
+                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Artículo: " & dtArticulos.Rows(a).Item("ItemCode").ToString & " - " & dtArticulos.Rows(a).Item("ItemName").ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                     dtProveedores = Nothing
                                     If iEncuentra <> 0 Then
                                         sSQLGrid &= " UNION ALL "
