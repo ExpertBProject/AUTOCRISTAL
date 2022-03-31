@@ -32,9 +32,12 @@ Module JOB
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#####           INICIO GESTION DOCUMENTAL         #####", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
-
+                oLog.escribeMensaje("antes conectar sql hana", EXO_Log.EXO_Log.Tipo.informacion)
                 Conexiones.Connect_SQLHANA(oDBSAP, "HANA", oLog)
+                oLog.escribeMensaje("despues conectar sql hana", EXO_Log.EXO_Log.Tipo.informacion)
+                oLog.escribeMensaje("ANTES conectar DI", EXO_Log.EXO_Log.Tipo.informacion)
                 Conexiones.Connect_Company(oCompany, "DI", Conexiones.sBBDD, Conexiones.sUser, Conexiones.sPwd, oLog)
+                oLog.escribeMensaje("despues conectar DI", EXO_Log.EXO_Log.Tipo.informacion)
                 If Conexiones.Datos_Confi("ACTUALIZAR", "CAMPOS") = "Y" Then
                     Procesos.ParametrizacionGeneral(oCompany, oLog)
                 End If

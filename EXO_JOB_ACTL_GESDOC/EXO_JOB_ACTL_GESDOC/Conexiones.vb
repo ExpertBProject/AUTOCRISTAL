@@ -184,8 +184,10 @@ Public Class Conexiones
                         Select Case Reader.Name.ToString.Trim
                             Case "HANA"
                                 If db Is Nothing OrElse db.State = ConnectionState.Closed Then
+
                                     db = New HanaConnection
                                     db.ConnectionString = "Server=" & Reader.GetAttribute("Server").ToString.Trim & ";UserID=" & Reader.GetAttribute("DbUser").ToString & ";Password=" & Reader.GetAttribute("DbPwd").ToString & ";"
+                                    oLog.escribeMensaje("Cadena" & db.ConnectionString, EXO_Log.EXO_Log.Tipo.advertencia)
                                     db.Open()
 
                                     'variable a añadir en las sql hana
@@ -196,6 +198,7 @@ Public Class Conexiones
                                     sUser = Reader.GetAttribute("DbUser").ToString.Trim
                                     sPwd = Reader.GetAttribute("DbPwd").ToString.Trim
                                     sCadena = "Server=" & Reader.GetAttribute("Server").ToString.Trim & ";UserID=" & Reader.GetAttribute("DbUser").ToString & ";Password=" & Reader.GetAttribute("DbPwd").ToString & ";"
+                                    oLog.escribeMensaje("Cadena " & sCadena, EXO_Log.EXO_Log.Tipo.advertencia)
                                 End If
                                 Exit While
                         End Select

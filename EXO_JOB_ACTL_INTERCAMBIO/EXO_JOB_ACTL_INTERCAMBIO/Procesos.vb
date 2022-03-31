@@ -25,16 +25,19 @@ Public Class Procesos
         Dim sPass As String = Conexiones.Datos_Confi("DI", "Password")
         Try
             olog = New EXO_Log.EXO_Log(My.Application.Info.DirectoryPath.ToString & "\Logs\Log_ERRORES_OSHP.txt", 1)
-
+            olog.escribeMensaje("Antes de conectar sql", EXO_Log.EXO_Log.Tipo.informacion)
             Conexiones.Connect_SQLHANA(oDB, "HANA", olog)
+            olog.escribeMensaje("Despues de conectar sql", EXO_Log.EXO_Log.Tipo.informacion)
+            olog.escribeMensaje("Anmtes de conectar company", EXO_Log.EXO_Log.Tipo.informacion)
             Conexiones.Connect_Company(oCompany, "DI", Conexiones.sBBDD, Conexiones.sUser, Conexiones.sPwd, olog)
+            olog.escribeMensaje("Despues de conectar company", EXO_Log.EXO_Log.Tipo.informacion)
             Try
                 refDI = New EXO_DIAPI.EXO_DIAPI(oCompany, olog)
 
             Catch ex As Exception
                 refDI = New EXO_DIAPI.EXO_DIAPI(tipoServidor, oCompany.Server.ToString, oCompany.LicenseServer.ToString, oCompany.CompanyDB.ToString, oCompany.UserName.ToString, sPass, tipocliente)
             End Try
-
+            olog.escribeMensaje("Despues de refdi", EXO_Log.EXO_Log.Tipo.informacion)
 
             sSQL = "SELECT t1.""DBNAMEORIG"", t1.""DBNAMEDEST"", t1.""TABLENAME"", t1.""CODETABLE"", t1.""CODETABLE2"" " &
                    "FROM ""REPLICATE"" t1  " &
@@ -44,7 +47,7 @@ Public Class Procesos
             oDt = New System.Data.DataTable
             oDt = refDI.SQL.sqlComoDataTable(sSQL)
             'Conexiones.FillDtDB(oDB, oDt, sSQL)
-
+            olog.escribeMensaje("Antes del count datatable", EXO_Log.EXO_Log.Tipo.informacion)
 
             If oDt.Rows.Count > 0 Then
                 sDBO = oDt.Rows.Item(0).Item("DBNAMEORIG").ToString

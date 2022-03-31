@@ -179,20 +179,20 @@ Public Class Procesos
                         log.escribeMensaje("error pdf 1" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
                     Else
                         AttEntry = CInt(oCompany.GetNewObjectKey())
-                        oDocuments.GetByKey(DocEntry)
-                        oDocuments.AttachmentEntry = AttEntry
-                        If oDocuments.Update() = 0 Then
-                            log.escribeMensaje("OK ATTACH Adjuntado Documento ObjType " & objType & " DocEntry: " & DocEntry & "", EXO_Log.EXO_Log.Tipo.error)
-                            jRes = "OK"
-                        Else
-                            log.escribeMensaje("ERROR ATTACH " + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
-                            jRes = "Error: " + oCompany.GetLastErrorDescription
-                        End If
+                        'oDocuments.GetByKey(DocEntry)
+                        'oDocuments.AttachmentEntry = AttEntry
+                        'If oDocuments.Update() = 0 Then
+                        '    log.escribeMensaje("OK ATTACH Adjuntado Documento ObjType " & objType & " DocEntry: " & DocEntry & "", EXO_Log.EXO_Log.Tipo.error)
+                        '    jRes = "OK"
+                        'Else
+                        '    log.escribeMensaje("ERROR ATTACH " + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
+                        '    jRes = "Error: " + oCompany.GetLastErrorDescription
+                        'End If
 
                         '''update 
-                        'oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-                        'sSql = "UPDATE " & sTabla & " SET AtcEntry =" & AttEntry & " WHERE DocEntry=" & DocEntry & ""
-                        'oRs.DoQuery(sSql)
+                        oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+                        sSql = "UPDATE """ & sTabla & """ SET ""AtcEntry"" =" & AttEntry & " WHERE ""DocEntry""=" & DocEntry & ""
+                        oRs.DoQuery(sSql)
                     End If
                 End If
 
