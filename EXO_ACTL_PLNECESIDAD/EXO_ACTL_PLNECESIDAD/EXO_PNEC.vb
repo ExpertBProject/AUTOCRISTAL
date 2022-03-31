@@ -577,6 +577,7 @@ Public Class EXO_PNEC
                                     If iEncuentra <> 0 Then
                                         sSQLGrid &= " UNION ALL "
                                     End If
+                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Artículo: " & dtArticulos.Rows(a).Item("ItemCode").ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                                     sSQLGrid &= "(Select '" & dtArticulos.Rows(a).Item("ItemCode").ToString & "' ""EUROCODE"", '" & dtArticulos.Rows(a).Item("ItemName").ToString & "' ""Descripción"" "
                                     sSQLGrid &= ", 0.00 ""Order"", CAST('     ' AS VARCHAR(50)) ""Prov.Pedido"", CAST('     ' AS VARCHAR(150)) ""Nombre"" "
                                     sSQLGrid &= ", CAST('     ' AS VARCHAR(50)) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."" "
