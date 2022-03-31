@@ -2,7 +2,8 @@
 
 Public Class EXO_PNEC
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
-
+    Public _Width As Integer = 328
+    Public _Height As Integer = 113
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
         Me.objGlobal = objG
     End Sub
@@ -36,6 +37,10 @@ Public Class EXO_PNEC
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_ACTIVATE
 
+                                Case SAPbouiCOM.BoEventTypes.et_FORM_RESIZE
+                                    If EventHandler_FORM_RESIZE_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                             End Select
                     End Select
                 ElseIf infoEvento.BeforeAction = True Then
@@ -100,6 +105,34 @@ Public Class EXO_PNEC
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
+        End Try
+    End Function
+    Private Function EventHandler_FORM_RESIZE_After(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
+
+        EventHandler_FORM_RESIZE_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            oForm.Freeze(True)
+            If pVal.ActionSuccess = True Then
+                'Posicionamos campos
+                oForm.Items.Item("grdALM").Width = _Width
+                oForm.Items.Item("grdALM").Height = _Height
+
+            End If
+
+
+
+            EventHandler_FORM_RESIZE_After = True
+
+        Catch ex As Exception
+            oForm.Freeze(False)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_VALIDATE_After(ByVal pVal As ItemEvent) As Boolean
@@ -350,6 +383,10 @@ Public Class EXO_PNEC
                         sSQLGrid = ""
                         sSQL = "SELECT OITM.""ItemCode"",OITM.""ItemName"" FROM OITM INNER JOIN OITB ON OITB.""ItmsGrpCod""=OITM.""ItmsGrpCod"" WHERE OITB.""U_EXO_GESNEC""='Si' "
                         sSQL &= " AND OITM.""QryGroup2""<>'Y' "
+                        If sProveedorPR.Trim <> "" Then
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Proveedor:" & sProveedorPR, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            sSQL &= " AND OITM.""CardCode""='" & sProveedorPR.Trim & "' "
+                        End If
                         dtArticulos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                         If dtArticulos.Rows.Count > 0 Then
                             sMensaje = "Cargando datos..."
@@ -365,6 +402,7 @@ Public Class EXO_PNEC
                                 End If
 
                                 For a As Integer = 0 To dtArticulos.Rows.Count - 1
+                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Artículo: " & dtArticulos.Rows(a).Item("ItemCode").ToString & " - " & dtArticulos.Rows(a).Item("ItemName").ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                     dtProveedores = Nothing
                                     If iEncuentra <> 0 Then
                                         sSQLGrid &= " UNION ALL "
@@ -539,6 +577,7 @@ Public Class EXO_PNEC
                                     If iEncuentra <> 0 Then
                                         sSQLGrid &= " UNION ALL "
                                     End If
+                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Artículo: " & dtArticulos.Rows(a).Item("ItemCode").ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                                     sSQLGrid &= "(Select '" & dtArticulos.Rows(a).Item("ItemCode").ToString & "' ""EUROCODE"", '" & dtArticulos.Rows(a).Item("ItemName").ToString & "' ""Descripción"" "
                                     sSQLGrid &= ", 0.00 ""Order"", CAST('     ' AS VARCHAR(50)) ""Prov.Pedido"", CAST('     ' AS VARCHAR(150)) ""Nombre"" "
                                     sSQLGrid &= ", CAST('     ' AS VARCHAR(50)) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."" "
@@ -1237,6 +1276,7 @@ Public Class EXO_PNEC
             FormateaGridALM(oForm)
             oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx = "7"
             oForm.Items.Item("btnGen").Enabled = False
+
             CargarForm = True
         Catch exCOM As System.Runtime.InteropServices.COMException
             objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -1244,6 +1284,7 @@ Public Class EXO_PNEC
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             oForm.Visible = True
+
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function

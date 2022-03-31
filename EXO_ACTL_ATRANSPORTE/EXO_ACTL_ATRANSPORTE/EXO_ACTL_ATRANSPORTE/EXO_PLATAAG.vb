@@ -75,6 +75,9 @@ Public Class EXO_PLATAAG
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
 
                                 Case SAPbouiCOM.BoEventTypes.et_MATRIX_LINK_PRESSED
+                                    If EventHandler_Matrix_Link_Press_Before(infoEvento) = False Then
+                                        Return False
+                                    End If
 
                             End Select
                     End Select
@@ -122,6 +125,30 @@ Public Class EXO_PLATAAG
             Return False
         End Try
     End Function
+    Private Function EventHandler_Matrix_Link_Press_Before(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sModo As String = ""
+        EventHandler_Matrix_Link_Press_Before = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            'If pVal.ItemUID = "0_U_G" Then
+            '    If pVal.ColUID = "C_0_1" Then 'Plataforma
+            '        CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1"), SAPbouiCOM.LinkedButton).LinkedObjectType = "EXO_PLATAFORMAS"
+            '    End If
+            'End If
+            EventHandler_Matrix_Link_Press_Before = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+
     Private Function EventHandler_Form_Visible(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)

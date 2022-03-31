@@ -117,7 +117,7 @@ Public Class EXO_OCRD
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
             oItem = oForm.Items.Add("btnAgencia", SAPbouiCOM.BoFormItemTypes.it_BUTTON_COMBO)
-            oItem.Left = oForm.Items.Item("2").Left + 180
+            oItem.Left = oForm.Items.Item("2").Left + 210
             oItem.Width = oForm.Items.Item("2").Width + 75
             oItem.Top = oForm.Items.Item("2").Top
             oItem.Height = oForm.Items.Item("2").Height
