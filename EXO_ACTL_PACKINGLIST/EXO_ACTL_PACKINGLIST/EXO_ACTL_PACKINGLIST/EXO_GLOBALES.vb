@@ -349,6 +349,7 @@ Public Class EXO_GLOBALES
         Dim sSerie As String = "" : Dim sDocEntry As String = "" : Dim sDocnum As String = ""
         Dim oRsLote As SAPbobsCOM.Recordset = Nothing : Dim oRsArt As SAPbobsCOM.Recordset = Nothing
         Dim iTabla As Integer = 1
+        Dim dCantLotes As Double = 0
 #End Region
 
         Try
@@ -393,19 +394,7 @@ Public Class EXO_GLOBALES
                             Dim dCant As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLin.Rows.Item(iLin).Item("Quantity").ToString)
                             Dim sUnidad As String = oDtLin.Rows.Item(iLin).Item("UomCode").ToString.Trim
                             Dim sUnidadFichero As String = oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_TBULTO").ToString
-                            If sUnidad = sUnidadFichero Then
-                                If dCant <= dCantFichero Then
-                                    oOPDN.Lines.Quantity = dCant
-                                Else
-                                    oOPDN.Lines.Quantity = dCantFichero
-                                End If
-                            Else
-                                If dCant <= dCantFichero Then
-                                    oOPDN.Lines.InventoryQuantity = dCant
-                                Else
-                                    oOPDN.Lines.InventoryQuantity = dCantFichero
-                                End If
-                            End If
+
                             oOPDN.Lines.BaseEntry = CInt(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString)
                             oOPDN.Lines.BaseType = 22
                             oOPDN.Lines.BaseLine = CInt(oDtLin.Rows.Item(iLin).Item("LineNum").ToString)
@@ -420,6 +409,7 @@ Public Class EXO_GLOBALES
                                 'Creamos el lote de la línea del artículo
                                 oOPDN.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("U_EXO_LOTE").Value.ToString
                                 oOPDN.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLote.Fields.Item("CANTIDAD").Value.ToString)
+                                dCantLotes += oOPDN.Lines.BatchNumbers.Quantity
                                 oOPDN.Lines.BatchNumbers.ManufacturingDate = CDate(oRsLote.Fields.Item("U_EXO_FFAB").Value.ToString)
                                 'sSQL = "SELECT STRING_AGG(""U_EXO_IDBULTO"",'; ') ""BULTOS"" FROM "
                                 'sSQL &= " (SELECT DISTINCT ""U_EXO_IDBULTO"" FROM ""@EXO_TMPPACKINGL"" T0 "
@@ -451,6 +441,19 @@ Public Class EXO_GLOBALES
                                 oRsLote.MoveNext()
                             Next
 #End Region
+                            If sUnidad = sUnidadFichero Then
+                                If dCant <= dCantLotes Then
+                                    oOPDN.Lines.Quantity = dCant
+                                Else
+                                    oOPDN.Lines.Quantity = dCantLotes
+                                End If
+                            Else
+                                If dCant <= dCantLotes Then
+                                    oOPDN.Lines.InventoryQuantity = dCant
+                                Else
+                                    oOPDN.Lines.InventoryQuantity = dCantLotes
+                                End If
+                            End If
                         Next
                     Else
                         sMensaje = "No se encuentra la línea " & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & " con el artículo " & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
