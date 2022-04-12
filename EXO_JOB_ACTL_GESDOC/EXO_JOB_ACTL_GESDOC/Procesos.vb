@@ -168,6 +168,7 @@ Public Class Procesos
                             jRes = "OK"
                         Else
                             jRes = "Error: " + oCompany.GetLastErrorDescription()
+                            log.escribeMensaje("error pdf cuando ya tiene un anexo" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
                         End If
 
                     Else
@@ -180,7 +181,7 @@ Public Class Procesos
                                 oDocuments = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseCreditNotes), SAPbobsCOM.Documents)
                         End Select
 
-
+                        'oAtt.Lines.Add()
                         oAtt.Lines.SourcePath = System.IO.Path.GetDirectoryName(NomFichero)
                         oAtt.Lines.FileName = System.IO.Path.GetFileNameWithoutExtension(NomFichero)
                         oAtt.Lines.FileExtension = System.IO.Path.GetExtension(NomFichero).Substring(1)
@@ -189,7 +190,7 @@ Public Class Procesos
                         Dim AttEntry As Integer
                         If oAtt.Add() <> 0 Then
                             jRes = "Error: " + oCompany.GetLastErrorDescription
-                            log.escribeMensaje("error pdf 1" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
+                            log.escribeMensaje("error cuando no tiene ningun pdf 1" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
                         Else
                             AttEntry = CInt(oCompany.GetNewObjectKey())
                             'oDocuments.GetByKey(DocEntry)
