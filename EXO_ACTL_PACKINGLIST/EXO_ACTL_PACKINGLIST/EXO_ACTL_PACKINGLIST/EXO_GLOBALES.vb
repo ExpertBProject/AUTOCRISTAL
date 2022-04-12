@@ -412,6 +412,7 @@ Public Class EXO_GLOBALES
                                 dCantLotes += oOPDN.Lines.BatchNumbers.Quantity
                                 oOPDN.Lines.BatchNumbers.ManufacturingDate = CDate(oRsLote.Fields.Item("U_EXO_FFAB").Value.ToString)
                                 sSQL = "SELECT IFNULL(OMRC.""FirmName"",'') FROM OCRD LEFT JOIN OMRC ON OCRD.""U_EXO_MARPRO""=OMRC.""FirmCode"" Where ""CardCode""='" & EXO_GLOBALES._sIc & "' "
+                                oObjGlobal.SBOApp.StatusBar.SetText(sSQL, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                                 oOPDN.Lines.BatchNumbers.ManufacturerSerialNumber = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                                 'sSQL = "SELECT STRING_AGG(""U_EXO_IDBULTO"",'; ') ""BULTOS"" FROM "
                                 'sSQL &= " (SELECT DISTINCT ""U_EXO_IDBULTO"" FROM ""@EXO_TMPPACKINGL"" T0 "
