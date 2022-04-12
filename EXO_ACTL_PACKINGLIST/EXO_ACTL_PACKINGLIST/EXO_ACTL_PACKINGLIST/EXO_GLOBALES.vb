@@ -411,6 +411,8 @@ Public Class EXO_GLOBALES
                                 oOPDN.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLote.Fields.Item("CANTIDAD").Value.ToString)
                                 dCantLotes += oOPDN.Lines.BatchNumbers.Quantity
                                 oOPDN.Lines.BatchNumbers.ManufacturingDate = CDate(oRsLote.Fields.Item("U_EXO_FFAB").Value.ToString)
+                                sSQL = "SELECT IFNULL(OMRC.""FirmName"",'') FROM OCRD LEFT JOIN OMRC ON OCRD.""U_EXO_MARPRO""=OMRC.""FirmCode"" Where ""CardCode""='" & EXO_GLOBALES._sIc & "' "
+                                oOPDN.Lines.BatchNumbers.ManufacturerSerialNumber = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                                 'sSQL = "SELECT STRING_AGG(""U_EXO_IDBULTO"",'; ') ""BULTOS"" FROM "
                                 'sSQL &= " (SELECT DISTINCT ""U_EXO_IDBULTO"" FROM ""@EXO_TMPPACKINGL"" T0 "
                                 'sSQL &= " WHERE ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
