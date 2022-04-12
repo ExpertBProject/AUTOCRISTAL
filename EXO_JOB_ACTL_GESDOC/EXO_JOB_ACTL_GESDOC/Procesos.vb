@@ -100,6 +100,8 @@ Public Class Procesos
         Dim sTabla As String = ""
         Dim sSql As String = ""
         Dim oRs As SAPbobsCOM.Recordset = Nothing
+        Dim sExiste As String = ""
+
         Try
 
             oAtt = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oAttachments2), SAPbobsCOM.Attachments2)
@@ -107,9 +109,7 @@ Public Class Procesos
 
             Dim Sql As String = "SELECT ""AttachPath"" from  """ & Conexiones.sBBDD & """.""OADP"""
             Dim Attachpath As String = ""
-
             Conexiones.FillDtDB(oDBSAP, oDtCab, Sql)
-
             If oDtCab.Rows.Count > 0 Then
                 For iCab As Integer = 0 To oDtCab.Rows.Count - 1
                     Attachpath = oDtCab.Rows.Item(iCab).Item("attachpath").ToString
@@ -131,77 +131,91 @@ Public Class Procesos
                     Case "19"
                         sTabla = "ORPC"
                 End Select
-                'comprobamos si ya tenemos algun attach en el docentry
-                Sql = "SELECT COALESCE(""AtcEntry"",'0') ""AtcEntry"" FROM  """ & Conexiones.sBBDD & """.""" & sTabla & """ WHERE ""DocEntry""=" & Convert.ToInt16(DocEntry) & ""
-                Dim TieneAtcEntry As String = ""
 
+                'compramos si existe un docentry donde adjutnar
+                oDtCab = New System.Data.DataTable
+                Sql = "SELECT ""DocEntry"" FROM  """ & Conexiones.sBBDD & """.""" & sTabla & """ WHERE ""DocEntry""=" & Convert.ToInt32(DocEntry) & ""
                 Conexiones.FillDtDB(oDBSAP, oDtCab, Sql)
 
                 If oDtCab.Rows.Count > 0 Then
-                    For iCab As Integer = 0 To oDtCab.Rows.Count - 1
-                        TieneAtcEntry = oDtCab.Rows.Item(iCab).Item("AtcEntry").ToString
-                    Next
+                    sExiste = oDtCab.Rows.Item(0).Item("DocEntry").ToString
+
                 End If
 
-                If TieneAtcEntry <> "" And TieneAtcEntry <> "0" Then
+                If sExiste <> "" Then
 
-                    oAtt.GetByKey(TieneAtcEntry)
-                    oAtt.Lines.Add()
-                    oAtt.Lines.SourcePath = System.IO.Path.GetDirectoryName(NomFichero)
-                    oAtt.Lines.FileName = System.IO.Path.GetFileNameWithoutExtension(NomFichero)
-                    oAtt.Lines.FileExtension = System.IO.Path.GetExtension(NomFichero).Substring(1)
-                    oAtt.Lines.Override = BoYesNoEnum.tYES
-                    If oAtt.Update() = 0 Then
-                        jRes = "OK"
-                    Else
-                        jRes = "Error: " + oCompany.GetLastErrorDescription()
+
+                    'comprobamos si ya tenemos algun attach en el docentry
+                    Sql = "SELECT COALESCE(""AtcEntry"",'0') ""AtcEntry"" FROM  """ & Conexiones.sBBDD & """.""" & sTabla & """ WHERE ""DocEntry""=" & Convert.ToInt32(DocEntry) & ""
+                    Dim TieneAtcEntry As String = ""
+                    oDtCab = New System.Data.DataTable
+                    Conexiones.FillDtDB(oDBSAP, oDtCab, Sql)
+                    If oDtCab.Rows.Count > 0 Then
+                        For iCab As Integer = 0 To oDtCab.Rows.Count - 1
+                            TieneAtcEntry = oDtCab.Rows.Item(iCab).Item("AtcEntry").ToString
+                        Next
                     End If
 
-                Else
-                    'hacerlo por sql
+                    If TieneAtcEntry <> "" And TieneAtcEntry <> "0" Then
 
-                    Select Case objType
-                        Case "18"
-                            oDocuments = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseInvoices), SAPbobsCOM.Documents)
-                        Case "19"
-                            oDocuments = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseCreditNotes), SAPbobsCOM.Documents)
-                    End Select
+                        oAtt.GetByKey(TieneAtcEntry)
+                        oAtt.Lines.Add()
+                        oAtt.Lines.SourcePath = System.IO.Path.GetDirectoryName(NomFichero)
+                        oAtt.Lines.FileName = System.IO.Path.GetFileNameWithoutExtension(NomFichero)
+                        oAtt.Lines.FileExtension = System.IO.Path.GetExtension(NomFichero).Substring(1)
+                        oAtt.Lines.Override = BoYesNoEnum.tYES
+                        If oAtt.Update() = 0 Then
+                            jRes = "OK"
+                        Else
+                            jRes = "Error: " + oCompany.GetLastErrorDescription()
+                        End If
 
-
-                    oAtt.Lines.SourcePath = System.IO.Path.GetDirectoryName(NomFichero)
-                    oAtt.Lines.FileName = System.IO.Path.GetFileNameWithoutExtension(NomFichero)
-                    oAtt.Lines.FileExtension = System.IO.Path.GetExtension(NomFichero).Substring(1)
-                    oAtt.Lines.Override = BoYesNoEnum.tYES
-
-                    Dim AttEntry As Integer
-                    If oAtt.Add() <> 0 Then
-                        jRes = "Error: " + oCompany.GetLastErrorDescription
-                        log.escribeMensaje("error pdf 1" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
                     Else
-                        AttEntry = CInt(oCompany.GetNewObjectKey())
-                        'oDocuments.GetByKey(DocEntry)
-                        'oDocuments.AttachmentEntry = AttEntry
-                        'If oDocuments.Update() = 0 Then
-                        '    log.escribeMensaje("OK ATTACH Adjuntado Documento ObjType " & objType & " DocEntry: " & DocEntry & "", EXO_Log.EXO_Log.Tipo.error)
-                        '    jRes = "OK"
-                        'Else
-                        '    log.escribeMensaje("ERROR ATTACH " + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
-                        '    jRes = "Error: " + oCompany.GetLastErrorDescription
-                        'End If
+                        'hacerlo por sql
 
-                        '''update 
-                        oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-                        sSql = "UPDATE """ & sTabla & """ SET ""AtcEntry"" =" & AttEntry & " WHERE ""DocEntry""=" & DocEntry & ""
-                        oRs.DoQuery(sSql)
+                        Select Case objType
+                            Case "18"
+                                oDocuments = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseInvoices), SAPbobsCOM.Documents)
+                            Case "19"
+                                oDocuments = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseCreditNotes), SAPbobsCOM.Documents)
+                        End Select
+
+
+                        oAtt.Lines.SourcePath = System.IO.Path.GetDirectoryName(NomFichero)
+                        oAtt.Lines.FileName = System.IO.Path.GetFileNameWithoutExtension(NomFichero)
+                        oAtt.Lines.FileExtension = System.IO.Path.GetExtension(NomFichero).Substring(1)
+                        oAtt.Lines.Override = BoYesNoEnum.tYES
+
+                        Dim AttEntry As Integer
+                        If oAtt.Add() <> 0 Then
+                            jRes = "Error: " + oCompany.GetLastErrorDescription
+                            log.escribeMensaje("error pdf 1" + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
+                        Else
+                            AttEntry = CInt(oCompany.GetNewObjectKey())
+                            'oDocuments.GetByKey(DocEntry)
+                            'oDocuments.AttachmentEntry = AttEntry
+                            'If oDocuments.Update() = 0 Then
+                            '    log.escribeMensaje("OK ATTACH Adjuntado Documento ObjType " & objType & " DocEntry: " & DocEntry & "", EXO_Log.EXO_Log.Tipo.error)
+                            '    jRes = "OK"
+                            'Else
+                            '    log.escribeMensaje("ERROR ATTACH " + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
+                            '    jRes = "Error: " + oCompany.GetLastErrorDescription
+                            'End If
+
+                            '''update 
+                            oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+                            sSql = "UPDATE """ & Conexiones.sBBDD & """.""" & sTabla & """ SET ""AtcEntry"" =" & AttEntry & " WHERE ""DocEntry""=" & Convert.ToInt32(DocEntry) & ""
+                            oRs.DoQuery(sSql)
+                            jRes = "OK"
+                        End If
                     End If
-                End If
 
-                'borramos el fichero
-                If jRes = "OK" Then
-                    My.Computer.FileSystem.DeleteFile(NomFichero)
+                    'borramos el fichero
+                    If jRes = "OK" Then
+                        My.Computer.FileSystem.DeleteFile(NomFichero)
+                    End If
                 End If
             End If
-
         Catch ex As Exception
             log.escribeMensaje("attach: " + ex.Message, EXO_Log.EXO_Log.Tipo.error)
             jRes = "Error: " + ex.Message
