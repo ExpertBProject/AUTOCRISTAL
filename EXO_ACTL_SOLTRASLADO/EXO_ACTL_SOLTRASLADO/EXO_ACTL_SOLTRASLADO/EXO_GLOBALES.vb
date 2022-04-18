@@ -168,7 +168,7 @@ Public Class EXO_GLOBALES
             sDocNum = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("DocNum", 0).ToString.Trim
             sObjtype = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("ObjType", 0).ToString.Trim
             sSerie = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("Series", 0).ToString.Trim
-            If oobjglobal.SBOApp.MessageBox("¿Está seguro que quiere agregar el fichero en la lista activa?", 1, "Sí", "No") = 1 Then
+            If oobjglobal.SBOApp.MessageBox("¿Está seguro que quiere crear la Sol. de traslado?", 1, "Sí", "No") = 1 Then
                 oobjglobal.SBOApp.StatusBar.SetText("(EXO) - Generando Sol. de Traslado...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                 oForm.Freeze(True)
                 If oobjglobal.compañia.InTransaction = True Then
@@ -205,16 +205,16 @@ Public Class EXO_GLOBALES
                         sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""Indicator""='" & sIndicator & "' and ""Remark""='" & sSucursal & "' and ""ObjectCode""='1250000001' "
                         sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
                         If sSerie = "" Then
-                            If oobjglobal.SBOApp.MessageBox("No encuentra la serie del almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
-                                sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='1250000001' "
-                                sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
-                                oDoc.Series = sSerie
-                            Else
-                                sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
-                                oobjglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                oobjglobal.SBOApp.MessageBox(sMensaje)
-                                Exit Sub
-                            End If
+                            'If oobjglobal.SBOApp.MessageBox("No encuentra la serie del almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
+                            '    sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='1250000001' "
+                            '    sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
+                            '    oDoc.Series = sSerie
+                            'Else
+                            '    sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
+                            '    oobjglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            '    oobjglobal.SBOApp.MessageBox(sMensaje)
+                            '    Exit Sub
+                            'End If
                         Else
                             oDoc.Series = sSerie
                         End If
@@ -230,7 +230,31 @@ Public Class EXO_GLOBALES
                         oDoc.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(oobjglobal.compañia, oDtLin.Rows.Item(iLin).Item("Quantity").ToString)
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_LOT_ID").Value = oDtLin.Rows.Item(iLin).Item("U_EXO_LOT_ID").ToString
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_TBULTO").Value = oDtLin.Rows.Item(iLin).Item("U_EXO_TBULTO").ToString
+                        Select Case sTabla
+                            Case "ORDN"
+                                sSQL = "select T1.""BinCode"" from OBIN T1 inner join ( "
+                                sSQL &= " Select ""BinAbs"", T2.""ItemCode"", T2.""Quantity"" from OBTL T0 "
+                                sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" "
+                                sSQL &= " inner join RDN1 T2 on T1.""DocEntry"" = T2.""DocEntry"" and T1.""TransType"" = 16 "
+                                sSQL &= " where t2.""DocEntry"" = " & sDocEntry & " And t2.""LineNum""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
+                                sSQL &= "  ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                            Case "OWTR"
+                                sSQL = "select T1.""BinCode"" from OBIN T1 inner join ( "
+                                sSQL &= " Select ""BinAbs"", T2.""ItemCode"", T2.""Quantity"" from OBTL T0 "
+                                sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" "
+                                sSQL &= " inner join WTR1 T2 on T1.""DocEntry"" = T2.""DocEntry"" and T1.""TransType"" = 67 "
+                                sSQL &= " where t2.""DocEntry"" = " & sDocEntry & " And t2.""LineNum""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
+                                sSQL &= "  ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                        End Select
+                        Dim sUbiOr As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
+                        oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = sUbiOr
 
+                        sSQL = "SELECT ""OBIN"".""BinCode"" FROM ""OITW"" "
+                        sSQL &= " INNER JOIN ""OBIN"" ON ""OBIN"".""AbsEntry""= ""OITW"".""DftBinAbs"" "
+                        sSQL &= " WHERE ""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
+                        sSQL &= " and ""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
+                        Dim sUbiDes As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
+                        oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = sUbiDes
                         Select Case sTabla
                             Case "ORDN"
 #Region "Lotes"

@@ -15,6 +15,10 @@ Public Class EXO_OWTQ
             oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OWTQ.xml")
             objGlobal.refDi.comunes.LoadBDFromXML(oXML)
             objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_OWTQ", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_WTQ1.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_WTQ1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
