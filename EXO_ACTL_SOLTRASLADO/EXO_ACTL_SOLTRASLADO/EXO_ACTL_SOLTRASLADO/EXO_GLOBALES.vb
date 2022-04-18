@@ -232,19 +232,17 @@ Public Class EXO_GLOBALES
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_TBULTO").Value = oDtLin.Rows.Item(iLin).Item("U_EXO_TBULTO").ToString
                         Select Case sTabla
                             Case "ORDN"
-                                sSQL = "select T1.""BinCode"" from OBIN T1 inner join ( "
-                                sSQL &= " Select ""BinAbs"", T2.""ItemCode"", T2.""Quantity"" from OBTL T0 "
-                                sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" "
-                                sSQL &= " inner join RDN1 T2 on T1.""DocEntry"" = T2.""DocEntry"" and T1.""TransType"" = 16 "
-                                sSQL &= " where t2.""DocEntry"" = " & sDocEntry & " And t2.""LineNum""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                                sSQL &= "  ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                                sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
+                                sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+                                sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 16   and T1.""DocEntry"" = " & sDocEntry
+                                sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
+                                sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
                             Case "OWTR"
-                                sSQL = "select T1.""BinCode"" from OBIN T1 inner join ( "
-                                sSQL &= " Select ""BinAbs"", T2.""ItemCode"", T2.""Quantity"" from OBTL T0 "
-                                sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" "
-                                sSQL &= " inner join WTR1 T2 on T1.""DocEntry"" = T2.""DocEntry"" and T1.""TransType"" = 67 "
-                                sSQL &= " where t2.""DocEntry"" = " & sDocEntry & " And t2.""LineNum""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                                sSQL &= "  ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                                sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
+                                sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+                                sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 67   and T1.""DocEntry"" = " & sDocEntry
+                                sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
+                                sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
                         End Select
                         Dim sUbiOr As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = sUbiOr
