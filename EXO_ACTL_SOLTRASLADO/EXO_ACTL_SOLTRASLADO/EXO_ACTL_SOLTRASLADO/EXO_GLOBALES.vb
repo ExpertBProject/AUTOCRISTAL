@@ -149,7 +149,7 @@ Public Class EXO_GLOBALES
         Dim sExiste As String = "" : Dim sSQL As String = ""
         Dim oDtLin As System.Data.DataTable = New System.Data.DataTable
         Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sObjtype As String = "" : Dim sTabla As String = "" : Dim sTablaL As String = ""
-        Dim sSerie As String = "" : Dim sIndicator As String = "" : Dim sSucursal As String = ""
+        Dim sSerie As String = "" : Dim sIndicator As String = "" : Dim sSucursal As String = "" : Dim sAlmacenDestino As String = ""
         Dim oDoc As SAPbobsCOM.StockTransfer = Nothing : Dim iCuenta As Integer = 0
         Dim sMensaje As String = ""
         Dim oRsLote As SAPbobsCOM.Recordset = Nothing
@@ -168,14 +168,15 @@ Public Class EXO_GLOBALES
             sDocNum = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("DocNum", 0).ToString.Trim
             sObjtype = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("ObjType", 0).ToString.Trim
             sSerie = oForm.DataSources.DBDataSources.Item(sTabla).GetValue("Series", 0).ToString.Trim
+            sAlmacenDestino = oForm.DataSources.DBDataSources.Item(sTablaL).GetValue("WhsCode", 0).ToString.Trim
             If oobjglobal.SBOApp.MessageBox("¿Está seguro que quiere crear la Sol. de traslado?", 1, "Sí", "No") = 1 Then
                 oobjglobal.SBOApp.StatusBar.SetText("(EXO) - Generando Sol. de Traslado...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                 oForm.Freeze(True)
-                If oobjglobal.compañia.InTransaction = True Then
-                    oobjglobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-                Else
-                    oobjglobal.compañia.StartTransaction()
-                End If
+                'If oobjglobal.compañia.InTransaction = True Then
+                '    oobjglobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+                'Else
+                '    oobjglobal.compañia.StartTransaction()
+                'End If
 #Region "Crear Sol. de traslado"
                 oDoc = CType(oobjglobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
                 oDoc.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
@@ -191,33 +192,42 @@ Public Class EXO_GLOBALES
                 End Select
 
                 oDtLin.Clear()
-                sSQL = "SELECT * FROM """ & sTablaL & """ "
-                sSQL &= " where ""DocEntry""='" & sDocEntry & "' Order by ""LineNum"" "
+                sSQL = "SELECT Z.""BinCode"", Z.""DistNumber"", Z.""ItemCode"", Z.""Cantidad"",Z.""DocEntry"", Z.""DocLineNum"", TT.* FROM " & sTablaL & " TT "
+                sSQL &= " Left JOIN (Select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"",X.""DocEntry"", X.""DocLineNum"" from obin T1 inner join ( "
+                sSQL &= " Select T1.""DocEntry"",T1.""DocLineNum"", T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+                sSQL &= " From OBTL T0 "
+                Select Case sTabla
+                    Case "ORDN" : sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 16   And T1.""DocEntry"" = " & sDocEntry
+                    Case "OWTR" : sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 67   And T1.""DocEntry"" = " & sDocEntry
+                End Select
+                sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
+                sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"")Z ON Z.""DocEntry""=TT.""DocEntry"" And Z.""DocLineNum""=TT.""LineNum"" "
+                sSQL &= " where TT.""DocEntry""=" & sDocEntry & " Order by TT.""LineNum"" "
                 oDtLin = oobjglobal.refDi.SQL.sqlComoDataTable(sSQL)
                 If oDtLin.Rows.Count > 0 Then
                     Dim bPlinea As Boolean = True
                     For iLin As Integer = 0 To oDtLin.Rows.Count - 1
 #Region "Buscar la serie"
-                        sSQL = "SELECT ""Indicator"" FROM ""NNM1"" WHERE ""ObjectCode""='" & sObjtype & "' and ""Series""='" & sSerie & "' "
+                        sSQL = "Select ""Indicator"" FROM ""NNM1"" WHERE ""ObjectCode""='" & sObjtype & "' and ""Series""='" & sSerie & "' "
                         sIndicator = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
                         sSQL = "SELECT ""U_EXO_SUCURSAL"" FROM ""OWHS"" WHERE ""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
                         sSucursal = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
                         sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""Indicator""='" & sIndicator & "' and ""Remark""='" & sSucursal & "' and ""ObjectCode""='1250000001' "
                         sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
-                        If sSerie = "" Then
-                            'If oobjglobal.SBOApp.MessageBox("No encuentra la serie del almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
-                            '    sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='1250000001' "
-                            '    sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
-                            '    oDoc.Series = sSerie
-                            'Else
-                            '    sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
-                            '    oobjglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                            '    oobjglobal.SBOApp.MessageBox(sMensaje)
-                            '    Exit Sub
-                            'End If
-                        Else
-                            oDoc.Series = sSerie
-                        End If
+                        'If sSerie = "" Then
+                        '    'If oobjglobal.SBOApp.MessageBox("No encuentra la serie del almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
+                        '    '    sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='1250000001' "
+                        '    '    sSerie = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
+                        '    '    oDoc.Series = sSerie
+                        '    'Else
+                        '    '    sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
+                        '    '    oobjglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        '    '    oobjglobal.SBOApp.MessageBox(sMensaje)
+                        '    '    Exit Sub
+                        '    'End If
+                        'Else
+                        '    oDoc.Series = sSerie
+                        'End If
 #End Region
                         oDoc.FromWarehouse = oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
                         oDoc.ToWarehouse = oDtLin.Rows.Item(iLin).Item("WhsCode").ToString
@@ -227,30 +237,32 @@ Public Class EXO_GLOBALES
                             bPlinea = False
                         End If
                         oDoc.Lines.ItemCode = oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
-                        oDoc.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(oobjglobal.compañia, oDtLin.Rows.Item(iLin).Item("Quantity").ToString)
+                        oDoc.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(oobjglobal.compañia, oDtLin.Rows.Item(iLin).Item("Cantidad").ToString)
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_LOT_ID").Value = oDtLin.Rows.Item(iLin).Item("U_EXO_LOT_ID").ToString
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_TBULTO").Value = oDtLin.Rows.Item(iLin).Item("U_EXO_TBULTO").ToString
-                        Select Case sTabla
-                            Case "ORDN"
-                                sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
-                                sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
-                                sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 16   and T1.""DocEntry"" = " & sDocEntry
-                                sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
-                                sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
-                            Case "OWTR"
-                                sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
-                                sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
-                                sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 67   and T1.""DocEntry"" = " & sDocEntry
-                                sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
-                                sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
-                        End Select
-                        Dim sUbiOr As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
-                        oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = sUbiOr
+                        'Select Case sTabla
+                        '    Case "ORDN"
+                        '        sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
+                        '        sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+                        '        sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 16   and T1.""DocEntry"" = " & sDocEntry
+                        '        sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
+                        '        sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                        '        sSQL &= " WHERE X.""ItemCode"" = '" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'  "
+                        '    Case "OWTR"
+                        '        sSQL = "select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"" from obin T1 inner join ("
+                        '        sSQL &= " select T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+                        '        sSQL &= " from OBTL T0 inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" and T1.""TransType"" = 67   and T1.""DocEntry"" = " & sDocEntry
+                        '        sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
+                        '        sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+                        '        sSQL &= " WHERE X.""ItemCode"" = '" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'  "
+                        'End Select
+                        'Dim sUbiOr As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
+                        oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oDtLin.Rows.Item(iLin).Item("BinCode").ToString 'sUbiOr
 
                         sSQL = "SELECT ""OBIN"".""BinCode"" FROM ""OITW"" "
                         sSQL &= " INNER JOIN ""OBIN"" ON ""OBIN"".""AbsEntry""= ""OITW"".""DftBinAbs"" "
-                        sSQL &= " WHERE ""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
-                        sSQL &= " and ""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
+                        sSQL &= " WHERE ""OITW"".""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
+                        sSQL &= " and ""OITW"".""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
                         Dim sUbiDes As String = oobjglobal.refDi.SQL.sqlStringB1(sSQL)
                         oDoc.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = sUbiDes
                         Select Case sTabla
@@ -321,9 +333,9 @@ Public Class EXO_GLOBALES
                     oobjglobal.SBOApp.MessageBox(sMensaje)
                 End If
 #End Region
-                If oobjglobal.compañia.InTransaction = True Then
-                    oobjglobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-                End If
+                'If oobjglobal.compañia.InTransaction = True Then
+                '    oobjglobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+                'End If
 
             Else
                 oobjglobal.SBOApp.StatusBar.SetText("(EXO) - El usuario ha cancelado la generación de la solicitud de traslado.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
