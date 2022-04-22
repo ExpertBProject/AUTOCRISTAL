@@ -423,29 +423,33 @@ Public Class EXO_PNEC
 
                                         End If
                                     Next
-                                    sSQLGrid &= ", ifnull((Select SUM(INV1.""OpenQty"") FROM INV1 INNER JOIN OINV On INV1.""DocEntry"" = OINV.""DocEntry"" "
-                                    sSQLGrid &= " WHERE OINV.""DocStatus""<>'C' and OINV.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                    sSQLGrid &= ", ((SELECT IFNULL(SUM(INV1.""Quantity""),0) FROM INV1 INNER JOIN OINV ON INV1.""DocEntry"" = OINV.""DocEntry"" "
+                                    sSQLGrid &= " WHERE OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
-                                    sSQLGrid &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""24Q-" & sAlmacen & """ "
+                                    sSQLGrid &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
+                                    sSQLGrid &= " (SELECT IFNULL(SUM(RIN1.""Quantity""),0) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
+                                    sSQLGrid &= " WHERE ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                    sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
+                                    sSQLGrid &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')) ""24Q-" & sAlmacen & """ "
                                     sSQLGrid &= " ,IFNULL((SELECT SUM(""OnHand"")  FROM OITW WHERE ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""Stock " & sAlmacen & """ "
                                     sSQLGrid &= ",IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""PTE " & sAlmacen & """ "
                                     sSQLGrid &= ", (CASE WHEN (SELECT IFNULL(SUM(PCH1.""Quantity""),0) FROM PCH1 INNER JOIN OPCH ON PCH1.""DocEntry"" = OPCH.""DocEntry""  "
                                     sSQLGrid &= " WHERE OPCH.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And OPCH.""DocDate"">='" & dFechaSemestre.Year.ToString("0000") & dFechaSemestre.Month.ToString("00") & dFechaSemestre.Day.ToString("00") & "' "
-                                    sSQLGrid &= " And PCH1.""WhsCode"" ='" & sAlmacen & "' and PCH1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
+                                    sSQLGrid &= " And PCH1.""WhsCode"" in (" & sAlmacenes & ") and PCH1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
                                     sSQLGrid &= " (SELECT IFNULL(SUM(RPC1.""Quantity""),0) FROM RPC1 INNER JOIN ORPC ON RPC1.""DocEntry"" = ORPC.""DocEntry""  "
                                     sSQLGrid &= " WHERE ORPC.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And ORPC.""DocDate"">='" & dFechaSemestre.Year.ToString("0000") & dFechaSemestre.Month.ToString("00") & dFechaSemestre.Day.ToString("00") & "' "
-                                    sSQLGrid &= " And RPC1.""WhsCode"" ='" & sAlmacen & "' and RPC1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')>0  "
+                                    sSQLGrid &= " And RPC1.""WhsCode"" in (" & sAlmacenes & ") and RPC1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')>0  "
                                     sSQLGrid &= " And "
                                     sSQLGrid &= " (SELECT IFNULL(SUM(INV1.""Quantity""),0) FROM INV1 INNER JOIN OINV ON INV1.""DocEntry"" = OINV.""DocEntry"" "
                                     sSQLGrid &= " WHERE OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
-                                    sSQLGrid &= " And INV1.""WhsCode""='" & sAlmacen & "' and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
+                                    sSQLGrid &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
                                     sSQLGrid &= " (SELECT IFNULL(SUM(RIN1.""Quantity""),0) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
                                     sSQLGrid &= " WHERE ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
-                                    sSQLGrid &= " And RIN1.""WhsCode""='" & sAlmacen & "' and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')=0  "
+                                    sSQLGrid &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')=0  "
                                     sSQLGrid &= " then 'SI' else 'NO' END) ""N " & sAlmacen & """ "
 
                                     'sSQLGrid &= ",(CASE WHEN (SELECT SUM(PDN1.""OpenQty"") FROM PDN1 INNER JOIN OPDN ON PDN1.""DocEntry"" = OPDN.""DocEntry"" "
@@ -605,10 +609,14 @@ Public Class EXO_PNEC
                                     For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM").Rows.Count - 1
                                         If oForm.DataSources.DataTables.Item("DTALM").GetValue("Sel", i).ToString = "Y" Then
                                             sAlmacen = oForm.DataSources.DataTables.Item("DTALM").GetValue("WhsCode", i).ToString
-                                            sSQLGrid &= ", ifnull((Select SUM(INV1.""OpenQty"") FROM INV1 INNER JOIN OINV On INV1.""DocEntry"" = OINV.""DocEntry"" "
-                                            sSQLGrid &= " WHERE OINV.""DocStatus""<>'C' and OINV.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                            sSQLGrid &= ", ((SELECT IFNULL(SUM(INV1.""Quantity""),0) FROM INV1 INNER JOIN OINV ON INV1.""DocEntry"" = OINV.""DocEntry"" "
+                                            sSQLGrid &= " WHERE OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                             sSQLGrid &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
-                                            sSQLGrid &= " And INV1.""WhsCode""='" & sAlmacen & "' and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""24Q-" & sAlmacen & """ "
+                                            sSQLGrid &= " And INV1.""WhsCode""='" & sAlmacen & "' and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
+                                            sSQLGrid &= " (SELECT IFNULL(SUM(RIN1.""Quantity""),0) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
+                                            sSQLGrid &= " WHERE ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                            sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
+                                            sSQLGrid &= " And RIN1.""WhsCode""='" & sAlmacen & "' and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')) ""24Q-" & sAlmacen & """ "
                                             sSQLGrid &= " ,IFNULL((SELECT ""OnHand""  FROM OITW WHERE ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""Stock " & sAlmacen & """ "
                                             sSQLGrid &= ",IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""PTE " & sAlmacen & """ "
                                             sSQLGrid &= ", (CASE WHEN (SELECT IFNULL(SUM(PCH1.""Quantity""),0) FROM PCH1 INNER JOIN OPCH ON PCH1.""DocEntry"" = OPCH.""DocEntry""  "
@@ -1059,7 +1067,7 @@ Public Class EXO_PNEC
                                 objGlobal.SBOApp.StatusBar.SetText("(EXO) - No existen datos para generar Solicitud de traslado.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                             End If
 #End Region
-                            sMensaje = "Fin del proceso. Por favor, revise el Log."
+                            sMensaje = "Fin del proceso."
                             objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             objGlobal.SBOApp.MessageBox(sMensaje)
                         Else
@@ -1093,18 +1101,23 @@ Public Class EXO_PNEC
         End Try
     End Function
     Private Function Calculo_Pedir(ByRef oObjglobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form, ByVal dFecha As Date, ByVal dFechaAnt As Date,
-                                                 ByVal sArticulo As String, ByVal sAlmacen As String, ByVal sProveedor As String) As Double
+                                                 ByVal sArticulo As String, ByVal sAlmacenes As String, ByVal sProveedor As String) As Double
         Calculo_Pedir = 0
         Dim sSQL As String = ""
         Try
-            sSQL = "Select IFNULL(SUM(INV1.""OpenQty""),0) FROM INV1 INNER JOIN OINV On INV1.""DocEntry"" = OINV.""DocEntry"" "
-            sSQL &= " WHERE OINV.""DocStatus""<>'C' and OINV.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+            sSQL = "SELECT ((SELECT IFNULL(SUM(INV1.""Quantity""),0) FROM INV1 INNER JOIN OINV ON INV1.""DocEntry"" = OINV.""DocEntry"" "
+            sSQL &= " WHERE OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
             sSQL &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
-            sSQL &= " And INV1.""WhsCode""='" & sAlmacen & "' and INV1.""ItemCode""='" & sArticulo & "' "
+            sSQL &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & sArticulo & "')- "
+            sSQL &= " (SELECT IFNULL(SUM(RIN1.""Quantity""),0) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
+            sSQL &= " WHERE ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+            sSQL &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
+            sSQL &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & sArticulo & "')) "
+            sSQL &= " FROM DUMMY "
             Dim d24Q As Double = objGlobal.refDi.SQL.sqlNumericaB1(sSQL)
-            sSQL = "SELECT IFNULL(""OnHand""+""OnOrder"",0)  FROM OITW WHERE ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & sArticulo & "' "
+            sSQL = "SELECT IFNULL(""OnHand""+""OnOrder"",0)  FROM OITW WHERE ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & sArticulo & "' "
             Dim dSTOCK As Double = objGlobal.refDi.SQL.sqlNumericaB1(sSQL)
-            sSQL = "SELECT IFNULL(SUM(""OpenQty""),0) FROM POR1 where ""LineStatus""<>'C' and ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & sArticulo & "'"
+            sSQL = "SELECT IFNULL(SUM(""OpenQty""),0) FROM POR1 where ""LineStatus""<>'C' and ""WhsCode""in (" & sAlmacenes & ")  and ""ItemCode""='" & sArticulo & "'"
             Dim dPTE As Double = objGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
             If d24Q > 3 And (dSTOCK + dPTE) < 2 Then
@@ -1119,7 +1132,7 @@ Public Class EXO_PNEC
 
                 Dim dQ As Double = d24Q / 12
                 Dim dSTOCK_m As Double = dQ * 2
-                Dim dSTOCK_S As Double = dSTOCK
+                Dim dSTOCK_S As Double = d24Q / 12
                 Dim dMGS As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx.ToString)
                 Dim dPP As Double = dQ * ((dMGS / 15) + dTR)
                 Calculo_Pedir = dSTOCK_m + dSTOCK_S + dPP - dPTE - dSTOCK
