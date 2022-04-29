@@ -23,6 +23,11 @@ Public Class INICIO
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_ENVTRANS.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_ENVTRANS", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
         End If
     End Sub
     Private Sub cargamenu()
@@ -60,6 +65,9 @@ Public Class INICIO
                 Case "UDO_FT_EXO_LSTEMB"
                     Clase = New EXO_LSTEMB(objGlobal)
                     Return CType(Clase, EXO_LSTEMB).SBOApp_ItemEvent(infoEvento)
+                Case "UDO_FT_EXO_ENVTRANS"
+                    Clase = New EXO_ENVTRANS(objGlobal)
+                    Return CType(Clase, EXO_ENVTRANS).SBOApp_ItemEvent(infoEvento)
             End Select
 
             Return MyBase.SBOApp_ItemEvent(infoEvento)
@@ -83,6 +91,9 @@ Public Class INICIO
                     Case "EXO-MnLEmb"
                         Clase = New EXO_LSTEMB(objGlobal)
                         Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
+                    Case "EXO-MnGETR"
+                        Clase = New EXO_ENVTRANS(objGlobal)
+                        Return CType(Clase, EXO_ENVTRANS).SBOApp_MenuEvent(infoEvento)
                     Case "1282"
                         Clase = New EXO_LSTEMB(objGlobal)
                         Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
@@ -97,5 +108,25 @@ Public Class INICIO
         Finally
             Clase = Nothing
         End Try
+    End Function
+    Public Overrides Function SBOApp_FormDataEvent(infoEvento As BusinessObjectInfo) As Boolean
+        Dim Res As Boolean = True
+        Dim Clase As Object = Nothing
+        Try
+            Select Case infoEvento.FormTypeEx
+                Case "UDO_FT_EXO_LSTEMB"
+                    Clase = New EXO_LSTEMB(objGlobal)
+                    Return CType(Clase, EXO_LSTEMB).SBOApp_FormDataEvent(infoEvento)
+            End Select
+
+            Return MyBase.SBOApp_FormDataEvent(infoEvento)
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion, EXO_TipoSalidaMensaje.MessageBox, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            Return False
+        Finally
+            Clase = Nothing
+        End Try
+
     End Function
 End Class
