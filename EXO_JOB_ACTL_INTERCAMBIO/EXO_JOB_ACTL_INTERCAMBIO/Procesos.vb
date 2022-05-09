@@ -89,7 +89,7 @@ Public Class Procesos
                         If sXML <> "" Then
                             'Porque en el modo Update no funciona por XML
                             sWebSite = oOSHP.Website
-                            oUserFields = oOSHP.UserFields
+                            'oUserFields = oOSHP.UserFields
                             '''''''''''''''''''''''''''''''''''''''''''''
 
                             oOSHP = CType(oCompanyD.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oShippingTypes), SAPbobsCOM.ShippingTypes)
@@ -100,20 +100,22 @@ Public Class Procesos
 
                             If sTrnspCode = "" Then
                                 'Añadir
+                                olog.escribeMensaje("No existe", EXO_Log.EXO_Log.Tipo.informacion)
                                 If oOSHP.Add() <> 0 Then
                                     Throw New Exception(oCompanyD.GetLastErrorCode & " / " & oCompanyD.GetLastErrorDescription)
                                 End If
                             Else
                                 'Modificar"
                                 'Porque en el modo Update no funciona por XML
+                                olog.escribeMensaje(" existe", EXO_Log.EXO_Log.Tipo.informacion)
                                 If oOSHP.GetByKey(CInt(sTrnspCode)) = True Then
                                     oOSHP.Website = sWebSite
 
-                                    For h As Integer = 0 To oUserFields.Fields.Count - 1
-                                        If oOSHP.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
-                                            oOSHP.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
-                                        End If
-                                    Next
+                                    'For h As Integer = 0 To oUserFields.Fields.Count - 1
+                                    '    If oOSHP.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).IsNull = SAPbobsCOM.BoYesNoEnum.tNO Then
+                                    '        oOSHP.UserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value = oUserFields.Fields.Item(oUserFields.Fields.Item(h).Name).Value
+                                    '    End If
+                                    'Next
 
                                     If oOSHP.Update() <> 0 Then
                                         Throw New Exception(oCompanyD.GetLastErrorCode & " / " & oCompanyD.GetLastErrorDescription)
@@ -760,12 +762,23 @@ Public Class Procesos
                                 oOITM2.SalesItem = BoYesNoEnum.tYES
                                 oOITM2.PurchaseItem = BoYesNoEnum.tYES
                                 'longitud compras 
-                                oOITM2.PurchaseLengthUnit = oOITM.PurchaseLengthUnit
-                                oOITM2.PurchaseUnitLength = oOITM.PurchaseUnitLength
+                                If oOITM.PurchaseLengthUnit <> 0 Then
+                                    oOITM2.PurchaseLengthUnit = oOITM.PurchaseLengthUnit
+                                End If
+                                If oOITM.PurchaseUnitLength <> 0 Then
+                                    oOITM2.PurchaseUnitLength = oOITM.PurchaseUnitLength
+                                End If
+
                                 'ancho compras
-                                oOITM2.PurchaseUnitWidth = oOITM.PurchaseUnitWidth
+                                If oOITM.PurchaseUnitWidth <> 0 Then
+                                    oOITM2.PurchaseUnitWidth = oOITM.PurchaseUnitWidth
+                                End If
+
                                 'peso compras
-                                oOITM2.PurchaseUnitWeight = oOITM.PurchaseUnitWeight
+                                If oOITM.PurchaseUnitWeight <> 0 Then
+                                    oOITM2.PurchaseUnitWeight = oOITM.PurchaseUnitWeight
+                                End If
+
 
                                 'longitud ventas
                                 oOITM2.SalesUnit = oOITM.SalesUnit
