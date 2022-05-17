@@ -7,9 +7,50 @@ Public Class INICIO
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)
 
         If actualizar Then
-            'cargaDatos()
+            cargaDatos()
         End If
         cargamenu()
+    End Sub
+    Private Sub cargaDatos()
+        Dim sXML As String = ""
+        Dim res As String = ""
+        Dim sSQL As String = ""
+        If objGlobal.refDi.comunes.esAdministrador Then
+
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_ORDR.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_ORDR", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OWTQ.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OWTQ", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_ROTURA.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_ROTURA", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_SITUACION.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_SITUACION", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_A.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_A", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+        End If
     End Sub
     Private Sub cargamenu()
         Dim Path As String = ""
@@ -36,5 +77,54 @@ Public Class INICIO
     Public Overrides Function menus() As XmlDocument
         Return Nothing
     End Function
+    Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
+        Dim Clase As Object = Nothing
 
+        Try
+            If infoEvento.BeforeAction = True Then
+                Select Case infoEvento.MenuUID
+                    Case ""
+                End Select
+            Else
+                Select Case infoEvento.MenuUID
+                    Case "EXO-MnPARC"
+                        Clase = New EXO_PARRILLA(objGlobal)
+                        Return CType(Clase, EXO_PARRILLA).SBOApp_MenuEvent(infoEvento)
+                End Select
+            End If
+
+            Return MyBase.SBOApp_MenuEvent(infoEvento)
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion)
+            Return False
+        Finally
+            Clase = Nothing
+        End Try
+    End Function
+    Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
+        Dim res As Boolean = True
+        Dim Clase As Object = Nothing
+
+        Try
+            Select Case infoEvento.FormTypeEx
+                Case "EXO_PARRILLA"
+                    Clase = New EXO_PARRILLA(objGlobal)
+                    Return CType(Clase, EXO_PARRILLA).SBOApp_ItemEvent(infoEvento)
+                Case "EXO_RSTOCK"
+                    Clase = New EXO_RSTOCK(objGlobal)
+                    Return CType(Clase, EXO_RSTOCK).SBOApp_ItemEvent(infoEvento)
+                Case "1250000940"
+                    Clase = New EXO_OWTQ(objGlobal)
+                    Return CType(Clase, EXO_OWTQ).SBOApp_ItemEvent(infoEvento)
+            End Select
+
+            Return MyBase.SBOApp_ItemEvent(infoEvento)
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion, EXO_TipoSalidaMensaje.MessageBox, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            Return False
+        Finally
+            Clase = Nothing
+        End Try
+    End Function
 End Class
