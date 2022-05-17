@@ -6,8 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{AAC73E53-A411-4819-980D-A556378D356A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>Sub Main</StartupObject>
     <RootNamespace>EXO_JOB_ACTL_INTERCAMBIO</RootNamespace>
     <AssemblyName>EXO_JOB_ACTL_INTERCAMBIO</AssemblyName>
     <FileAlignment>512</FileAlignment>
