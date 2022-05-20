@@ -80,7 +80,7 @@ Public Class INICIO
     End Function
     Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim Clase As Object = Nothing
-
+        Dim oForm As SAPbouiCOM.Form = Nothing
         Try
             If infoEvento.BeforeAction = True Then
                 Select Case infoEvento.MenuUID
@@ -95,8 +95,19 @@ Public Class INICIO
                         Clase = New EXO_ENVTRANS(objGlobal)
                         Return CType(Clase, EXO_ENVTRANS).SBOApp_MenuEvent(infoEvento)
                     Case "1282"
-                        Clase = New EXO_LSTEMB(objGlobal)
-                        Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
+                        oForm = objGlobal.SBOApp.Forms.ActiveForm
+                        If oForm IsNot Nothing Then
+                            Select Case oForm.TypeEx
+                                Case "UDO_FT_EXO_ENVTRANS"
+                                    Clase = New EXO_ENVTRANS(objGlobal)
+                                    Return CType(Clase, EXO_ENVTRANS).SBOApp_MenuEvent(infoEvento)
+                                Case "UDO_FT_EXO_LSTEMB"
+                                    Clase = New EXO_LSTEMB(objGlobal)
+                                    Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
+                            End Select
+                        End If
+
+
                 End Select
             End If
 
@@ -106,7 +117,7 @@ Public Class INICIO
             objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion)
             Return False
         Finally
-            Clase = Nothing
+            Clase = Nothing : oform = Nothing
         End Try
     End Function
     Public Overrides Function SBOApp_FormDataEvent(infoEvento As BusinessObjectInfo) As Boolean
@@ -117,6 +128,9 @@ Public Class INICIO
                 Case "UDO_FT_EXO_LSTEMB"
                     Clase = New EXO_LSTEMB(objGlobal)
                     Return CType(Clase, EXO_LSTEMB).SBOApp_FormDataEvent(infoEvento)
+                Case "UDO_FT_EXO_ENVTRANS"
+                    Clase = New EXO_ENVTRANS(objGlobal)
+                    Return CType(Clase, EXO_ENVTRANS).SBOApp_FormDataEvent(infoEvento)
             End Select
 
             Return MyBase.SBOApp_FormDataEvent(infoEvento)

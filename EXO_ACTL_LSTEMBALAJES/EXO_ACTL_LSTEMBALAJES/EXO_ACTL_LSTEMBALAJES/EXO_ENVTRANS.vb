@@ -7,7 +7,7 @@ Public Class EXO_ENVTRANS
         Me.objGlobal = objG
     End Sub
     Public Function SBOApp_MenuEvent(ByVal infoEvento As MenuEvent) As Boolean
-
+        SBOApp_MenuEvent = False
         Dim sSQL As String = ""
         Try
             If infoEvento.BeforeAction = True Then
@@ -18,8 +18,17 @@ Public Class EXO_ENVTRANS
                             Exit Function
                         End If
                     Case "1282"
-                        'Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.ActiveForm
-                        'Modo_Anadir(oForm)
+                        Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.ActiveForm
+                        If oForm IsNot Nothing Then
+                            If oForm.TypeEx = "UDO_FT_EXO_ENVTRANS" Then
+                                EXO_GLOBALES.Modo_Anadir(oForm, objGlobal)
+                                Cargar_Combos(oForm)
+
+                                If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
+                                    objGlobal.SBOApp.ActivateMenuItem("1304")
+                                End If
+                            End If
+                        End If
                 End Select
             End If
 
@@ -64,13 +73,13 @@ Public Class EXO_ENVTRANS
                         Case "UDO_FT_EXO_ENVTRANS"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
-                                    'If EventHandler_COMBO_SELECT_After(infoEvento) = False Then
-                                    '    Return False
-                                    'End If
+                                    If EventHandler_COMBO_SELECT_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-                                    'If EventHandler_ItemPressed_After(infoEvento) = False Then
-                                    '    Return False
-                                    'End If
+                                    If EventHandler_ItemPressed_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
 
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
@@ -147,6 +156,77 @@ Public Class EXO_ENVTRANS
             Return False
         End Try
     End Function
+    Private Function EventHandler_ItemPressed_After(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
+
+        EventHandler_ItemPressed_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            Select Case pVal.ItemUID
+                Case "1"
+                    If oForm.Mode = BoFormMode.fm_ADD_MODE Then
+                        Cargar_Combos(oForm)
+                    End If
+            End Select
+
+            EventHandler_ItemPressed_After = True
+
+        Catch ex As Exception
+            oForm.Freeze(False)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+    Private Function EventHandler_COMBO_SELECT_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sSQL As String = ""
+        Dim oItem As SAPbouiCOM.Item = Nothing
+        EventHandler_COMBO_SELECT_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            If oForm.Visible = True And oForm.Mode = BoFormMode.fm_ADD_MODE Then
+                If pVal.ItemUID = "4_U_Cb" Then
+                    If CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value IsNot Nothing Then
+                        Dim sSerie As String = CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                        Dim iNum As Integer
+                        iNum = oForm.BusinessObject.GetNextSerialNumber(CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString, oForm.BusinessObject.Type.ToString)
+                        oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
+                    End If
+                End If
+            End If
+            If oForm.Visible = True Then
+                If pVal.ItemUID = "20_U_Cb" Then 'Clase de expedición
+                    If CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value IsNot Nothing Then
+                        Dim sExpedicion As String = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                        sSQL = "SELECT IFNULL(""U_EXO_AGE"",'') FROM OSHP WHERE ""TrnspCode""='" & sExpedicion & "' "
+                        Dim sAgeCod As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTCODE", 0, sAgeCod)
+                        sSQL = "SELECT ""CardName"" FROM OCRD WHERE ""CardCode""='" & sAgeCod & "' "
+                        Dim sAgeNom As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTNAME", 0, sAgeNom)
+                    End If
+                End If
+            End If
+
+            EventHandler_COMBO_SELECT_After = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oItem, Object))
+        End Try
+    End Function
     Private Function EventHandler_Form_Visible(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
@@ -159,6 +239,8 @@ Public Class EXO_ENVTRANS
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_ENVTRANS" Then
 
                 Cargar_Combos(oForm)
+                Dim sAgencia As String = CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value
+                Cargar_Combo_Matricula_Conductor_Plataforma(oForm, sAgencia)
 
                 If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
                     objGlobal.SBOApp.ActivateMenuItem("1304")
@@ -189,11 +271,20 @@ Public Class EXO_ENVTRANS
         Dim sAlmacendef As String = ""
 #End Region
         Try
+            'Almacen
+            sSQL = "SELECT ""Branch"" FROM OUSR WHERE ""USERID""=" & objGlobal.compañia.UserSignature.ToString
+            sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            sSQL = " SELECT ""WhsCode"",""WhsName"" FROM OWHS"
+            sSQL &= " WHERE ""Inactive""='N' and ""U_EXO_SUCURSAL""='" & sSucursal & "' "
+            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+            oform.Items.Item("22_U_Cb").DisplayDesc = True
 
             'Expedición
             sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' "
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(0, BoSearchKey.psk_Index)
+
+
             'Series 
             sSQL = "SELECT ""Series"",""SeriesName"" FROM NNM1 WHERE ""ObjectCode""='EXO_ENVTRANS' "
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
@@ -202,13 +293,7 @@ Public Class EXO_ENVTRANS
             sFecha = CType(oform.Items.Item("21_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
             sClaseExp = CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
 
-            'Almacen
-            sSQL = "SELECT ""Branch"" FROM OUSR WHERE ""USERID""=" & objGlobal.compañia.UserSignature.ToString
-            sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-            sSQL = " SELECT ""WhsCode"",""WhsName"" FROM OWHS"
-            sSQL &= " WHERE ""Inactive""='N' and ""U_EXO_SUCURSAL""='" & sSucursal & "' "
-            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-            oform.Items.Item("22_U_Cb").DisplayDesc = True
+
 
             If oform.Mode = BoFormMode.fm_ADD_MODE Then
                 'Poner fecha
@@ -219,7 +304,9 @@ Public Class EXO_ENVTRANS
                 sSQL = " SELECT ""DfltSeries"" FROM ONNM WHERE ""ObjectCode""='EXO_ENVTRANS' "
                 sSerieDef = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                 CType(oform.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
-                Poner_DocNum(oform, sSerieDef)
+                Dim iNum As Integer
+                iNum = oform.BusinessObject.GetNextSerialNumber(sSerieDef, oform.BusinessObject.Type.ToString)
+                oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
 
                 'Poner almacen por defecto
                 Try
@@ -230,6 +317,14 @@ Public Class EXO_ENVTRANS
                 Catch ex As Exception
 
                 End Try
+                'Como en la expedición tenemos la agencia, pues tenemos que rellenarlo automático
+                Dim sExpedicion As String = CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                sSQL = "SELECT IFNULL(""U_EXO_AGE"",'') FROM OSHP WHERE ""TrnspCode""='" & sExpedicion & "' "
+                Dim sAgeCod As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTCODE", 0, sAgeCod)
+                sSQL = "SELECT ""CardName"" FROM OCRD WHERE ""CardCode""='" & sAgeCod & "' "
+                Dim sAgeNom As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTNAME", 0, sAgeNom)
             End If
 
         Catch ex As Exception
@@ -255,23 +350,9 @@ Public Class EXO_ENVTRANS
 
             'Plataforma
             sSQL = "SELECT ""U_EXO_PLATA"",""U_EXO_PLATAD"" FROM ""@EXO_PLATAAGL"" WHERE ""Code""='" & sAgencia & "' "
-            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("1_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").ValidValues, sSQL)
-            CType(oform.Items.Item("1_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").DisplayDesc = True
+            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").ValidValues, sSQL)
+            CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").DisplayDesc = True
 
-        Catch ex As Exception
-            Throw ex
-        End Try
-    End Sub
-
-    Private Sub Poner_DocNum(ByRef oForm As SAPbouiCOM.Form, ByVal sSerie As String)
-#Region "Variables"
-        Dim sDocNum As String = ""
-        Dim sSQL As String = ""
-#End Region
-        Try
-            sSQL = "SELECT ""NextNumber"" FROM NNM1 WHERE ""ObjectCode""='EXO_ENVTRANS' and ""Series""='" & sSerie & "' "
-            sDocNum = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-            oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, sDocNum)
         Catch ex As Exception
             Throw ex
         End Try
@@ -391,7 +472,11 @@ Public Class EXO_ENVTRANS
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_UPDATE
 
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_ADD
-
+                                If Comprobar_existe(oForm) = False Then
+                                    Return False
+                                Else
+                                    Return True
+                                End If
                         End Select
 
                 End Select
@@ -419,6 +504,29 @@ Public Class EXO_ENVTRANS
             Return False
         Finally
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+    Private Function Comprobar_existe(ByRef oForm As SAPbouiCOM.Form) As Boolean
+        Comprobar_existe = False
+        Dim sClaseExp As String = "" : Dim sAlmacen As String = ""
+        Dim sFecha As String = "" : Dim sDocNum As String = "" : Dim sSerie As String = ""
+        Dim sSQL As String = ""
+        Try
+            sSerie = CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            sFecha = CType(oForm.Items.Item("21_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+            sClaseExp = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            sAlmacen = CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            sSQL = " SELECT ""DocNum"" FROM ""@EXO_ENVTRANS"" Where ""U_EXO_CEXP""='" & sClaseExp & "' and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_ALMACEN""='" & sAlmacen & "' and ""Series""=" & sSerie
+            sDocNum = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            If sDocNum = "" Then
+                Return True
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Ya existe el documento Nº " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                Return False
+            End If
+            Comprobar_existe = True
+        Catch ex As Exception
+            Throw ex
         End Try
     End Function
 End Class

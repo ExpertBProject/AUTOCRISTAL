@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EXO_ENVTRANS.vb" />
+    <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_LSTEMB.vb" />
     <Compile Include="INICIO.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -162,13 +163,17 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDO_EXO_LSTEMB.xml" />
-    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml" />
+    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_MENU\XML_MENU.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UDO_EXO_ENVTRANS.xml" />
+    <EmbeddedResource Include="XML_BD\UDO_EXO_ENVTRANS.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

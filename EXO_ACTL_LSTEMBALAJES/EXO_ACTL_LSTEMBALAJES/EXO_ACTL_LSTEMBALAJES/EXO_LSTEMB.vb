@@ -7,7 +7,7 @@ Public Class EXO_LSTEMB
         Me.objGlobal = objG
     End Sub
     Public Function SBOApp_MenuEvent(ByVal infoEvento As MenuEvent) As Boolean
-
+        SBOApp_MenuEvent = False
         Dim sSQL As String = ""
         Try
             If infoEvento.BeforeAction = True Then
@@ -19,7 +19,11 @@ Public Class EXO_LSTEMB
                         End If
                     Case "1282"
                         Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.ActiveForm
-                        Modo_Anadir(oForm)
+                        If oForm IsNot Nothing Then
+                            If oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
+                                EXO_GLOBALES.Modo_Anadir(oForm, objGlobal)
+                            End If
+                        End If
                 End Select
             End If
 
@@ -145,6 +149,7 @@ Public Class EXO_LSTEMB
             Return False
         End Try
     End Function
+
     Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
 
         Dim oForm As SAPbouiCOM.Form = Nothing
@@ -258,7 +263,7 @@ Public Class EXO_LSTEMB
                 If pVal.ItemUID = "4_U_Cb" Then
                     If CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value IsNot Nothing Then
                         Dim sSerie As String = CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
-                        Poner_DocNum(oForm, sSerie)
+                        EXO_GLOBALES.Poner_DocNum(oForm, sSerie, objGlobal)
                     End If
                 End If
             End If
@@ -287,7 +292,7 @@ Public Class EXO_LSTEMB
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
 
                 If oForm.Mode = BoFormMode.fm_ADD_MODE Then
-                    Modo_Anadir(oForm)
+                    EXO_GLOBALES.Modo_Anadir(oForm, objGlobal)
                 End If
                 Cargar_Combos(oForm)
                 If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
@@ -336,48 +341,6 @@ Public Class EXO_LSTEMB
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oform.Items.Item("1_U_Cb").DisplayDesc = True
 
-        Catch ex As Exception
-            Throw ex
-        End Try
-    End Sub
-    Private Sub Modo_Anadir(ByRef oForm As SAPbouiCOM.Form)
-#Region "variables"
-        Dim dFecha As Date = New Date(Now.Year, Now.Month, Now.Day)
-        Dim sFecha As String = ""
-        Dim sSQL As String = ""
-        Dim sSerieDef As String = ""
-#End Region
-
-        Try
-            'Poner fecha
-            sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
-            oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
-
-            'Series 
-            sSQL = "SELECT ""Series"",""SeriesName"" FROM NNM1 WHERE ""ObjectCode""='EXO_LSTEMB' "
-            objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-            oForm.Items.Item("4_U_Cb").DisplayDesc = True
-
-            'Poner serie por defecto y el num. de documento
-            sSQL = " SELECT ""DfltSeries"" FROM ONNM WHERE ""ObjectCode""='EXO_LSTEMB' "
-            sSerieDef = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-            CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
-            Poner_DocNum(oForm, sSerieDef)
-
-
-        Catch ex As Exception
-            Throw ex
-        End Try
-    End Sub
-    Private Sub Poner_DocNum(ByRef oForm As SAPbouiCOM.Form, ByVal sSerie As String)
-#Region "Variables"
-        Dim sDocNum As String = ""
-        Dim sSQL As String = ""
-#End Region
-        Try
-            sSQL = "SELECT ""NextNumber"" FROM NNM1 WHERE ""ObjectCode""='EXO_LSTEMB' and ""Series""='" & sSerie & "' "
-            sDocNum = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-            oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("DocNum", 0, sDocNum)
         Catch ex As Exception
             Throw ex
         End Try
