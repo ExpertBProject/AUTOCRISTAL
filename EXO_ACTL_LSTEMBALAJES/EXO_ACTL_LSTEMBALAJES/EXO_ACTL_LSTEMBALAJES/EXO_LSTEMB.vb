@@ -51,6 +51,17 @@ Public Class EXO_LSTEMB
 
         End Try
     End Function
+    Public Function SBOApp_ProgressBarEvent(infoEvento As ProgressBarEvent) As Boolean
+        Try
+            If infoEvento.EventType = SAPbouiCOM.BoProgressBarEventTypes.pbet_ProgressBarStopped And infoEvento.BeforeAction Then
+                'Fail to handle document numbering:
+            End If
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Return False
+        End Try
+    End Function
     Public Function SBOApp_ItemEvent(ByVal infoEvento As ItemEvent) As Boolean
         Try
             'Apaño por un error que da EXO_Basic.dll al consultar infoEvento.FormTypeEx

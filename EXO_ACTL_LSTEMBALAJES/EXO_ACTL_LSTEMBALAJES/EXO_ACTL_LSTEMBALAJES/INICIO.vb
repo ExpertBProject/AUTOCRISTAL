@@ -56,6 +56,22 @@ Public Class INICIO
         Return Nothing
     End Function
 
+    'Public Overrides Function SBOApp_StatusBarEvent(texto As String, tipoMensaje As BoStatusBarMessageType) As Boolean
+    '    Dim Clase As Object = Nothing
+    '    Try
+    '        If texto = "Fail to handle document numbering:" And tipoMensaje = BoStatusBarMessageType.smt_Error Then
+    '            texto = "" : tipoMensaje = BoStatusBarMessageType.smt_Success
+    '        End If
+    '        Return MyBase.SBOApp_StatusBarEvent(texto, tipoMensaje)
+    '    Catch ex As Exception
+    '        objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion, EXO_TipoSalidaMensaje.MessageBox, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+    '        Return False
+    '    Finally
+    '        Clase = Nothing
+    '    End Try
+
+    'End Function
+
     Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
         Dim res As Boolean = True
         Dim Clase As Object = Nothing
