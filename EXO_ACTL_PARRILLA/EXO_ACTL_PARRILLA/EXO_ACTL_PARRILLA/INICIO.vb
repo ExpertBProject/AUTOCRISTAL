@@ -16,6 +16,11 @@ Public Class INICIO
         Dim res As String = ""
         Dim sSQL As String = ""
         If objGlobal.refDi.comunes.esAdministrador Then
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OCRD.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OCRD", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_ORDR.xml")
             objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_ORDR", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
@@ -117,6 +122,12 @@ Public Class INICIO
                 Case "1250000940"
                     Clase = New EXO_OWTQ(objGlobal)
                     Return CType(Clase, EXO_OWTQ).SBOApp_ItemEvent(infoEvento)
+                Case "134"
+                    Clase = New EXO_OCRD(objGlobal)
+                    Return CType(Clase, EXO_OCRD).SBOApp_ItemEvent(infoEvento)
+                Case "139"
+                    Clase = New EXO_ORDR(objGlobal)
+                    Return CType(Clase, EXO_ORDR).SBOApp_ItemEvent(infoEvento)
             End Select
 
             Return MyBase.SBOApp_ItemEvent(infoEvento)
@@ -126,5 +137,28 @@ Public Class INICIO
         Finally
             Clase = Nothing
         End Try
+    End Function
+    Public Overrides Function SBOApp_FormDataEvent(infoEvento As BusinessObjectInfo) As Boolean
+        Dim Res As Boolean = True
+        Dim Clase As Object = Nothing
+        Try
+            Select Case infoEvento.FormTypeEx
+                Case "134"
+                    Clase = New EXO_OCRD(objGlobal)
+                    Return CType(Clase, EXO_OCRD).SBOApp_FormDataEvent(infoEvento)
+                Case "139"
+                    Clase = New EXO_ORDR(objGlobal)
+                    Return CType(Clase, EXO_ORDR).SBOApp_FormDataEvent(infoEvento)
+            End Select
+
+            Return MyBase.SBOApp_FormDataEvent(infoEvento)
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_TipoMensaje.Excepcion, EXO_TipoSalidaMensaje.MessageBox, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            Return False
+        Finally
+            Clase = Nothing
+        End Try
+
     End Function
 End Class

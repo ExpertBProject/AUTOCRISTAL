@@ -160,26 +160,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="SAPbobsCOM">
-      <Guid>{FC8030BE-F5D2-4B8E-8F92-44228FE30100}</Guid>
-      <VersionMajor>10</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="SAPbouiCOM">
-      <Guid>{6048236A-956D-498D-A6F1-9C81C13AB6E8}</Guid>
-      <VersionMajor>10</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDO_EXO_DTARIFAS.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -220,6 +200,26 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDO_EXO_CONAG.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="SAPbobsCOM">
+      <Guid>{FC8030BE-F5D2-4B8E-8F92-44228FE30100}</Guid>
+      <VersionMajor>10</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="SAPbouiCOM">
+      <Guid>{6048236A-956D-498D-A6F1-9C81C13AB6E8}</Guid>
+      <VersionMajor>10</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

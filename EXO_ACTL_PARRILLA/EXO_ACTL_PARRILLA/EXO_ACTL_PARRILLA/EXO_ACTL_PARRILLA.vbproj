@@ -102,6 +102,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EXO_OCRD.vb" />
+    <Compile Include="EXO_ORDR.vb" />
     <Compile Include="EXO_PARRILLA.vb" />
     <Compile Include="EXO_RSTOCK.vb" />
     <Compile Include="INICIO.vb" />
@@ -187,6 +189,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FORMS\EXO_RSTOCK.srf" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDFs_OCRD.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

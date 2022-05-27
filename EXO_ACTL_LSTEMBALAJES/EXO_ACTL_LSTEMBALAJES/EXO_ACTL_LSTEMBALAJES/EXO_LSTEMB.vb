@@ -92,7 +92,9 @@ Public Class EXO_LSTEMB
                                 Case SAPbouiCOM.BoEventTypes.et_CLICK
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-
+                                    If EventHandler_ItemPressed_Before(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
 
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
@@ -149,7 +151,90 @@ Public Class EXO_LSTEMB
             Return False
         End Try
     End Function
+    Private Function EventHandler_ItemPressed_Before(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
 
+        EventHandler_ItemPressed_Before = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            Select Case pVal.ItemUID
+                Case "1_U_FD"
+                    If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                        Rellena_Grid(oForm)
+                    ElseIf oForm.Mode = BoFormMode.fm_ADD_MODE Or oForm.Mode = BoFormMode.fm_UPDATE_MODE Then
+                        objGlobal.SBOApp.StatusBar.SetText("Grabe primero para poder ver el resumen.", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                        objGlobal.SBOApp.MessageBox("Grabe primero para poder ver el resumen.")
+                    End If
+            End Select
+
+            EventHandler_ItemPressed_Before = True
+
+        Catch ex As Exception
+            oForm.Freeze(False)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+    Private Sub Rellena_Grid(ByRef oform As SAPbouiCOM.Form)
+#Region "Variables"
+        Dim sSQL As String = ""
+        Dim sDocEntry As String = ""
+#End Region
+        Try
+            sDocEntry = oform.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("DocEntry", 0)
+            If sDocEntry = "" Then
+                sDocEntry = CType(oform.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString()
+            End If
+            objGlobal.SBOApp.StatusBar.SetText("Documento Nº " & sDocEntry, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            sSQL = "SELECT DISTINCT T0.""U_EXO_IDBULTO"" ""ID BULTO"", T0.""U_EXO_TBULTO"" ""BULTO"", IFNULL( T3.""U_EXO_VOLUMEN"",0.00) ""VOLUMEN"", ifnull(T3.""U_EXO_PESO"",0.00) ""PESO"" "
+            sSQL &= "FROM ""@EXO_LSTEMBL""  T0 "
+            sSQL &= " Left JOIN  ""@EXO_LSTEMB""   T1  on T0.""DocEntry"" = T1.""DocEntry"" "
+            sSQL &= " Left JOIN  ""OSHP"" T2 ON T2.""TrnspCode"" = T1.""U_EXO_CEXP""  "
+            sSQL &= " Left JOIN  ""OPKG"" T4 ON T4.""PkgType"" = T0.""U_EXO_TBULTO"" "
+            sSQL &= " Left JOIN ""@EXO_BULTOSAGL"" T3 ON T3.""Code"" = T2.""U_EXO_AGE"" and T4.""PkgCode"" = T3.""U_EXO_BULTO"" "
+            sSQL &= " WHERE T0.""DocEntry"" =" & sDocEntry
+            oform.DataSources.DataTables.Item("DTRES").ExecuteQuery(sSQL)
+            FormateaGrid(oform)
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Sub
+    Private Sub FormateaGrid(ByRef oform As SAPbouiCOM.Form)
+        Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
+        Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
+        Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
+        Dim sSQL As String = ""
+        Try
+            oform.Freeze(True)
+
+            For i = 0 To 3
+                Select Case i
+                    Case 2, 3
+                        CType(oform.Items.Item("grdRES").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                        oColumnTxt = CType(CType(oform.Items.Item("grdRES").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                        oColumnTxt.Editable = False
+                        oColumnTxt.RightJustified = True
+                    Case Else
+                        CType(oform.Items.Item("grdRES").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                        oColumnTxt = CType(CType(oform.Items.Item("grdRES").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                        oColumnTxt.Editable = False
+                End Select
+            Next
+            CType(oform.Items.Item("grdRES").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oform.Freeze(False)
+        End Try
+    End Sub
     Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
 
         Dim oForm As SAPbouiCOM.Form = Nothing
@@ -197,7 +282,7 @@ Public Class EXO_LSTEMB
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oRs As SAPbobsCOM.Recordset = Nothing
         Dim sCardCode As String = ""
-        Dim sBulto As String = ""
+        Dim sBulto As String = "" : Dim sTBulto As String = ""
         Dim sArticulo As String = ""
         Dim sSQL As String = ""
         EventHandler_Choose_FromList_After = False
@@ -223,7 +308,7 @@ Public Class EXO_LSTEMB
                                     sCardCode = oDataTable.GetValue("CardCode", 0).ToString
                                     CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value = oDataTable.GetValue("CardName", 0).ToString
                                     'Cargamos Combo de dirección
-                                    sSQL = "SELECT ""Address"" FROM CRD1 WHERE ""CardCode""='" & sCardCode & "' and ""AdresType""='S' "
+                                    sSQL = "Select ""Address"" FROM CRD1 WHERE ""CardCode""='" & sCardCode & "' and ""AdresType""='S' "
                                     objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("24_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
                                 Catch ex As Exception
 
@@ -231,12 +316,19 @@ Public Class EXO_LSTEMB
                             End If
                         End If
                     Case "CFLOPKG"
+                        sTBulto = oDataTable.GetValue("PkgType", 0).ToString
                         sBulto = oDataTable.GetValue("U_EXO_DESBUL", 0).ToString
+                        oForm.DataSources.DBDataSources.Item("@EXO_LSTEMBL").SetValue("U_EXO_TBULTO", pVal.Row - 1, sTBulto)
                         oForm.DataSources.DBDataSources.Item("@EXO_LSTEMBL").SetValue("U_EXO_BULTO", pVal.Row - 1, sBulto)
-                        'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sBulto
+                        CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sBulto
+                        CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sTBulto
                     Case "CFLART"
                         sArticulo = oDataTable.GetValue("ItemName", 0).ToString
                         oForm.DataSources.DBDataSources.Item("@EXO_LSTEMBL").SetValue("U_EXO_ITEMNAME", pVal.Row - 1, sArticulo)
+                        CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_9").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sArticulo
+                        sArticulo = oDataTable.GetValue("ItemCode", 0).ToString
+                        oForm.DataSources.DBDataSources.Item("@EXO_LSTEMBL").SetValue("U_EXO_ITEMCODE", pVal.Row - 1, sArticulo)
+                        CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_8").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sArticulo
                 End Select
             End If
 
@@ -254,7 +346,9 @@ Public Class EXO_LSTEMB
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sSQL As String = ""
+        Dim sFecha As String = "" : Dim dFecha As Date = New Date(Now.Year, Now.Month, Now.Day) : Dim sClaseExp As String = ""
         Dim oItem As SAPbouiCOM.Item = Nothing
+        Dim sAlmacen As String = ""
         EventHandler_COMBO_SELECT_After = False
 
         Try
@@ -265,6 +359,55 @@ Public Class EXO_LSTEMB
                         Dim sSerie As String = CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
                         EXO_GLOBALES.Poner_DocNum(oForm, sSerie, objGlobal)
                     End If
+                ElseIf pVal.ItemUID = "20_U_Cb" Then
+                    'Actualizamos el combo de cargar	Id – Envío – Tte
+                    sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+                    If sFecha = "" Then
+                        sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
+                        oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
+                    End If
+                    If CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
+                        sClaseExp = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                    Else
+                        sClaseExp = ""
+                    End If
+                    sSQL = " SELECT '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
+                    sSQL &= " UNION ALL "
+                    sSQL &= "SELECT CAST(""DocEntry"" as nVARCHAR),CAST(""DocNum"" as nVARCHAR) FROM ""@EXO_ENVTRANS"" WHERE ""Status""='O' "
+                    sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
+                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                    oForm.Items.Item("1_U_Cb").DisplayDesc = True
+                ElseIf pVal.ItemUID = "22_U_Cb" Then
+                    sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+                    If sFecha = "" Then
+                        sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
+                        oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
+                    End If
+                    sAlmacen = CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                    'Expedición
+                    sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
+                    sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
+                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
+                    sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    sSQL &= " UNION ALL "
+                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
+                    sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    sSQL &= " UNION ALL "
+                    sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
+                    sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    sSQL &= " UNION ALL "
+                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
+                    sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    sSQL &= " UNION ALL "
+                    sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
+                    sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
+                    sSQL &= " ) ORDER BY ""TrnspName"""
+                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
                 End If
             End If
 
@@ -290,15 +433,14 @@ Public Class EXO_LSTEMB
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
-
+                Cargar_Combos(oForm)
                 If oForm.Mode = BoFormMode.fm_ADD_MODE Then
                     EXO_GLOBALES.Modo_Anadir(oForm, objGlobal)
                 End If
-                Cargar_Combos(oForm)
+
                 If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
                     objGlobal.SBOApp.ActivateMenuItem("1304")
                 End If
-
             End If
 
             EventHandler_Form_Visible = True
@@ -316,22 +458,74 @@ Public Class EXO_LSTEMB
     Private Sub Cargar_Combos(ByRef oform As SAPbouiCOM.Form)
 #Region "Variables"
         Dim sSQL As String = ""
-        Dim sFecha As String = ""
-        Dim sClaseExp As String = ""
+        Dim sFecha As String = "" : Dim dFecha As Date = New Date(Now.Year, Now.Month, Now.Day)
+        Dim sClaseExp As String = "" : Dim sSucursal As String = ""
+        Dim sAlmacendef As String = ""
 #End Region
         Try
+            sFecha = CType(oform.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+            If sFecha = "" Then
+                sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
+                oform.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
+            End If
 
-            'Expedición
-            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' "
-            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-            CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(0, BoSearchKey.psk_Index)
+            sSQL = "SELECT ""Branch"" FROM OUSR WHERE ""USERID""=" & objGlobal.compañia.UserSignature.ToString
+            sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            sSQL = " SELECT ""WhsCode"",""WhsName"" FROM OWHS"
+            sSQL &= " WHERE ""Inactive""='N' and ""U_EXO_SUCURSAL""='" & sSucursal & "' "
+            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+            oform.Items.Item("22_U_Cb").DisplayDesc = True
+
             'Series 
             sSQL = "SELECT ""Series"",""SeriesName"" FROM NNM1 WHERE ""ObjectCode""='EXO_LSTEMB' "
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oform.Items.Item("4_U_Cb").DisplayDesc = True
 
-            sFecha = CType(oform.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
-            sClaseExp = CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            If oform.Mode = BoFormMode.fm_ADD_MODE Then
+                'Poner almacen por defecto
+                Try
+                    sSQL = " SELECT TOP 1 ""WhsCode"" FROM OWHS"
+                    sSQL &= " WHERE ""Inactive""='N' and ""U_EXO_SUCURSAL""='" & sSucursal & "' "
+                    sAlmacendef = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    CType(oform.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sAlmacendef, BoSearchKey.psk_ByValue)
+                Catch ex As Exception
+
+                End Try
+            Else
+                sAlmacendef = oform.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("U_EXO_ALMACEN", 0)
+            End If
+
+            'Expedición
+            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
+            sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
+            sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
+            sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
+            sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
+            sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
+            sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
+            sSQL &= " ) ORDER BY ""TrnspName"""
+            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+            If CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues.Count > 0 Then
+                CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(0, BoSearchKey.psk_Index)
+                sClaseExp = CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            Else
+                sClaseExp = ""
+            End If
+
 
             'cargar	Id – Envío – Tte
             sSQL = " SELECT '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
@@ -340,6 +534,7 @@ Public Class EXO_LSTEMB
             sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oform.Items.Item("1_U_Cb").DisplayDesc = True
+
 
         Catch ex As Exception
             Throw ex
@@ -399,9 +594,40 @@ Public Class EXO_LSTEMB
         Dim sFecha As String = ""
         Dim sClaseExp As String = ""
         Dim sCardCode As String = ""
+        Dim sAlmacen As String = ""
         Try
             sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
-            sClaseExp = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+
+            sAlmacen = oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("U_EXO_ALMACEN", 0)
+            'Expedición
+            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
+            sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
+            sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
+            sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
+            sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
+            sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+            sSQL &= " UNION ALL "
+            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
+            sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
+            sSQL &= " ) ORDER BY ""TrnspName"""
+            objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+            If CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues.Count > 0 Then
+                sClaseExp = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            Else
+                sClaseExp = oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("U_EXO_CEXP", 0)
+            End If
 
             'cargar	Id – Envío – Tte
             sSQL = " SELECT '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
@@ -416,6 +642,9 @@ Public Class EXO_LSTEMB
             sSQL = "SELECT ""Address"" FROM CRD1 WHERE ""CardCode""='" & sCardCode & "' and ""AdresType""='S' "
             objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("24_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
+            'If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
+            '    objGlobal.SBOApp.ActivateMenuItem("1304")
+            'End If
         Catch ex As Exception
             Throw ex
         End Try

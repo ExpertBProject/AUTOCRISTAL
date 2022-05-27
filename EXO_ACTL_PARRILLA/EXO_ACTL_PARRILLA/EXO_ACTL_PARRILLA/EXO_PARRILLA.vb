@@ -202,6 +202,10 @@ Public Class EXO_PARRILLA
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_ACTIVATE
 
+                                Case SAPbouiCOM.BoEventTypes.et_FORM_RESIZE
+                                    If EventHandler_FORM_RESIZE_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                             End Select
                     End Select
                 ElseIf infoEvento.BeforeAction = True Then
@@ -267,6 +271,20 @@ Public Class EXO_PARRILLA
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
+        End Try
+    End Function
+    Private Function EventHandler_FORM_RESIZE_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            oForm.Items.Item("grdSPTE").Height = 140
+            oForm.Items.Item("grdSLIB").Height = 140
+            oForm.Items.Item("grdSCOM").Height = 140
+            oForm.Items.Item("grdE").Height = 140
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_COMBO_SELECT_After(ByRef pVal As ItemEvent) As Boolean

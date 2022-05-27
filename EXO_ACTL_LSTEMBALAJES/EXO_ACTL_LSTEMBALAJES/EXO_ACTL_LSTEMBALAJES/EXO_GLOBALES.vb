@@ -25,8 +25,8 @@ Public Class EXO_GLOBALES
                     sSQL = " SELECT ""DfltSeries"" FROM ONNM WHERE ""ObjectCode""='EXO_LSTEMB' "
                     sSerieDef = oObjglobal.refDi.SQL.sqlStringB1(sSQL)
                     CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
-                    Poner_DocNum(oForm, sSerieDef, oObjglobal)
                 Case "UDO_FT_EXO_ENVTRANS"
+                    'Poner fecha
                     sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
                     oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_DOCDATE", 0, sFecha)
 
@@ -39,12 +39,12 @@ Public Class EXO_GLOBALES
                     sSQL = " SELECT ""DfltSeries"" FROM ONNM WHERE ""ObjectCode""='EXO_ENVTRANS' "
                     sSerieDef = oObjglobal.refDi.SQL.sqlStringB1(sSQL)
                     CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
-                    Dim iNum As Integer
-                    iNum = oForm.BusinessObject.GetNextSerialNumber(CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString, oForm.BusinessObject.Type.ToString)
-                    oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
-                    'Poner_DocNum(oForm, sSerieDef, oObjglobal)
+                    'Dim iNum As Integer
+                    'iNum = oForm.BusinessObject.GetNextSerialNumber(CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString, oForm.BusinessObject.Type.ToString)
+                    'oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
+                    ' Poner_DocNum(oForm, sSerieDef, oObjglobal)
             End Select
-
+            Poner_DocNum(oForm, sSerieDef, oObjglobal)
 
 
         Catch ex As Exception
@@ -55,17 +55,17 @@ Public Class EXO_GLOBALES
 #Region "Variables"
         Dim sDocNum As String = ""
         Dim sSQL As String = ""
+        Dim iNum As Integer
+
 #End Region
         Try
             Select Case oForm.TypeEx
                 Case "UDO_FT_EXO_LSTEMB"
-                    sSQL = "SELECT ""NextNumber"" FROM NNM1 WHERE ""ObjectCode""='EXO_LSTEMB' and ""Series""='" & sSerie & "' "
-                    sDocNum = oObjglobal.refDi.SQL.sqlStringB1(sSQL)
-                    oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("DocNum", 0, sDocNum)
+                    iNum = oForm.BusinessObject.GetNextSerialNumber(sSerie, oForm.BusinessObject.Type.ToString)
+                    oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("DocNum", 0, iNum.ToString)
                 Case "UDO_FT_EXO_ENVTRANS"
-                    sSQL = "SELECT ""NextNumber"" FROM NNM1 WHERE ""ObjectCode""='EXO_ENVTRANS' and ""Series""='" & sSerie & "' "
-                    sDocNum = oObjglobal.refDi.SQL.sqlStringB1(sSQL)
-                    oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, sDocNum)
+                    iNum = oForm.BusinessObject.GetNextSerialNumber(sSerie, oForm.BusinessObject.Type.ToString)
+                    oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
             End Select
 
         Catch ex As Exception
