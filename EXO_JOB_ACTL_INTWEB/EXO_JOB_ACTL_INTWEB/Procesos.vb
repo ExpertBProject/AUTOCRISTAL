@@ -21,7 +21,7 @@ Public Class Procesos
         Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
 #End Region
         Try
-            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 "
+            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 ORDER BY ""ID"" "
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
@@ -60,7 +60,37 @@ Public Class Procesos
 
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
+#Region "Serie"
+                        Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'")
+                        Dim sSerie As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@NNM1""", """Series""", "WHERE ""ObjectCode""='17' and ""SeriesName""='" & sSerieName & "'")
+                        If sSerie <> "" Then
+                            oORDR.Series = CInt(sSerie)
+                        End If
+#End Region
                         oORDR.CardCode = sCliente
+#Region "Dirección"
+                        If odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString <> "" Then
+                            oORDR.AddressExtension.ShipToStreet = odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToZipCode = odtDatosWeb.Rows.Item(iCab).Item("CP_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCity = odtDatosWeb.Rows.Item(iCab).Item("MUNICIPIO_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCounty = odtDatosWeb.Rows.Item(iCab).Item("PROVINCIA_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCountry = odtDatosWeb.Rows.Item(iCab).Item("PAIS_ENVIO").ToString
+                        End If
+#End Region
+#Region "Autorizado"
+                        If odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "0" Then
+                            oORDR.Confirmed = BoYesNoEnum.tYES
+                        ElseIf odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "1" And odtDatosWeb.Rows.Item(iCab).Item("PAGADO").ToString.Trim = "1" Then
+                            oORDR.Confirmed = BoYesNoEnum.tNO
+                            'Condición de pago
+                            oORDR.GroupNumber = -1
+                            Dim sPMethod As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_VIAPAGO' and ""Code""='EXO_KERNEL'")
+                            If sPMethod <> "" Then
+                                oORDR.PaymentMethod = sPMethod
+                            End If
+
+                        End If
+#End Region
                         oORDR.TaxDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
                         oORDR.DocDueDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
                         Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'")
@@ -394,6 +424,35 @@ Public Class Procesos
 #End Region
             Next
 
+#End Region
+#Region "Parámetros"
+            oLog.escribeMensaje("######                                                      ###### ", EXO_Log.EXO_Log.Tipo.informacion)
+            oLog.escribeMensaje("##################################################################", EXO_Log.EXO_Log.Tipo.informacion)
+
+            Dim oGeneralService As SAPbobsCOM.GeneralService = Nothing
+            Dim oGeneralData As SAPbobsCOM.GeneralData = Nothing
+            Dim oGeneralParams As SAPbobsCOM.GeneralDataParams = Nothing
+            Dim genserdataint As SAPbobsCOM.GeneralServiceDataInterfaces = Nothing
+            Dim oCompService As SAPbobsCOM.CompanyService = oCompany.GetCompanyService()
+
+            oGeneralService = CType(oCompany.GetCompanyService().GetGeneralService("EXO_OGEN"), SAPbobsCOM.GeneralService)
+            oGeneralParams = CType(oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams), SAPbobsCOM.GeneralDataParams)
+            oGeneralParams.SetProperty("Code", "EXO_KERNEL")
+            oGeneralData = oGeneralService.GetByParams(oGeneralParams)
+
+            Dim oChild As SAPbobsCOM.GeneralData = Nothing
+            Dim oChildren As SAPbobsCOM.GeneralDataCollection = oGeneralData.Child("EXO_OGEN1")
+            oLog.escribeMensaje("###### CREANDO PARÁMETRO:  EXO_VIAPAGO ", EXO_Log.EXO_Log.Tipo.informacion)
+            oChild = oChildren.Add()
+            oChild.SetProperty("U_EXO_NOMV", "EXO_VIAPAGO")
+            oChild.SetProperty("U_EXO_INFV", "CO-TA")
+            oLog.escribeMensaje("###### CREANDO PARÁMETRO:  EXO_SERIEPEDWEB", EXO_Log.EXO_Log.Tipo.informacion)
+            oChild = oChildren.Add()
+            oChild.SetProperty("U_EXO_NOMV", "EXO_SERIEPEDWEB")
+            oChild.SetProperty("U_EXO_INFV", "P_WEB")
+            oGeneralService.Update(oGeneralData)
+            oLog.escribeMensaje("###### PARÁMETROS CREADOS ", EXO_Log.EXO_Log.Tipo.informacion)
+            oLog.escribeMensaje("##################################################################", EXO_Log.EXO_Log.Tipo.informacion)
 #End Region
         Catch exCOM As System.Runtime.InteropServices.COMException
             sError = exCOM.Message
