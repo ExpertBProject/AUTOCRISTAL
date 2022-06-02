@@ -278,9 +278,26 @@ Public Class EXO_PARRILLA
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             oForm.Items.Item("grdSPTE").Height = 140
+            oForm.Items.Item("Item_5").Top = oForm.Items.Item("grdSPTE").Top - 15
+            oForm.Items.Item("btLPicking").Top = oForm.Items.Item("grdSPTE").Top + 5
+            oForm.Items.Item("btCPed").Top = oForm.Items.Item("grdSPTE").Top + 31
+            oForm.Items.Item("btCALM").Top = oForm.Items.Item("grdSPTE").Top + 57
+            oForm.Items.Item("btCCEXP").Top = oForm.Items.Item("grdSPTE").Top + 83
+            oForm.Items.Item("btASS").Top = oForm.Items.Item("grdSPTE").Top + 109
+
             oForm.Items.Item("grdSLIB").Height = 140
+            oForm.Items.Item("Item_6").Top = oForm.Items.Item("grdSLIB").Top - 15
+            oForm.Items.Item("btGENALB").Top = oForm.Items.Item("grdSLIB").Top + 10
+            oForm.Items.Item("btCCEXPL").Top = oForm.Items.Item("btGENALB").Top + 88
+
             oForm.Items.Item("grdSCOM").Height = 140
+            oForm.Items.Item("Item_12").Top = oForm.Items.Item("grdSCOM").Top - 15
+            oForm.Items.Item("btCCEXPC").Top = oForm.Items.Item("grdSCOM").Top + 5
+            oForm.Items.Item("btImpD").Top = oForm.Items.Item("btCCEXPC").Top + 50
+            oForm.Items.Item("btIMPE").Top = oForm.Items.Item("btImpD").Top + 50
+
             oForm.Items.Item("grdE").Height = 140
+            oForm.Items.Item("Item_18").Top = oForm.Items.Item("grdE").Top - 15
         Catch ex As Exception
             Throw ex
         Finally
