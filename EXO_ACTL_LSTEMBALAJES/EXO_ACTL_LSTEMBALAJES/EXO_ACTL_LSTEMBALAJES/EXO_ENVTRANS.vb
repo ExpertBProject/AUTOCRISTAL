@@ -129,7 +129,9 @@ Public Class EXO_ENVTRANS
                                         Return False
                                     End If
                                 Case SAPbouiCOM.BoEventTypes.et_GOT_FOCUS
-
+                                    If EventHandler_GOT_FOCUS_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
 
                             End Select
@@ -146,6 +148,8 @@ Public Class EXO_ENVTRANS
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
 
+                                Case SAPbouiCOM.BoEventTypes.et_GOT_FOCUS
+
                             End Select
                     End Select
                 End If
@@ -156,6 +160,34 @@ Public Class EXO_ENVTRANS
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
+        End Try
+    End Function
+    Private Function EventHandler_GOT_FOCUS_After(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
+
+        EventHandler_GOT_FOCUS_After = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            Select Case pVal.ItemUID
+                Case "22_U_Cb"
+                    If oForm.Mode = BoFormMode.fm_ADD_MODE Or oForm.Mode = BoFormMode.fm_FIND_MODE Then
+                        If pVal.ItemChanged = True Then
+                            Cargar_Combos(oForm)
+                        End If
+                    End If
+            End Select
+
+            EventHandler_GOT_FOCUS_After = True
+
+        Catch ex As Exception
+            oForm.Freeze(False)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_ItemPressed_Before(ByVal pVal As ItemEvent) As Boolean
@@ -357,6 +389,27 @@ Public Class EXO_ENVTRANS
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_ENVTRANS" Then
+                'No dejamos que modifique la cabecera
+                oItem = oForm.Items.Item("22_U_Cb")
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem = oForm.Items.Item("4_U_Cb")
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem = oForm.Items.Item("20_U_Cb")
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem = oForm.Items.Item("21_U_E")
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+                oItem = oForm.Items.Item("23_U_E")
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
 
                 Cargar_Combos(oForm)
                 Dim sAgencia As String = CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value
@@ -605,7 +658,8 @@ Public Class EXO_ENVTRANS
     Public Function SBOApp_FormDataEvent(ByVal infoEvento As BusinessObjectInfo) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oXml As New Xml.XmlDocument
-
+        Dim sFecha As String = "" : Dim sAlmacen As String = "" : Dim sSucursal As String = ""
+        Dim sSQL As String = ""
         Try
             oForm = objGlobal.SBOApp.Forms.Item(infoEvento.FormUID)
             If infoEvento.BeforeAction = True Then
@@ -614,6 +668,17 @@ Public Class EXO_ENVTRANS
                         Select Case infoEvento.EventType
                             Case SAPbouiCOM.BoEventTypes.et_FORM_DATA_LOAD
                                 If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                                    'Almacen
+                                    'sSQL = "SELECT ""Branch"" FROM OUSR WHERE ""USERID""=" & objGlobal.compañia.UserSignature.ToString
+                                    'sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                    sSQL = " SELECT ""WhsCode"",""WhsName"" FROM OWHS"
+                                    sSQL &= " WHERE ""Inactive""='N' "
+                                    'ssql &= " And ""U_EXO_SUCURSAL""='" & sSucursal & "' "
+                                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                                    'Expedición
+                                    sSQL = "Select ""TrnspCode"",""TrnspName"" FROM OSHP "
+                                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+
                                     Dim sAgencia As String = CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value
                                     Cargar_Combo_Matricula_Conductor_Plataforma(oForm, sAgencia)
                                 End If
