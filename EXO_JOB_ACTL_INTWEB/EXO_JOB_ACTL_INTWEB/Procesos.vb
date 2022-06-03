@@ -5,7 +5,6 @@ Imports System.Xml
 Imports SAPbobsCOM
 
 Public Class Procesos
-
     Public Shared Sub LecturaTabla(ByRef db As HanaConnection, ByRef dbWEB As HanaConnection, ByRef oCompany As SAPbobsCOM.Company, ByRef oLog As EXO_Log.EXO_Log)
 #Region "Variables"
         Dim sError As String = ""
@@ -21,7 +20,162 @@ Public Class Procesos
         Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
 #End Region
         Try
-            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 ORDER BY ""ID"" "
+            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 AND ""REPROCESAR=0 ORDER BY ""ID"" "
+            Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
+            If odtDatosWeb.Rows.Count > 0 Then
+                For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
+                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString Then
+                        iLin = 0
+                        If iCab <> 0 Then
+                            If oORDR.Add() <> 0 Then
+                                sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
+                                oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
+
+                                'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                sSubject = "Pedido WEB del Cliente " & sCliente & " con error: " & sError
+                                sTipo = "Pedido WEB"
+                                sComen = sError
+                                EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
+                            Else
+                                oCompany.GetNewObjectCode(sDocEntry)
+                                sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
+
+                                'udpate BBDD
+                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                Conexiones.ExecuteSqlDB(dbWEB, sSQL)
+                                oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
+                                'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                sSubject = "Pedido WEB de Venta " & sDocNum & " se ha registrado correctamente con el cliente " & sCliente
+                                sTipo = "Pedido de Cliente WEB"
+                                oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
+                                sComen = ""
+                                EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                            End If
+                            sID = odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
+                        Else
+                            sID = odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
+                        End If
+
+
+                        sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
+                        oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
+#Region "Serie"
+                        Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'")
+                        Dim sSerie As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@NNM1""", """Series""", "WHERE ""ObjectCode""='17' and ""SeriesName""='" & sSerieName & "'")
+                        If sSerie <> "" Then
+                            oORDR.Series = CInt(sSerie)
+                        End If
+#End Region
+                        oORDR.CardCode = sCliente
+#Region "Dirección"
+                        If odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString <> "" Then
+                            oORDR.AddressExtension.ShipToStreet = odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToZipCode = odtDatosWeb.Rows.Item(iCab).Item("CP_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCity = odtDatosWeb.Rows.Item(iCab).Item("MUNICIPIO_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCounty = odtDatosWeb.Rows.Item(iCab).Item("PROVINCIA_ENVIO").ToString
+                            oORDR.AddressExtension.ShipToCountry = odtDatosWeb.Rows.Item(iCab).Item("PAIS_ENVIO").ToString
+                        End If
+#End Region
+#Region "Autorizado"
+                        If odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "0" Then
+                            oORDR.Confirmed = BoYesNoEnum.tYES
+                        ElseIf odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "1" And odtDatosWeb.Rows.Item(iCab).Item("PAGADO").ToString.Trim = "1" Then
+                            oORDR.Confirmed = BoYesNoEnum.tNO
+                            'Condición de pago
+                            oORDR.GroupNumber = -1
+                            Dim sPMethod As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_VIAPAGO' and ""Code""='EXO_KERNEL'")
+                            If sPMethod <> "" Then
+                                oORDR.PaymentMethod = sPMethod
+                            End If
+
+                        End If
+#End Region
+                        oORDR.TaxDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
+                        oORDR.DocDueDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
+                        Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'")
+                        Dim sTransporte As String = ""
+                        sDELALMACEN = odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString
+                        If sAgencia = "" Or sAgencia = "-" Then
+                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'")
+                        Else
+                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ")
+                        End If
+                        If IsNumeric(sTransporte) Then
+                            oORDR.TransportationCode = CInt(sTransporte)
+                        End If
+
+                        oORDR.Comments = "Pedido creado desde WEB. " & ChrW(13) & ChrW(10) & odtDatosWeb.Rows.Item(iCab).Item("OBSERVACIONES").ToString
+                        oLog.escribeMensaje("Tratando Documento de Cliente " & sCliente & "...", EXO_Log.EXO_Log.Tipo.informacion)
+                    Else
+                        iLin += 1
+                        sID &= "," & odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
+                    End If
+                    If iLin <> 0 Then
+                        oORDR.Lines.Add()
+                    End If
+                    oORDR.Lines.ItemCode = odtDatosWeb.Rows.Item(iCab).Item("CREF").ToString
+                    oORDR.Lines.Quantity = CDbl(odtDatosWeb.Rows.Item(iCab).Item("NUNIDADES").ToString)
+                    oORDR.Lines.UnitPrice = CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString)
+                    oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT001").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString)
+                    oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT002").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString)
+                    oORDR.Lines.DiscountPercent = (CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) + CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) - ((CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) * CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) / 100)))
+                    sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
+                    Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ")
+                    oORDR.Lines.WarehouseCode = sAlmacen
+                Next
+                If oORDR.Add() <> 0 Then
+                    sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
+                    oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
+
+                    'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                    sSubject = "Pedido WEB del Cliente " & sCliente & " ha tenido un error"
+                    sTipo = "Pedido WEB"
+                    sComen = sError
+                    EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
+                Else
+                    oCompany.GetNewObjectCode(sDocEntry)
+                    sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
+
+                    'udpate BBDD
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    Conexiones.ExecuteSqlDB(dbWEB, sSQL)
+
+                    'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                    sSubject = "Pedido WEB de Venta " & sDocNum & " se ha registrado correctamente con el cliente " & sCliente
+                    sTipo = "Pedido de Cliente WEB"
+                    oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
+                    sComen = ""
+                    EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                End If
+            Else
+                oLog.escribeMensaje("##### No existen registros para crear pedidos.", EXO_Log.EXO_Log.Tipo.advertencia)
+            End If
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            sError = exCOM.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Catch ex As Exception
+            sError = ex.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Finally
+
+        End Try
+    End Sub
+    Public Shared Sub REPROCESAR(ByRef db As HanaConnection, ByRef dbWEB As HanaConnection, ByRef oCompany As SAPbobsCOM.Company, ByRef oLog As EXO_Log.EXO_Log)
+#Region "Variables"
+        Dim sError As String = ""
+        Dim sSQL As String = ""
+        Dim sBBDDWEB As String = Conexiones.Datos_Confi("HANAWEB", "databaseName")
+        Dim odtDatosWeb As System.Data.DataTable = New System.Data.DataTable
+        Dim sCliente As String = "" : Dim sID As String = ""
+        Dim oORDR As SAPbobsCOM.Documents = Nothing : Dim iLin As Integer = 0
+
+        Dim sSubject As String = ""
+        Dim sTipo As String = ""
+        Dim sComen As String = ""
+        Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
+#End Region
+        Try
+            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""NPEDIDO""<>0 AND ""REPROCESAR=1 ORDER BY ""ID"" "
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
@@ -314,10 +468,11 @@ Public Class Procesos
         Try
 #Region "CREAR EN SAP EN BBDD"
             Dim sruta As String = ""
-            For F = 0 To 1
+            For F = 0 To 2
                 Select Case F
                     Case 0 : sruta = sDir & "\01.XML\XML_BD\UDFs_OUSR.xml"
                     Case 1 : sruta = sDir & "\01.XML\XML_BD\UDFs_OWHS.xml"
+                    Case 2 : sruta = sDir & "\01.XML\XML_BD\UDFs_RDR1.xml"
                 End Select
 #Region "Importación"
                 oLog.escribeMensaje("######                                                      ###### ", EXO_Log.EXO_Log.Tipo.informacion)

@@ -41,6 +41,7 @@ Module JOB
                     Procesos.Actualizar_Campos(oLog, oDBSAP, oCompany, False)
                 Else
                     Procesos.LecturaTabla(oDBSAP, oDBWEB, oCompany, oLog)
+                    Procesos.REPROCESAR(oDBSAP, oDBWEB, oCompany, oLog)
                 End If
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)
