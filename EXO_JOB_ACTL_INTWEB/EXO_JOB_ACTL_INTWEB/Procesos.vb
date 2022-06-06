@@ -29,7 +29,7 @@ Public Class Procesos
                         If iCab <> 0 Then
                             If oORDR.Add() <> 0 Then
                                 sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
-                                oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
+                                oLog.escribeMensaje("Se ha producido una error al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.error)
 
                                 'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                                 sSubject = "Pedido WEB del Cliente " & sCliente & " con error: " & sError
@@ -125,7 +125,7 @@ Public Class Procesos
                 Next
                 If oORDR.Add() <> 0 Then
                     sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
-                    oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
+                    oLog.escribeMensaje("Se ha producido una error al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.error)
 
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                     sSubject = "Pedido WEB del Cliente " & sCliente & " ha tenido un error"
@@ -168,7 +168,7 @@ Public Class Procesos
         Dim odtDatosWeb As System.Data.DataTable = New System.Data.DataTable
         Dim sCliente As String = "" : Dim sID As String = ""
         Dim oORDR As SAPbobsCOM.Documents = Nothing : Dim iLin As Integer = 0
-
+        Dim sPAGADO As String = ""
         Dim sSubject As String = ""
         Dim sTipo As String = ""
         Dim sComen As String = ""
@@ -180,130 +180,71 @@ Public Class Procesos
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
                     If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString Then
-                        iLin = 0
-                        If iCab <> 0 Then
-                            If oORDR.Add() <> 0 Then
-                                sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
-                                oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
-
-                                'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
-                                sSubject = "Pedido WEB del Cliente " & sCliente & " con error: " & sError
-                                sTipo = "Pedido WEB"
-                                sComen = sError
-                                EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
-                            Else
-                                oCompany.GetNewObjectCode(sDocEntry)
-                                sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
-
-                                'udpate BBDD
-                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
-                                Conexiones.ExecuteSqlDB(dbWEB, sSQL)
-                                oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
-                                'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
-                                sSubject = "Pedido WEB de Venta " & sDocNum & " se ha registrado correctamente con el cliente " & sCliente
-                                sTipo = "Pedido de Cliente WEB"
-                                oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
-                                sComen = ""
-                                EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
-                            End If
-                            sID = odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
-                        Else
-                            sID = odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
-                        End If
-
-
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
+                        sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
+                        sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
+                        sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
+                        oLog.escribeMensaje("Tratando pedido Nº " & sDocNum & " de Cliente " & sCliente & "...", EXO_Log.EXO_Log.Tipo.informacion)
+
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
-#Region "Serie"
-                        Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'")
-                        Dim sSerie As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@NNM1""", """Series""", "WHERE ""ObjectCode""='17' and ""SeriesName""='" & sSerieName & "'")
-                        If sSerie <> "" Then
-                            oORDR.Series = CInt(sSerie)
-                        End If
-#End Region
-                        oORDR.CardCode = sCliente
-#Region "Dirección"
-                        If odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString <> "" Then
-                            oORDR.AddressExtension.ShipToStreet = odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString
-                            oORDR.AddressExtension.ShipToZipCode = odtDatosWeb.Rows.Item(iCab).Item("CP_ENVIO").ToString
-                            oORDR.AddressExtension.ShipToCity = odtDatosWeb.Rows.Item(iCab).Item("MUNICIPIO_ENVIO").ToString
-                            oORDR.AddressExtension.ShipToCounty = odtDatosWeb.Rows.Item(iCab).Item("PROVINCIA_ENVIO").ToString
-                            oORDR.AddressExtension.ShipToCountry = odtDatosWeb.Rows.Item(iCab).Item("PAIS_ENVIO").ToString
-                        End If
-#End Region
-#Region "Autorizado"
-                        If odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "0" Then
-                            oORDR.Confirmed = BoYesNoEnum.tYES
-                        ElseIf odtDatosWeb.Rows.Item(iCab).Item("TPV").ToString.Trim = "1" And odtDatosWeb.Rows.Item(iCab).Item("PAGADO").ToString.Trim = "1" Then
-                            oORDR.Confirmed = BoYesNoEnum.tNO
-                            'Condición de pago
-                            oORDR.GroupNumber = -1
-                            Dim sPMethod As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_VIAPAGO' and ""Code""='EXO_KERNEL'")
-                            If sPMethod <> "" Then
-                                oORDR.PaymentMethod = sPMethod
-                            End If
+                        'Falta saber qué es DocEntry
+                        If oORDR.GetByKey(CInt(sDocEntry)) = True Then
+                            sPAGADO = odtDatosWeb.Rows.Item(iCab).Item("PAGADO").ToString
+                            Select Case sPAGADO.Trim
+                                Case "2" 'Autorizar pedido
+                                    oORDR.Confirmed = BoYesNoEnum.tYES
+                                    If oORDR.Update() <> 0 Then
+                                        sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
+                                        oLog.escribeMensaje("Se ha producido un error al autorizar el pedido web Nº Interno " & sDocEntry & " del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.error)
 
-                        End If
-#End Region
-                        oORDR.TaxDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
-                        oORDR.DocDueDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
-                        Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'")
-                        Dim sTransporte As String = ""
-                        sDELALMACEN = odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString
-                        If sAgencia = "" Or sAgencia = "-" Then
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'")
+                                        'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                        sSubject = "Pedido WEB del Cliente " & sCliente & " no se ha podido autorizar debido a un error"
+                                        sTipo = "Pedido WEB"
+                                        sComen = sError
+                                        EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                                    Else
+                                        'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                        sSubject = "Pedido WEB de Venta " & sDocNum & " se ha autorizado correctamente con el cliente " & sCliente
+                                        sTipo = "Pedido de Cliente WEB"
+                                        oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
+                                        sComen = ""
+                                        EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                                    End If
+                                Case "3" 'Cancelar pedido
+                                    oORDR.Comments &= ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB."
+                                    If oORDR.Cancel() <> 0 Then
+                                        'Error
+                                        sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
+                                        oLog.escribeMensaje("Se ha producido un error al cancelar el pedido web Nº Interno " & sDocEntry & " del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.error)
+
+                                        'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                        sSubject = "Pedido WEB del Cliente " & sCliente & " no se ha podido cancelar debido a un error"
+                                        sTipo = "Pedido WEB"
+                                        sComen = sError
+                                        EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                                    Else
+                                        'OK
+                                        'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                                        sSubject = "Pedido WEB de Venta " & sDocNum & " se ha cancelado por falta de pago con el cliente " & sCliente
+                                        sTipo = "Pedido de Cliente WEB"
+                                        oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
+                                        sComen = ""
+                                        EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                                    End If
+                            End Select
                         Else
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ")
-                        End If
-                        If IsNumeric(sTransporte) Then
-                            oORDR.TransportationCode = CInt(sTransporte)
-                        End If
+                            oLog.escribeMensaje("Nº Interno: " & sDocEntry & ". No se ha encontrado el pedido web " & sDocNum & " del cliente " & sCliente & ". No se puede procesar.", EXO_Log.EXO_Log.Tipo.error)
 
-                        oORDR.Comments = "Pedido creado desde WEB. " & ChrW(13) & ChrW(10) & odtDatosWeb.Rows.Item(iCab).Item("OBSERVACIONES").ToString
-                        oLog.escribeMensaje("Tratando Documento de Cliente " & sCliente & "...", EXO_Log.EXO_Log.Tipo.informacion)
+                            'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                            sSubject = "Pedido WEB Nº" & sDocNum & " del Cliente " & sCliente & " no se ha podido reprocesar. No se encuentra"
+                            sTipo = "Pedido WEB"
+                            sComen = sError
+                            EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
+                        End If
                     Else
-                        iLin += 1
-                        sID &= "," & odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
+                        oLog.escribeMensaje("##### No existen registros para crear pedidos.", EXO_Log.EXO_Log.Tipo.advertencia)
                     End If
-                    If iLin <> 0 Then
-                        oORDR.Lines.Add()
-                    End If
-                    oORDR.Lines.ItemCode = odtDatosWeb.Rows.Item(iCab).Item("CREF").ToString
-                    oORDR.Lines.Quantity = CDbl(odtDatosWeb.Rows.Item(iCab).Item("NUNIDADES").ToString)
-                    oORDR.Lines.UnitPrice = CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString)
-                    oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT001").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString)
-                    oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT002").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString)
-                    oORDR.Lines.DiscountPercent = (CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) + CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) - ((CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) * CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) / 100)))
-                    sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
-                    Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ")
-                    oORDR.Lines.WarehouseCode = sAlmacen
                 Next
-                If oORDR.Add() <> 0 Then
-                    sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
-                    oLog.escribeMensaje("Se ha producido una incidencia al crear el pedido web del cliente " & sCliente & vbCrLf & sError & "", EXO_Log.EXO_Log.Tipo.informacion)
-
-                    'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
-                    sSubject = "Pedido WEB del Cliente " & sCliente & " ha tenido un error"
-                    sTipo = "Pedido WEB"
-                    sComen = sError
-                    EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
-                Else
-                    oCompany.GetNewObjectCode(sDocEntry)
-                    sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
-
-                    'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
-                    Conexiones.ExecuteSqlDB(dbWEB, sSQL)
-
-                    'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
-                    sSubject = "Pedido WEB de Venta " & sDocNum & " se ha registrado correctamente con el cliente " & sCliente
-                    sTipo = "Pedido de Cliente WEB"
-                    oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
-                    sComen = ""
-                    EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
-                End If
-            Else
-                oLog.escribeMensaje("##### No existen registros para crear pedidos.", EXO_Log.EXO_Log.Tipo.advertencia)
             End If
         Catch exCOM As System.Runtime.InteropServices.COMException
             sError = exCOM.Message

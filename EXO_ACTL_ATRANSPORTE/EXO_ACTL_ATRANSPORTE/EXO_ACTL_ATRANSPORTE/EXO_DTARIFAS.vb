@@ -52,7 +52,7 @@ Public Class EXO_DTARIFAS
     End Function
     Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-
+        Dim sSQL As String = "" : Dim sCode As String = ""
         Try
             If infoEvento.BeforeAction = True Then
 
@@ -60,6 +60,19 @@ Public Class EXO_DTARIFAS
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnDTar"
                         objGlobal.funcionesUI.cargaFormUdoBD("EXO_DTARIFAS")
+                    Case "1282"
+                        oForm = objGlobal.SBOApp.Forms.ActiveForm()
+                        If oForm.Visible = True Then
+#Region "Buscamos el número siguiente para poner al code"
+                            Try
+                                sSQL = "SELECT ifnull(MAX(CAST(""Code"" as INT)),'0')+1 ""CODIGO"" FROM ""@EXO_DTARIFAS"" "
+                                sCode = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = sCode
+                            Catch ex As Exception
+                                Throw ex
+                            End Try
+#End Region
+                        End If
                 End Select
             End If
 
@@ -278,6 +291,8 @@ Public Class EXO_DTARIFAS
     End Function
     Private Function EventHandler_FORM_VISIBLE_After(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
+        Dim sCode As String = ""
         EventHandler_FORM_VISIBLE_After = False
 
         Try
@@ -290,6 +305,18 @@ Public Class EXO_DTARIFAS
                 CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_5").RightJustified = True
                 CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_6").RightJustified = True
                 CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_7").RightJustified = True
+
+                If oForm.Mode = BoFormMode.fm_ADD_MODE Then
+#Region "Buscamos el número siguiente para poner al code"
+                    Try
+                        sSQL = "SELECT ifnull(MAX(CAST(""Code"" as INT)),'0')+1 ""CODIGO"" FROM ""@EXO_DTARIFAS"" "
+                        sCode = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = sCode
+                    Catch ex As Exception
+                        Throw ex
+                    End Try
+#End Region
+                End If
             End If
 
 
