@@ -507,28 +507,8 @@ Public Class EXO_LSTEMB
             End If
 
             'Expedición
-            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
-            sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
-            sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
-            sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
-            sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
-            sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
-            sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
-            sSQL &= " ) ORDER BY ""TrnspName"""
+            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' "
+            sSQL &= " ORDER BY ""TrnspName"""
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             If CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues.Count > 0 Then
                 CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(0, BoSearchKey.psk_Index)
@@ -539,7 +519,7 @@ Public Class EXO_LSTEMB
 
 
             'cargar	Id – Envío – Tte
-            sSQL = " SELECT '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
+            sSQL = " Select '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
             sSQL &= " UNION ALL "
             sSQL &= "SELECT CAST(""DocEntry"" as nVARCHAR),CAST(""DocNum"" as nVARCHAR) FROM ""@EXO_ENVTRANS"" WHERE ""Status""='O' "
             sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
@@ -607,41 +587,9 @@ Public Class EXO_LSTEMB
         Dim sCardCode As String = ""
         Dim sAlmacen As String = ""
         Try
-            sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
-
-            sAlmacen = oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("U_EXO_ALMACEN", 0)
-            'Expedición
-            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
-            sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
-            sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
-            sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
-            sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
-            sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
-            sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
-            sSQL &= " ) ORDER BY ""TrnspName"""
-            objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-            If CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues.Count > 0 Then
-                sClaseExp = CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
-            Else
-                sClaseExp = oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("U_EXO_CEXP", 0)
-            End If
 
             'cargar	Id – Envío – Tte
-            sSQL = " SELECT '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
+            sSQL = " Select '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
             sSQL &= " UNION ALL "
             sSQL &= "SELECT CAST(""DocEntry"" as nVARCHAR),CAST(""DocNum"" as nVARCHAR) FROM ""@EXO_ENVTRANS"" WHERE ""Status""='O' "
             sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "

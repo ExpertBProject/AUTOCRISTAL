@@ -43,7 +43,7 @@ Public Class Procesos
                                 sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                                 'udpate BBDD
-                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                                 oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
                                 Conexiones.ExecuteSqlDB(dbWEB, sSQL)
                                 oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
@@ -140,7 +140,7 @@ Public Class Procesos
                     sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                     'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocEntry & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                     Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -187,12 +187,11 @@ Public Class Procesos
                     If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString Then
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
                         sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
-                        sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
-                        sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
+                        sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
+                        sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
                         oLog.escribeMensaje("Tratando pedido Nº " & sDocNum & " de Cliente " & sCliente & "...", EXO_Log.EXO_Log.Tipo.informacion)
 
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
-                        'Falta saber qué es DocEntry
                         If oORDR.GetByKey(CInt(sDocEntry)) = True Then
                             sPAGADO = odtDatosWeb.Rows.Item(iCab).Item("PAGADO").ToString
                             Select Case sPAGADO.Trim
