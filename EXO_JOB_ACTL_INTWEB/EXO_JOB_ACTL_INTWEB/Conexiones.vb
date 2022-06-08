@@ -227,7 +227,7 @@ Public Class Conexiones
             db = Nothing
         End Try
     End Sub
-    Public Shared Function GetValueDB(ByRef db As HanaConnection, ByRef sTable As String, ByRef sField As String, ByRef sCondition As String) As String
+    Public Shared Function GetValueDB(ByRef db As HanaConnection, ByRef sTable As String, ByRef sField As String, ByRef sCondition As String, ByRef oLog As EXO_Log.EXO_Log) As String
         Dim cmd As HanaCommand = Nothing
         Dim da As HanaDataAdapter = Nothing
         Dim dt As System.Data.DataTable = Nothing
@@ -260,6 +260,7 @@ Public Class Conexiones
             End If
 
         Catch ex As Exception
+            oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.advertencia)
             Throw ex
         Finally
             If Not dt Is Nothing Then

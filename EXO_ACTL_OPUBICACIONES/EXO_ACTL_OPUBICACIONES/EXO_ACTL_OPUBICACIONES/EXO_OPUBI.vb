@@ -17,6 +17,10 @@ Public Class EXO_OPUBI
             oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UTs_EXO_TMPOPUBI.xml")
             objGlobal.refDi.comunes.LoadBDFromXML(oXML)
             objGlobal.SBOApp.StatusBar.SetText("Validado: UTs_EXO_TMPOPUBI", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OITW.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_OITW", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
     End Sub
     Private Sub cargamenu()
@@ -76,7 +80,7 @@ Public Class EXO_OPUBI
         Try
             oFP = CType(objGlobal.SBOApp.CreateObject(SAPbouiCOM.BoCreatableObjectType.cot_FormCreationParams), SAPbouiCOM.FormCreationParams)
             oFP.XmlData = objGlobal.leerEmbebido(Me.GetType(), "EXO_OPUBI.srf")
-            oFP.XmlData = oFP.XmlData.Replace("modality=""0""", "modality=""1""")
+            'oFP.XmlData = oFP.XmlData.Replace("modality=""0""", "modality=""1""")
             Try
                 oForm = objGlobal.SBOApp.Forms.AddEx(oFP)
 
@@ -88,7 +92,7 @@ Public Class EXO_OPUBI
                     Exit Function
                 End If
             End Try
-
+            CType(oForm.Items.Item("btnGen").Specific, SAPbouiCOM.Button).Item.Enabled = False
             CargarFormOPUBI = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -265,22 +269,68 @@ Public Class EXO_OPUBI
 #Region "Variables"
         Dim sSQL As String = ""
         Dim iDoc As Integer = 0 'Contador de Code de documentos
+        Dim iDocLin As Integer = 0 'Contador de Lineas de documentos
+        Dim sAlmacen As String = ""
+        Dim sFechaD As String = "" : Dim dFechaD As Date = Now.Date.AddMonths(-3)
+        Dim sFechaH As String = ""
+        Dim dtDatos As System.Data.DataTable = Nothing
+        Dim sUbDestino As String = "" : Dim sUBDestinoTotal As String = "'' "
 #End Region
         Try
+            objGlobal.SBOApp.StatusBar.SetText("Buscando datos ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             oform.Freeze(True)
-
+            sAlmacen = oform.DataSources.UserDataSources.Item("UDALM").Value
+            sFechaD = dFechaD.Year.ToString("0000") & dFechaD.Month.ToString("00") & dFechaD.Day.ToString("00")
+            sFechaH = Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00")
             Limpiar_Grid(oform)
 #Region "Cargar datos tabla temporal"
             'Tengo que buscar en la tabla el último numero de documento
-            iDoc = objGlobal.refDi.SQL.sqlNumericaB1("SELECT isnull(MAX(cast(""Code"" as int)),0) FROM ""@EXO_TMPOPUBI"" ")
 
-            sSQL = " ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "'  "
-            objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            sSQL = "SELECT I.""ItemCode"",IFNULL(I.""ItemName"",'') ""ItemName"" ,W.""OnHand"", IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(B.""Attr3Val"",'') ""ZonaRota"", 
+                    CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'D'
+	                     WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'C' 
+	                     WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'B' 
+	                     WHEN IFNULL(""Ventas"",0)>=10  THEN 'A'END ""Clasificacion"", ' ' ""DESTINO""
+                    FROM ""OITM"" I
+                    INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
+                    LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
+                    LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
+						                                                            SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
+						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+						                                                            UNION ALL
+						                                                            SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
+						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+						                                                            )S GROUP BY ""ItemCode""
+		                       )V ON V.""ItemCode""=I.""ItemCode""
+                    WHERE W.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
+                    ORDER BY I.""ItemName"""
+            dtDatos = New System.Data.DataTable
+            dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+            If dtDatos.Rows.Count > 0 Then
+                iDoc = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""Code"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" ")
+                For Each MiDataRow As DataRow In dtDatos.Rows
+                    iDocLin = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""LineId"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" WHERE ""Code""='" & iDoc.ToString & "'")
+                    sUBDestinoTotal &= ", '" & MiDataRow("UBSTANDARD").ToString & "' "
+                    sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr3Val"" ='" & MiDataRow("Clasificacion").ToString & "' 
+                            And IFNULL(V.""ItemQty"",0)=0 and ""BinCode"" not in (" & sUBDestinoTotal & ")"
+                    sUbDestino = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+                    sUBDestinoTotal &= ", '" & objGlobal.refDi.SQL.sqlStringB1(sSQL) & "' "
+
+                    sSQL = "INSERT INTO ""@EXO_TMPOPUBI"" values('" & iDoc.ToString & "'," & iDocLin.ToString & ",'EXO_TMPOPUBI',0,'" & MiDataRow("ItemCode").ToString & "',
+                            '" & MiDataRow("ItemName").ToString.Replace("'", "") & " '," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
+                            ",'" & MiDataRow("UBSTANDARD").ToString & "',
+                            '" & MiDataRow("ZonaRota").ToString & "','" & MiDataRow("Clasificacion").ToString & "'," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
+                            ", '" & sUbDestino & "','" & objGlobal.compañia.UserName.ToString & "')"
+                    objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                Next
+            End If
+
 #End Region
 #Region "Cargar Datos Grid"
             objGlobal.SBOApp.StatusBar.SetText("Cargando en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel."", ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
-            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona almacén de Rotación actual"", ""U_EXO_CLAACT"" as ""Clasificación actual de Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
+            sSQL = "SELECT 'Y' ""Sel"",""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
+            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Clas. Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
             sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
             sSQL &= " From ""@EXO_TMPOPUBI"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -300,6 +350,7 @@ Public Class EXO_OPUBI
             oform.Freeze(False)
             Throw ex
         Finally
+            CType(oform.Items.Item("btnGen").Specific, SAPbouiCOM.Button).Item.Enabled = True
             oform.Freeze(False)
         End Try
     End Sub
@@ -311,11 +362,12 @@ Public Class EXO_OPUBI
             'Borrar tablas temporales por usuario activo
             sSQL = "DELETE FROM ""@EXO_TMPOPUBI"" where ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "'  "
             objGlobal.refDi.SQL.sqlUpdB1(sSQL)
+            oForm.DataSources.UserDataSources.Item("UDMEN").Value = ""
+            oForm.DataSources.UserDataSources.Item("UDDE").Value = ""
 
             'Ahora cargamos el Grid con los datos guardados
-            objGlobal.SBOApp.StatusBar.SetText("Cargando en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel."", ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
-            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona almacén de Rotación actual"", ""U_EXO_CLAACT"" as ""Clasificación actual de Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
+            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
+            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Clas. Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
             sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
             sSQL &= " From ""@EXO_TMPOPUBI"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -335,18 +387,47 @@ Public Class EXO_OPUBI
         Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
         Dim sSQL As String = ""
         Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sAlmacen As String = ""
         Try
+            sAlmacen = oform.DataSources.UserDataSources.Item("UDALM").Value
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
-            'For i = 1 To 5
-            '    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
-            '    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
-            '    oColumnTxt.Editable = False
-            '    If i = 2 Then
-            '        oColumnTxt.LinkedObjectType = "112"
-            '    End If
-            'Next
+            For i = 1 To 8
+                If i = 5 Or i = 6 Then
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
+                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
+                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
+                    oColumnCb.ValidValues.Add("", "")
+                    oColumnCb.ValidValues.Add("A", "Alta rotación")
+                    oColumnCb.ValidValues.Add("B", "Media rotación")
+                    oColumnCb.ValidValues.Add("C", "Baja rotación")
+                    oColumnCb.ValidValues.Add("D", "Muy baja rotación")
+                    oColumnCb.Editable = False
+                ElseIf i = 8 Then
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
+                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
+                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
+                    sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
+                            And IFNULL(V.""ItemQty"",0)=0 "
+                    oRs.DoQuery(sSQL)
+                    For a = 0 To oRs.RecordCount - 1
+                        oColumnCb.ValidValues.Add(oRs.Fields.Item("BinCode").Value.ToString, oRs.Fields.Item("BinCode").Value.ToString)
+                        oRs.MoveNext()
+                    Next
+
+                    oColumnCb.Editable = True
+                Else
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                    If i = 3 Or i = 7 Then
+                        oColumnTxt.RightJustified = True
+                        oColumnTxt.Editable = False
+                    Else
+                        oColumnTxt.Editable = False
+                    End If
+                End If
+            Next
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
@@ -366,7 +447,7 @@ Public Class EXO_OPUBI
                     'Generamos facturas
                     objGlobal.SBOApp.StatusBar.SetText("Creando Documento... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     oform.Freeze(True)
-                    If CrearDocumento(oform, "DT_DOC", "FACTURA") = False Then
+                    If CrearDocumento(oform, "DT_DOC") = False Then
                         Exit Sub
                     End If
                     oform.Freeze(False)
@@ -374,12 +455,10 @@ Public Class EXO_OPUBI
                     objGlobal.SBOApp.MessageBox("Fin del Proceso." & ChrW(10) & ChrW(13) & "Por favor, revise el Log para ver las operaciones realizadas.")
                     oform.Items.Item("btnGen").Enabled = True
                 End If
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("El usuario ha cancelado el proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                objGlobal.SBOApp.MessageBox("El usuario ha cancelado el proceso.")
             End If
-
-
-            oform.Freeze(False)
-            objGlobal.SBOApp.StatusBar.SetText("Fin del proceso de carga.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            objGlobal.SBOApp.MessageBox("Fin del proceso de carga.")
         Catch exCOM As System.Runtime.InteropServices.COMException
             oform.Freeze(False)
             Throw exCOM
@@ -387,6 +466,7 @@ Public Class EXO_OPUBI
             oform.Freeze(False)
             Throw ex
         Finally
+            CType(oform.Items.Item("btnGen").Specific, SAPbouiCOM.Button).Item.Enabled = False
             oform.Freeze(False)
         End Try
     End Sub
@@ -416,66 +496,85 @@ Public Class EXO_OPUBI
             Throw ex
         End Try
     End Function
-    Private Function CrearDocumento(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByVal sTDoc As String) As Boolean
+    Private Function CrearDocumento(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String) As Boolean
         CrearDocumento = False
 #Region "Variables"
-        Dim oDoc As SAPbobsCOM.Documents = Nothing
         Dim sExiste As String = "" ' Para comprobar si existen los datos
         Dim sErrorDes As String = ""
         Dim sDocAdd As String = ""
         Dim sMensaje As String = ""
+        Dim oDocStockTransfer As SAPbobsCOM.StockTransfer = Nothing
+        Dim sAlmacen As String = ""
+        Dim sSQL As String = ""
+        Dim sUbStandard As String = ""
 #End Region
 
         Try
+            sAlmacen = oForm.DataSources.UserDataSources.Item("UDALM").Value
             If objGlobal.compañia.InTransaction = True Then
                 objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
             End If
             objGlobal.compañia.StartTransaction()
+            oDocStockTransfer = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
+            oDocStockTransfer.DocDate = Now.Date
+            oDocStockTransfer.DueDate = Now.Date
+            oDocStockTransfer.TaxDate = Now.Date
+            oDocStockTransfer.FromWarehouse = sAlmacen
+            oDocStockTransfer.ToWarehouse = sAlmacen
+            oDocStockTransfer.UserFields.Fields.Item("U_EXO_STATUSP").Value = "P"
+            oDocStockTransfer.UserFields.Fields.Item("U_EXO_TIPO").Value = "INU"
+            oDocStockTransfer.Comments = "Generado automáticamente a través de Optimización de ubicaciones por rotación."
             For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
                 If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
-                    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "WARNING")
-                    sMensaje = "Falta definir cómo crear el documento"
-                    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sMensaje)
-                    'grabar el documento
-                    'If oDoc.Add() <> 0 Then 'Si ocurre un error en la grabación entra
-                    '    sErrorDes = objGlobal.compañia.GetLastErrorCode & " / " & objGlobal.compañia.GetLastErrorDescription
-                    '    objGlobal.SBOApp.StatusBar.SetText(sErrorDes, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "ERROR")
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sErrorDes)
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, "")
-                    'Else
-                    '    sDocAdd = objGlobal.compañia.GetNewObjectKey() 'Recoge el último documento creado
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("DocEntry", i, sDocAdd)
-                    '    'Buscamos el documento para crear un mensaje
-                    '    sDocAdd = EXO_GLOBALES.GetValueDB(oCompany, """" & sTabla & """", """DocNum""", """DocEntry""=" & sDocAdd)
-                    '    If sModo = "F" Then
-                    '        sModo = ""
-                    '    Else
-                    '        sModo = " borrador "
-                    '    End If
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Estado", i, "OK")
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Nº Documento", i, sDocAdd)
-                    '    Select Case sTipoFac
-                    '        Case "13" 'Factura de ventas
-                    '            sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de ventas Nº" & sDocAdd
-                    '        Case "14" 'Abono de ventas
-                    '            sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de ventas Nº" & sDocAdd
-                    '        Case "18" 'Factura de compras
-                    '            sMensaje = "(EXO) - Ha sido creada la factura " & sModo & " de compras Nº" & sDocAdd
-                    '        Case "19" 'Abono de compras
-                    '            sMensaje = "(EXO) - Ha sido creado el abono " & sModo & " de compras Nº" & sDocAdd
-                    '        Case "22" 'Pedido de compras
-                    '            sMensaje = "(EXO) - Ha sido creado el pedido " & sModo & " de compras Nº" & sDocAdd
-                    '    End Select
-                    '    oForm.DataSources.DataTables.Item(sData).SetValue("Descripción Estado", i, sMensaje)
-                    '    objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                    'End If
+                    If (i > 0) Then
+                        oDocStockTransfer.Lines.Add()
+                    End If
+                    oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString
+                    oDocStockTransfer.Lines.ItemDescription = oForm.DataSources.DataTables.Item(sData).GetValue("Descripción", i).ToString
+                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación actual", i).ToString
+                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
+                    oDocStockTransfer.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item(sData).GetValue("Traslado", i).ToString)
+#Region "Actualizamos los campos en OITW Ubicación standard, Fecha y clasificación"
+                    sSQL = "SELECT ""AbsEntry"" FROM OBIN WHERE ""WhsCode""='" & sAlmacen & "' and ""BinCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString & "' "
+                    sUbStandard = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    If sUbStandard <> "" Then
+                        sSQL = "UPDATE OITW SET ""DftBinAbs""='" & sUbStandard & "', 
+                                ""U_EXO_FUPDATE""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "', 
+                                ""U_EXO_CLASIF""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Clas. Rotación", i).ToString & "'
+                                WHERE ""ItemCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & "' AND 
+                                ""WhsCode""='" & sAlmacen & "' "
+                        If objGlobal.refDi.SQL.executeNonQuery(sSQL) = False Then
+                            sMensaje = sSQL & " - No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
+                            objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        End If
+                    Else
+                        sMensaje = "No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
+                        objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    End If
+
+#End Region
                 End If
             Next
+            ' grabar el documento
+            If oDocStockTransfer.Add() <> 0 Then 'Si ocurre un error en la grabación entra
+                sErrorDes = objGlobal.compañia.GetLastErrorCode & " / " & objGlobal.compañia.GetLastErrorDescription
+                objGlobal.SBOApp.StatusBar.SetText(sErrorDes, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                oForm.DataSources.UserDataSources.Item("UDMEN").Value = "ERROR - " & sErrorDes
+                oForm.DataSources.UserDataSources.Item("UDDE").Value = ""
+            Else
+                sDocAdd = objGlobal.compañia.GetNewObjectKey() 'Recoge el último documento creado
+                oForm.DataSources.UserDataSources.Item("UDDE").Value = sDocAdd
+                'Buscamos el documento para crear un mensaje
+                sDocAdd = objGlobal.refDi.SQL.sqlStringB1("SELECT ""DocNum"" FROM OWTQ WHERE ""DocEntry""=" & sDocAdd)
+                oForm.DataSources.UserDataSources.Item("UDMEN").Value = "OK - Nº Documento creado " & sDocAdd
 
-            If objGlobal.compañia.InTransaction = True Then
-                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+                objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+                If objGlobal.compañia.InTransaction = True Then
+                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+                End If
             End If
+
 
             CrearDocumento = True
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -487,7 +586,7 @@ Public Class EXO_OPUBI
                 objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
             End If
 
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oDoc, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oDocStockTransfer, Object))
         End Try
     End Function
 End Class

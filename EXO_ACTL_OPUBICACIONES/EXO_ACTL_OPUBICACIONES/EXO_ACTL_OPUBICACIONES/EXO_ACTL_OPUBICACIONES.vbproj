@@ -103,6 +103,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_OPUBI.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -168,7 +169,9 @@
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UTs_EXO_TMPOPUBI.xml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="FORMS\UDFs_OITW.xml" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FORMS\EXO_OPUBI.srf" />
   </ItemGroup>

@@ -494,6 +494,8 @@ Public Class EXO_PARRILLA
                         End If
                         oForm.Freeze(False)
                         FiltrarPDTE(oForm)
+                        FiltrarLIB(oForm)
+                        FiltrarCOM(oForm)
                         objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                         objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                     End If
@@ -507,6 +509,8 @@ Public Class EXO_PARRILLA
                         End If
                         oForm.Freeze(False)
                         FiltrarPDTE(oForm)
+                        FiltrarLIB(oForm)
+                        FiltrarCOM(oForm)
                         objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                         objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                     End If
@@ -522,6 +526,8 @@ Public Class EXO_PARRILLA
                         End If
                         oForm.Freeze(False)
                         FiltrarPDTE(oForm)
+                        FiltrarLIB(oForm)
+                        FiltrarCOM(oForm)
                         objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                         objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                     End If
@@ -548,6 +554,7 @@ Public Class EXO_PARRILLA
                         End If
                         oForm.Freeze(False)
                         FiltrarLIB(oForm)
+                        FiltrarCOM(oForm)
                         objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                         objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                     End If

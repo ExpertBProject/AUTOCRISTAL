@@ -20,7 +20,9 @@ Public Class Procesos
         Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
 #End Region
         Try
-            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 AND ""REPROCESAR=0 ORDER BY ""ID"" "
+            oLog.escribeMensaje("Lectura del carrito...", EXO_Log.EXO_Log.Tipo.informacion)
+            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""CONFIRMADO""=1 AND ""NPEDIDO""=0 AND ""REPROCESAR""=0 ORDER BY ""ID"" "
+            oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
@@ -38,10 +40,11 @@ Public Class Procesos
                                 EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
                             Else
                                 oCompany.GetNewObjectCode(sDocEntry)
-                                sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
+                                sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                                 'udpate BBDD
                                 sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
                                 Conexiones.ExecuteSqlDB(dbWEB, sSQL)
                                 oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
                                 'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -60,8 +63,8 @@ Public Class Procesos
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
 #Region "Serie"
-                        Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'")
-                        Dim sSerie As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@NNM1""", """Series""", "WHERE ""ObjectCode""='17' and ""SeriesName""='" & sSerieName & "'")
+                        Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'", oLog)
+                        Dim sSerie As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""NNM1""", """Series""", """ObjectCode""='17' and ""SeriesName""='" & sSerieName & "'", oLog)
                         If sSerie <> "" Then
                             oORDR.Series = CInt(sSerie)
                         End If
@@ -83,7 +86,7 @@ Public Class Procesos
                             oORDR.Confirmed = BoYesNoEnum.tNO
                             'Condición de pago
                             oORDR.GroupNumber = -1
-                            Dim sPMethod As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_VIAPAGO' and ""Code""='EXO_KERNEL'")
+                            Dim sPMethod As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_VIAPAGO' and ""Code""='EXO_KERNEL'", oLog)
                             If sPMethod <> "" Then
                                 oORDR.PaymentMethod = sPMethod
                             End If
@@ -92,13 +95,13 @@ Public Class Procesos
 #End Region
                         oORDR.TaxDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
                         oORDR.DocDueDate = CDate(odtDatosWeb.Rows.Item(iCab).Item("FECHA").ToString)
-                        Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'")
+                        Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'", oLog)
                         Dim sTransporte As String = ""
                         sDELALMACEN = odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString
                         If sAgencia = "" Or sAgencia = "-" Then
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'")
+                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'", oLog)
                         Else
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ")
+                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ", oLog)
                         End If
                         If IsNumeric(sTransporte) Then
                             oORDR.TransportationCode = CInt(sTransporte)
@@ -120,7 +123,7 @@ Public Class Procesos
                     oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT002").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString)
                     oORDR.Lines.DiscountPercent = (CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) + CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) - ((CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) * CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) / 100)))
                     sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
-                    Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ")
+                    Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ", oLog)
                     oORDR.Lines.WarehouseCode = sAlmacen
                 Next
                 If oORDR.Add() <> 0 Then
@@ -134,10 +137,10 @@ Public Class Procesos
                     EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
                 Else
                     oCompany.GetNewObjectCode(sDocEntry)
-                    sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "")
+                    sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                     'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocEntry & "',""NUMPEDIDO""='" & sDocNum & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                     Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -175,7 +178,9 @@ Public Class Procesos
         Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
 #End Region
         Try
-            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""NPEDIDO""<>0 AND ""REPROCESAR=1 ORDER BY ""ID"" "
+            oLog.escribeMensaje("Reprocesar el carrito...", EXO_Log.EXO_Log.Tipo.informacion)
+            sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""NPEDIDO""<>0 AND ""REPROCESAR""=1 ORDER BY ""ID"" "
+            oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
@@ -203,6 +208,10 @@ Public Class Procesos
                                         sComen = sError
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
+                                        'udpate BBDD
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        Conexiones.ExecuteSqlDB(dbWEB, sSQL)
+
                                         'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                                         sSubject = "Pedido WEB de Venta " & sDocNum & " se ha autorizado correctamente con el cliente " & sCliente
                                         sTipo = "Pedido de Cliente WEB"
@@ -211,7 +220,7 @@ Public Class Procesos
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     End If
                                 Case "3" 'Cancelar pedido
-                                    oORDR.Comments &= ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB."
+                                    'oORDR.Comments &= ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB."
                                     If oORDR.Cancel() <> 0 Then
                                         'Error
                                         sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
@@ -223,7 +232,14 @@ Public Class Procesos
                                         sComen = sError
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
+                                        'udpate BBDD
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        Conexiones.ExecuteSqlDB(dbWEB, sSQL)
+
                                         'OK
+                                        sSQL = "UPDATE """ & oCompany.CompanyDB & """.""ORDR"" SET ""Comments""= ""Comments"" || '" & ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB." & "' WHERE ""DocEntry""= " & sDocEntry
+                                        oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
+                                        Conexiones.ExecuteSqlDB(dbWEB, sSQL)
                                         'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                                         sSubject = "Pedido WEB de Venta " & sDocNum & " se ha cancelado por falta de pago con el cliente " & sCliente
                                         sTipo = "Pedido de Cliente WEB"
