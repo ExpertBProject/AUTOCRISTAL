@@ -286,7 +286,7 @@ Public Class EXO_OPUBI
 #Region "Cargar datos tabla temporal"
             'Tengo que buscar en la tabla el último numero de documento
 
-            sSQL = "SELECT I.""ItemCode"",IFNULL(I.""ItemName"",'') ""ItemName"" ,W.""OnHand"", IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(B.""Attr3Val"",'') ""ZonaRota"", 
+            sSQL = "SELECT I.""ItemCode"",IFNULL(I.""ItemName"",'') ""ItemName"" ,S.""OnHand"", IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(B.""Attr3Val"",'') ""ZonaRota"", 
                     CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'D'
 	                     WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'C' 
 	                     WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'B' 
@@ -294,6 +294,8 @@ Public Class EXO_OPUBI
                     FROM ""OITM"" I
                     INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
                     LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
+                    LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                                FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
                     LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
 						                                                            SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
 						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
@@ -302,7 +304,7 @@ Public Class EXO_OPUBI
 						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
 						                                                            )S GROUP BY ""ItemCode""
 		                       )V ON V.""ItemCode""=I.""ItemCode""
-                    WHERE W.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
+                    WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
                     ORDER BY I.""ItemName"""
             dtDatos = New System.Data.DataTable
             dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
@@ -315,7 +317,7 @@ Public Class EXO_OPUBI
                             And IFNULL(V.""ItemQty"",0)=0 and ""BinCode"" not in (" & sUBDestinoTotal & ")"
                     sUbDestino = objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
-                    sUBDestinoTotal &= ", '" & objGlobal.refDi.SQL.sqlStringB1(sSQL) & "' "
+                    sUBDestinoTotal &= ", '" & sUbDestino & "' "
 
                     sSQL = "INSERT INTO ""@EXO_TMPOPUBI"" values('" & iDoc.ToString & "'," & iDocLin.ToString & ",'EXO_TMPOPUBI',0,'" & MiDataRow("ItemCode").ToString & "',
                             '" & MiDataRow("ItemName").ToString.Replace("'", "") & " '," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
@@ -374,7 +376,7 @@ Public Class EXO_OPUBI
             sSQL &= " ORDER BY ""Code"", ""LineId"" "
             'Cargamos grid
             oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
-            FormateaGrid(oForm)
+            ' FormateaGrid(oForm)
         Catch ex As Exception
             Throw ex
         Finally
@@ -407,24 +409,22 @@ Public Class EXO_OPUBI
                 ElseIf i = 8 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                     oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
-                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
                     sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
                             And IFNULL(V.""ItemQty"",0)=0 "
-                    oRs.DoQuery(sSQL)
-                    For a = 0 To oRs.RecordCount - 1
-                        oColumnCb.ValidValues.Add(oRs.Fields.Item("BinCode").Value.ToString, oRs.Fields.Item("BinCode").Value.ToString)
-                        oRs.MoveNext()
-                    Next
-
+                    objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
+                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Value
                     oColumnCb.Editable = True
+                ElseIf i = 1 Then
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                    oColumnTxt.Editable = False
+                    oColumnTxt.LinkedObjectType = 4
                 Else
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                    oColumnTxt.Editable = False
                     If i = 3 Or i = 7 Then
                         oColumnTxt.RightJustified = True
-                        oColumnTxt.Editable = False
-                    Else
-                        oColumnTxt.Editable = False
                     End If
                 End If
             Next

@@ -1,7 +1,10 @@
 ﻿<Application>
   <Menus>
-    <action type="add">   
+    <action type="add">
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="" Type="3" UniqueID="EXO-MnUBP1"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="Optimización de ubicaciones por Rotación" Type="1" UniqueID="EXO-MnOUB"></Menu><!--Inventario/Ubicaciones-->
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="Optimización de ubicaciones por cantidades" Type="1" UniqueID="EXO-MnOUBC"></Menu><!--Inventario/Ubicaciones-->
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="" Type="3" UniqueID="EXO-MnUBP2"></Menu>
     </action>
   </Menus>
 </Application>

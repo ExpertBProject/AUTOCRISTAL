@@ -105,6 +105,7 @@
   <ItemGroup>
     <Compile Include="EXO_GLOBALES.vb" />
     <Compile Include="EXO_OPUBI.vb" />
+    <Compile Include="EXO_OPUBIC.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -170,10 +171,16 @@
     <EmbeddedResource Include="XML_BD\UTs_EXO_TMPOPUBI.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FORMS\UDFs_OITW.xml" />
+    <EmbeddedResource Include="FORMS\EXO_OPUBI.srf" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FORMS\EXO_OPUBI.srf" />
+    <EmbeddedResource Include="XML_BD\UDFs_OITW.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FORMS\EXO_OPUBIC.srf" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UTs_EXO_TMPOPUBIC.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
