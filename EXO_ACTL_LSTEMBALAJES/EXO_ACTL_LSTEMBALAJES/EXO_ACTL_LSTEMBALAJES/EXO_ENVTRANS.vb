@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Xml
+Imports SAPbobsCOM
 Imports SAPbouiCOM
 Public Class EXO_ENVTRANS
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
@@ -11,6 +12,19 @@ Public Class EXO_ENVTRANS
         Dim sSQL As String = ""
         Try
             If infoEvento.BeforeAction = True Then
+                Select Case infoEvento.MenuUID
+                    Case "1286" 'Cerrar
+                        Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.ActiveForm
+                        If oForm IsNot Nothing Then
+                            If oForm.TypeEx = "UDO_FT_EXO_ENVTRANS" Then
+                                If Cerrar_ENVIO(oForm) = False Then
+                                    Return False
+                                Else
+                                    Return True
+                                End If
+                            End If
+                        End If
+                End Select
             Else
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnGETR"
@@ -29,6 +43,7 @@ Public Class EXO_ENVTRANS
                                 End If
                             End If
                         End If
+
                 End Select
             End If
 
@@ -39,6 +54,176 @@ Public Class EXO_ENVTRANS
             Return False
         Finally
 
+        End Try
+    End Function
+    Public Function Cerrar_ENVIO(ByRef oform As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim sSQL As String = ""
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sAlmacen As String = "" : Dim sStatus As String = ""
+        Dim sDocEntryFinal As String = "" : Dim sDocNumFinal As String = ""
+        Dim dtDatos As System.Data.DataTable = Nothing
+
+        Dim Omercancias As SAPbobsCOM.Documents = Nothing
+        Dim sDocEntryCerrar As String = "" : Dim sDocNumCerrar As String = "" : Dim sStatusCerrar As String = ""
+        Dim iLinea As Integer = 0
+
+        Dim oGeneralService As SAPbobsCOM.GeneralService = Nothing
+        Dim oGeneralParams As SAPbobsCOM.GeneralDataParams = Nothing
+        Dim oCompService As SAPbobsCOM.CompanyService = objGlobal.compañia.GetCompanyService()
+#End Region
+        Cerrar_ENVIO = False
+        Try
+            If objGlobal.compañia.InTransaction = True Then
+                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+
+            objGlobal.compañia.StartTransaction()
+
+            sDocEntry = oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").GetValue("DocEntry", 0)
+            If sDocEntry = "" Then
+                sDocEntry = CType(oform.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString()
+            End If
+            sDocNum = oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").GetValue("DocNum", 0)
+            If sDocNum = "" Then
+                sDocNum = CType(oform.Items.Item("1_U_E").Specific, SAPbouiCOM.EditText).Value.ToString()
+            End If
+            sAlmacen = oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").GetValue("U_EXO_ALMACEN", 0)
+            If sAlmacen = "" Then
+                sAlmacen = CType(oform.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+            End If
+
+            objGlobal.SBOApp.StatusBar.SetText("Cerrando Documento Nº " & sDocNum & "...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            sStatus = objGlobal.refDi.SQL.sqlStringB1("SELECT ""Status"" FROM ""@EXO_ENVTRANS"" Where ""DocEntry""=" & sDocEntry)
+            If sStatus.Trim = "O" Then
+                sSQL = "SELECT TC.""DocEntry"", TC.""DocNum"", COUNT(""U_EXO_IDBULTO"" || ' - ' ||  ""U_EXO_TBULTO"") ""Cantidad"", MAX(""U_EXO_IDBULTO"") ""ID BULTO"", MAX(""U_EXO_TBULTO"") ""BULTO""
+                    FROM ""@EXO_LSTEMBL"" TL
+                    INNER JOIN ""@EXO_LSTEMB"" TC ON TC.""DocEntry""=TL.""DocEntry""
+                    WHERE TC.""Status""='O' and TL.""DocEntry"" IN (SELECT T0.""DocEntry""
+           				                        FROM ""@EXO_LSTEMB""  T0 
+            			                        Left Join  OCRD T1 ON T0.""U_EXO_IC"" = T1.""CardCode"" 
+            			                        where T0.""U_EXO_IDENVIO"" =" & sDocEntry & ")
+                    GROUP BY TC.""DocEntry"", TC.""DocNum"", ""U_EXO_IDBULTO"" || ' - ' ||  ""U_EXO_TBULTO""
+                    ORDER BY TC.""DocEntry"", MAX(""U_EXO_TBULTO""),MAX(""U_EXO_IDBULTO"")"
+                dtDatos = New System.Data.DataTable
+                dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                If dtDatos.Rows.Count > 0 Then
+                    Omercancias = objGlobal.compañia.GetBusinessObject(BoObjectTypes.oInventoryGenExit)
+                    Omercancias.DocDate = Date.Now
+                    Omercancias.TaxDate = Date.Now
+                    For Each MiDataRow As DataRow In dtDatos.Rows
+                        If sDocEntryCerrar <> MiDataRow("DocEntry").ToString Then
+                            sDocEntryCerrar = MiDataRow("DocEntry").ToString
+                            sSQL = "SELECT ""DocNum"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
+                            sDocNumCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                            sSQL = "SELECT ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
+                            sStatusCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                            If sStatusCerrar = "O" Then
+                                objGlobal.SBOApp.StatusBar.SetText("Cerrando Lista de embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                                'Cerramos el UDO
+                                'Get a handle to the SM_MOR UDO
+                                oGeneralService = oCompService.GetGeneralService("EXO_LSTEMB")
+                                'Close UDO record
+                                oGeneralParams = oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams)
+                                oGeneralParams.SetProperty("DocEntry", sDocEntryCerrar)
+                                oGeneralService.Close(oGeneralParams)
+                                objGlobal.SBOApp.StatusBar.SetText("Se ha cerrado la Lista de Embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+                            End If
+#Region "Lineas"
+                            sSQL = "SELECT L.* FROM ""@EXO_PAQL"" L INNER JOIN ""@EXO_PAQ"" C ON C.""Code""=L.""Code"" WHERE C.""Name""='" & MiDataRow("BULTO").ToString & "' ORDER BY L.""LineId"" "
+                            oRs.DoQuery(sSQL)
+                            For i = 0 To oRs.RecordCount - 1
+                                If iLinea <> 0 Then
+                                    Omercancias.Lines.Add()
+                                End If
+                                Omercancias.Lines.ItemCode = oRs.Fields.Item("U_EXO_ITEMCODE").Value.ToString
+                                Omercancias.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Cantidad").ToString) * EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oRs.Fields.Item("U_EXO_CANT").Value.ToString)
+                                Omercancias.Lines.WarehouseCode = sAlmacen
+                                ' Omercancias.Lines.BatchNumbers.BatchNumber = ""
+                                'Omercancias.Lines.BatchNumbers.Quantity = Omercancias.Lines.Quantity
+                                ' Omercancias.Lines.BatchNumbers.Add()
+                                Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDE").Value = sDocEntryCerrar
+                                Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDN").Value = sDocNumCerrar
+                                iLinea += 1
+
+                                oRs.MoveNext()
+                            Next
+#End Region
+                        End If
+
+                    Next
+                    Omercancias.Comments = "Generado automáticamente al cerrar Envío - Transporte Nº " & sDocNum
+                    If Omercancias.Add() <> 0 Then
+                        objGlobal.SBOApp.StatusBar.SetText("Error al generar Salida de Mercancía. " & objGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        If objGlobal.compañia.InTransaction = True Then
+                            objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+                        End If
+                        Return False
+                    Else
+                        objGlobal.compañia.GetNewObjectCode(sDocEntryFinal)
+
+                        If objGlobal.compañia.InTransaction = True Then
+                            objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+                        End If
+                        sSQL = "Select ""DocNum"" FROM """ & objGlobal.compañia.CompanyDB & """.""OIGE"" WHERE ""DocEntry"" = " & sDocEntryFinal
+                        oRs.DoQuery(sSQL)
+                        If oRs.RecordCount > 0 Then
+                            sDocNumFinal = oRs.Fields.Item("DocNum").Value.ToString
+                            'Actualizamos el UDO
+                            sSQL = "UPDATE ""@EXO_ENVTRANS"" SET ""U_EXO_CONEMB""='" & sDocEntryFinal & "' WHERE ""DocEntry""=" & sDocEntry
+                            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                                objGlobal.SBOApp.StatusBar.SetText("Se ha generado la Salida de mercancía Nº: " & sDocNumFinal, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                Return True
+                            Else
+                                objGlobal.SBOApp.StatusBar.SetText("No se ha podido actualizar el envío - Transporte Nº: " & sDocNum & " con el Nº de documento generado.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                Return False
+                            End If
+
+                        Else
+                            sDocNumFinal = "0"
+                            If objGlobal.compañia.InTransaction = True Then
+                                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+                            End If
+                            objGlobal.SBOApp.StatusBar.SetText("No se encuentra la Salida de mercancía con Nº Interno: " & sDocEntryFinal, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                            Return False
+                        End If
+
+                    End If
+                Else
+                    objGlobal.SBOApp.StatusBar.SetText("No se ha encontrado Lista de embalajes para cerrar. Revise los datos. ", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.MessageBox("No se ha encontrado Lista de embalajes para cerrar. Revise los datos. ")
+                    If objGlobal.compañia.InTransaction = True Then
+                        objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+                    End If
+                    Return False
+                End If
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Este documento ya está cerrado.", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                objGlobal.SBOApp.MessageBox("Este documento ya está cerrado.")
+                If objGlobal.compañia.InTransaction = True Then
+                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+                End If
+                Return False
+            End If
+
+
+        Catch ex As Exception
+            Throw ex
+        Finally
+            If oform.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then 'Para que el combo enseñe la descripción
+                If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
+                    objGlobal.SBOApp.ActivateMenuItem("1304")
+                End If
+            End If
+
+            If objGlobal.compañia.InTransaction = True Then
+                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(Omercancias, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCompService, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oGeneralParams, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oGeneralService, Object))
         End Try
     End Function
     Public Function CargarUDO() As Boolean
@@ -223,6 +408,7 @@ Public Class EXO_ENVTRANS
 #Region "Variables"
         Dim sSQL As String = ""
         Dim sDocEntry As String = ""
+
 #End Region
         Try
             sDocEntry = oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").GetValue("DocEntry", 0)
@@ -473,28 +659,8 @@ Public Class EXO_ENVTRANS
             oform.Items.Item("22_U_Cb").DisplayDesc = True
 
             'Expedición
-            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
-            sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
-            sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
-            sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
-            sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
-            sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-            sSQL &= " UNION ALL "
-            sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
-            sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacendef & "' "
-            sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
-            sSQL &= " ) ORDER BY ""TrnspName"""
+            sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' "
+            sSQL &= " ORDER BY ""TrnspName"""
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
 
@@ -675,9 +841,9 @@ Public Class EXO_ENVTRANS
                                     sSQL &= " WHERE ""Inactive""='N' "
                                     'ssql &= " And ""U_EXO_SUCURSAL""='" & sSucursal & "' "
                                     objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
-                                    'Expedición
-                                    sSQL = "Select ""TrnspCode"",""TrnspName"" FROM OSHP "
-                                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                                    ''Expedición
+                                    'sSQL = "Select ""TrnspCode"",""TrnspName"" FROM OSHP "
+                                    'objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
 
                                     Dim sAgencia As String = CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value
                                     Cargar_Combo_Matricula_Conductor_Plataforma(oForm, sAgencia)

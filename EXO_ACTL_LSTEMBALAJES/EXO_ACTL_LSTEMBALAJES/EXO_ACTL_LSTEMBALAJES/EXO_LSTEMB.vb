@@ -11,6 +11,17 @@ Public Class EXO_LSTEMB
         Dim sSQL As String = ""
         Try
             If infoEvento.BeforeAction = True Then
+                Select Case infoEvento.MenuUID
+                    Case "1286" 'Cerrar
+                        Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.ActiveForm
+                        If oForm IsNot Nothing Then
+                            If oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
+                                If Gestion_Cerrar() = False Then
+                                    Return False
+                                End If
+                            End If
+                        End If
+                End Select
             Else
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnLEmb"
@@ -32,6 +43,22 @@ Public Class EXO_LSTEMB
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
+        Finally
+
+        End Try
+    End Function
+    Public Function Gestion_Cerrar() As Boolean
+        Gestion_Cerrar = False
+
+        Try
+            objGlobal.SBOApp.StatusBar.SetText("No se puede cerrar desde este menú. Se debe cerrar desde la ventana ""Envío - Transporte"" ", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+            objGlobal.SBOApp.MessageBox("No se puede cerrar desde este menú. Se debe cerrar desde la ventana ""Envío - Transporte"" ")
+
+            Return False
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
 
         End Try

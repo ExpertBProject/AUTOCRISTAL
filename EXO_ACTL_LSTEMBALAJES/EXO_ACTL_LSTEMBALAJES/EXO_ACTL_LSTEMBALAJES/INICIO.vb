@@ -28,6 +28,11 @@ Public Class INICIO
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_IGE1.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_IGE1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
         End If
     End Sub
     Private Sub cargamenu()
@@ -100,7 +105,18 @@ Public Class INICIO
         Try
             If infoEvento.BeforeAction = True Then
                 Select Case infoEvento.MenuUID
-                    Case ""
+                    Case "1286" ' Cerrar
+                        oForm = objGlobal.SBOApp.Forms.ActiveForm
+                        If oForm IsNot Nothing Then
+                            Select Case oForm.TypeEx
+                                Case "UDO_FT_EXO_ENVTRANS"
+                                    Clase = New EXO_ENVTRANS(objGlobal)
+                                    Return CType(Clase, EXO_ENVTRANS).SBOApp_MenuEvent(infoEvento)
+                                Case "UDO_FT_EXO_LSTEMB"
+                                    Clase = New EXO_LSTEMB(objGlobal)
+                                    Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
+                            End Select
+                        End If
                 End Select
             Else
                 Select Case infoEvento.MenuUID
@@ -122,8 +138,6 @@ Public Class INICIO
                                     Return CType(Clase, EXO_LSTEMB).SBOApp_MenuEvent(infoEvento)
                             End Select
                         End If
-
-
                 End Select
             End If
 
