@@ -1338,196 +1338,176 @@ Public Class EXO_PARRILLA
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
-                    sSQL = "SELECT DISTINCT CAST('PEDVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"",  'N' ""Sel"" "
-                    sSQL &= "FROM ORDR T0 "
-                    sSQL &= " LEFT JOIN RDR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL = "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", "
+                    sSQL &= " ""ROT. STOCK"", ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel""  FROM ""EXO_PEDIDOS_VENTA"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""CLASE EXP.""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
                     sSQL &= " UNION ALL "
-                    sSQL &= "SELECT DISTINCT CAST('SOLTRA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""U_EXO_CLASEE"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel""  "
-                    sSQL &= "FROM OWTQ T0 "
-                    sSQL &= " LEFT JOIN WTQ1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL &= "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", ""ROT. STOCK"", "
+                    sSQL &= " ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel"" FROM ""EXO_SOL_TRASLADO"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""TrnspCode""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
                     sSQL &= " UNION ALL "
-                    sSQL &= "SELECT DISTINCT CAST('SDPROV' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
-                    sSQL &= "FROM OPRR T0 "
-                    sSQL &= " LEFT JOIN PRR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL &= "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", ""ROT. STOCK"", "
+                    sSQL &= " ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel"" FROM ""EXO_SOL_DEVOLUCION"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""CLASE EXP.""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
 #End Region
                 Case "PEDVTA"
 #Region "Pedidos de Ventas"
-                    sSQL = "SELECT DISTINCT CAST('PEDVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
-                    sSQL &= "FROM ORDR T0 "
-                    sSQL &= " LEFT JOIN RDR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    'sSQL = "SELECT DISTINCT CAST('PEDVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    'sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
+                    'sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
+                    'sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
+                    'sSQL &= "FROM ORDR T0 "
+                    'sSQL &= " LEFT JOIN RDR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
+                    'sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
+                    'sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
+                    'sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
+                    'sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
+                    'sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL = "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", "
+                    sSQL &= " ""ROT. STOCK"", ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel""  FROM ""EXO_PEDIDOS_VENTA"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""CLASE EXP.""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
 #End Region
                 Case "SOLTRA"
 #Region "Sol de traslado"
-                    sSQL = "SELECT DISTINCT CAST('SOLTRA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""U_EXO_CLASEE"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
-                    sSQL &= "FROM OWTQ T0 "
-                    sSQL &= " LEFT JOIN WTQ1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""U_EXO_STATUSP""='P' "
+                    'sSQL = "SELECT DISTINCT CAST('SOLTRA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    'sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""U_EXO_CLASEE"" as nVARCHAR(50)) ""CLASE EXP."", "
+                    'sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
+                    'sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
+                    'sSQL &= "FROM OWTQ T0 "
+                    'sSQL &= " LEFT JOIN WTQ1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
+                    'sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
+                    'sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
+                    'sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
+                    'sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
+                    'sSQL &= " WHERE TL.""LineStatus""='O' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL = "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", ""ROT. STOCK"", "
+                    sSQL &= " ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel"" FROM ""EXO_SOL_TRASLADO"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""TrnspCode""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
 #End Region
                 Case "SDPROV"
 #Region "Sol de Devolución"
-                    sSQL = "SELECT DISTINCT CAST('SDPROV' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
-                    sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
-                    sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
-                    sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel""  "
-                    sSQL &= "FROM OPRR T0 "
-                    sSQL &= " LEFT JOIN PRR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
-                    sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
-                    sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
-                    sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
-                    sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
-                    sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    'sSQL = "SELECT DISTINCT CAST('SDPROV' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    'sSQL &= " T0.""Confirmed"" ""AUTORIZADO"", CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", "
+                    'sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
+                    'sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel""  "
+                    'sSQL &= "FROM OPRR T0 "
+                    'sSQL &= " LEFT JOIN PRR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
+                    'sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
+                    'sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
+                    'sSQL &= " LEFT JOIN ""EXO_ROTURA"" R ON R.""DocEntry""=T0.""DocEntry"" and R.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_SITUACION"" S ON S.""DocEntry""=T0.""DocEntry"" and S.""ObjType""=T0.""ObjType"" "
+                    'sSQL &= " LEFT JOIN ""EXO_A"" A ON A.""CardCode""=T0.""CardCode"" and A.""WhsCode""=TL.""WhsCode"" "
+                    'sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
+                    'sSQL &= " WHERE TL.""LineStatus""='O' and T0.""Confirmed""='Y' and T0.""U_EXO_STATUSP""='P' "
+                    sSQL = "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", ""ROT. STOCK"", "
+                    sSQL &= " ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel"" FROM ""EXO_SOL_DEVOLUCION"" "
+                    sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and ""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' and ""CÓDIGO""<='" & sICH & "' )"
                     ElseIf sICD <> "" Then
-                        sSQL &= " And (T0.""CardCode"">='" & sICD & "' )"
+                        sSQL &= " And (""CÓDIGO"">='" & sICD & "' )"
                     ElseIf sICH <> "" Then
-                        sSQL &= " And (T0.""CardCode""<='" & sICH & "' )"
+                        sSQL &= " And (""CÓDIGO""<='" & sICH & "' )"
                     End If
                     If sEXPE <> "-" Then
-                        sSQL &= " And (T0.""TrnspCode""='" & sEXPE & "' )"
+                        sSQL &= " And (""CLASE EXP.""='" & sEXPE & "' )"
                     End If
                     If sTerri <> "-" Then
-                        sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
+                        sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
 #End Region
             End Select
             oForm.DataSources.DataTables.Item("DTSPTE").ExecuteQuery(sSQL)
             FormateaGrid_SPTE(oForm)
-            objGlobal.SBOApp.StatusBar.SetText("Datos de salidas Pdtes. Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+                objGlobal.SBOApp.StatusBar.SetText("Datos de salidas Pdtes. Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         Catch ex As Exception
             oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -1746,7 +1726,7 @@ Public Class EXO_PARRILLA
             End Select
             oForm.DataSources.DataTables.Item("DTSLIB").ExecuteQuery(sSQL)
             FormateaGrid_SLIB(oForm)
-            objGlobal.SBOApp.StatusBar.SetText("Datos de salida liberados Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                objGlobal.SBOApp.StatusBar.SetText("Datos de salida liberados Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         Catch ex As Exception
             oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -1949,7 +1929,8 @@ Public Class EXO_PARRILLA
             End Select
             oForm.DataSources.DataTables.Item("DTSCOM").ExecuteQuery(sSQL)
             FormateaGrid_SCOM(oForm)
-            objGlobal.SBOApp.StatusBar.SetText("Datos de salida completadas Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+                objGlobal.SBOApp.StatusBar.SetText("Datos de salida completadas Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         Catch ex As Exception
             oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -2178,7 +2159,8 @@ Public Class EXO_PARRILLA
             End Select
             oForm.DataSources.DataTables.Item("DTE").ExecuteQuery(sSQL)
             FormateaGrid_E(oForm)
-            objGlobal.SBOApp.StatusBar.SetText("Datos de Entrada Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+                objGlobal.SBOApp.StatusBar.SetText("Datos de Entrada Cargados con éxito.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         Catch ex As Exception
             oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)

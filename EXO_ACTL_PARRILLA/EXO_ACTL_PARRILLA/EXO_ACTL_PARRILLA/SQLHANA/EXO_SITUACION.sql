@@ -1,4 +1,4 @@
-﻿CREATE VIEW "SBO_AUTO_TEST"."EXO_SITUACION"  AS 
+﻿CREATE VIEW "EXO_SITUACION"  AS 
 
 SELECT T."DocEntry",T."ObjType",T."DocNum", CASE WHEN COUNT("Situacion")=1 then max("Situacion") ELSE 'Ambos' END "Sit"
 FROM (

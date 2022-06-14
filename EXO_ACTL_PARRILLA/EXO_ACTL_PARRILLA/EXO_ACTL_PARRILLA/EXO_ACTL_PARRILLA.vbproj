@@ -170,7 +170,9 @@
     <EmbeddedResource Include="FORMS\EXO_PARRILLA.srf" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml" />
+    <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SQLHANA\EXO_ROTURA.sql" />
@@ -192,6 +194,15 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDFs_OCRD.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SQLHANA\EXO_PEDIDOS_VENTA.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SQLHANA\EXO_SOL_TRASLADO.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SQLHANA\EXO_SOL_DEVOLUCION.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

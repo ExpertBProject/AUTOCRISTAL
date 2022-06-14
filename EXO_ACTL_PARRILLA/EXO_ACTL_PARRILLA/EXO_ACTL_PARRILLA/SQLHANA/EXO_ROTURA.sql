@@ -1,4 +1,4 @@
-﻿CREATE VIEW "SBO_AUTO_TEST"."EXO_ROTURA"  AS 
+﻿CREATE VIEW "EXO_ROTURA"  AS 
 
 SELECT * FROM (
 SELECT T."DocEntry",T."DocNum", T."LineNum", t."ObjType", T."ItemCode", "ALMACEN", "OpenQty", "U_EXO_DOCPRI", "CreateDate", "CreateTS", 
