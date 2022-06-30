@@ -131,9 +131,9 @@ Public Class EXO_PLATAFORMAS
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
 
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
-                                    If EventHandler_Choose_FromList_After(infoEvento) = False Then
-                                        Return False
-                                    End If
+                                    'If EventHandler_Choose_FromList_After(infoEvento) = False Then
+                                    '    Return False
+                                    'End If
                             End Select
                     End Select
                 Else
@@ -142,9 +142,9 @@ Public Class EXO_PLATAFORMAS
 
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
-                                    If EventHandler_Choose_FromList_Before(infoEvento) = False Then
-                                        Return False
-                                    End If
+                                    'If EventHandler_Choose_FromList_Before(infoEvento) = False Then
+                                    '    Return False
+                                    'End If
                                 Case SAPbouiCOM.BoEventTypes.et_PICKER_CLICKED
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
@@ -163,114 +163,114 @@ Public Class EXO_PLATAFORMAS
             Return False
         End Try
     End Function
-    Private Function EventHandler_Choose_FromList_Before(ByRef pVal As ItemEvent) As Boolean
-        Dim oCFLEvento As IChooseFromListEvent = Nothing
-        Dim oConds As SAPbouiCOM.Conditions = Nothing
-        Dim oCond As SAPbouiCOM.Condition = Nothing
-        Dim oForm As SAPbouiCOM.Form = Nothing
+    'Private Function EventHandler_Choose_FromList_Before(ByRef pVal As ItemEvent) As Boolean
+    '    Dim oCFLEvento As IChooseFromListEvent = Nothing
+    '    Dim oConds As SAPbouiCOM.Conditions = Nothing
+    '    Dim oCond As SAPbouiCOM.Condition = Nothing
+    '    Dim oForm As SAPbouiCOM.Form = Nothing
 
-        EventHandler_Choose_FromList_Before = False
+    '    EventHandler_Choose_FromList_Before = False
 
-        Try
-            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+    '    Try
+    '        oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
-            If pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_0_2" Then 'Provincias
-                Dim sPais As String = ""
-                If CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(pVal.Row).Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                    sPais = CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(pVal.Row).Specific, SAPbouiCOM.ComboBox).Selected.Value
-                Else
-                    sPais = ""
-                End If
+    '        If pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_0_2" Then 'Provincias
+    '            Dim sPais As String = ""
+    '            If CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(pVal.Row).Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
+    '                sPais = CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(pVal.Row).Specific, SAPbouiCOM.ComboBox).Selected.Value
+    '            Else
+    '                sPais = ""
+    '            End If
 
-                oCFLEvento = CType(pVal, IChooseFromListEvent)
+    '            oCFLEvento = CType(pVal, IChooseFromListEvent)
 
-                oConds = New SAPbouiCOM.Conditions
+    '            oConds = New SAPbouiCOM.Conditions
 
-                oCond = oConds.Add
-                oCond.Alias = "Country"
-                oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
-                oCond.CondVal = sPais
+    '            oCond = oConds.Add
+    '            oCond.Alias = "Country"
+    '            oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+    '            oCond.CondVal = sPais
 
 
 
-                oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
-            End If
+    '            oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+    '        End If
 
-            EventHandler_Choose_FromList_Before = True
+    '        EventHandler_Choose_FromList_Before = True
 
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
-        Finally
-            EXO_CleanCOM.CLiberaCOM.Form(oForm)
-            EXO_CleanCOM.CLiberaCOM.FormConditions(oConds)
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCond, Object))
-        End Try
-    End Function
-    Private Function EventHandler_Choose_FromList_After(ByRef pVal As ItemEvent) As Boolean
-        Dim oCFLEvento As IChooseFromListEvent = Nothing
-        Dim oDataTable As SAPbouiCOM.DataTable = Nothing
-        Dim oForm As SAPbouiCOM.Form = Nothing
+    '    Catch exCOM As System.Runtime.InteropServices.COMException
+    '        Throw exCOM
+    '    Catch ex As Exception
+    '        Throw ex
+    '    Finally
+    '        EXO_CleanCOM.CLiberaCOM.Form(oForm)
+    '        EXO_CleanCOM.CLiberaCOM.FormConditions(oConds)
+    '        EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCond, Object))
+    '    End Try
+    'End Function
+    'Private Function EventHandler_Choose_FromList_After(ByRef pVal As ItemEvent) As Boolean
+    '    Dim oCFLEvento As IChooseFromListEvent = Nothing
+    '    Dim oDataTable As SAPbouiCOM.DataTable = Nothing
+    '    Dim oForm As SAPbouiCOM.Form = Nothing
 
-        EventHandler_Choose_FromList_After = False
+    '    EventHandler_Choose_FromList_After = False
 
-        Try
-            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-            If oForm.Mode = SAPbouiCOM.BoFormMode.fm_FIND_MODE Then
-                oForm = Nothing
+    '    Try
+    '        oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+    '        If oForm.Mode = SAPbouiCOM.BoFormMode.fm_FIND_MODE Then
+    '            oForm = Nothing
 
-                Return True
-            End If
+    '            Return True
+    '        End If
 
-            oCFLEvento = CType(pVal, IChooseFromListEvent)
+    '        oCFLEvento = CType(pVal, IChooseFromListEvent)
 
-            oDataTable = oCFLEvento.SelectedObjects
-            If Not oDataTable Is Nothing Then
-                Select Case oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).ObjectType
-                    Case "130"
-                        Try
-                            CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).FlushToDataSource()
-                            For i = 0 To oDataTable.Rows.Count - 1
-                                Dim sCode As String = oDataTable.GetValue("Code", i).ToString
-                                Dim sDes As String = oDataTable.GetValue("Name", i).ToString
+    '        oDataTable = oCFLEvento.SelectedObjects
+    '        If Not oDataTable Is Nothing Then
+    '            Select Case oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).ObjectType
+    '                Case "130"
+    '                    Try
+    '                        CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).FlushToDataSource()
+    '                        For i = 0 To oDataTable.Rows.Count - 1
+    '                            Dim sCode As String = oDataTable.GetValue("Code", i).ToString
+    '                            Dim sDes As String = oDataTable.GetValue("Name", i).ToString
 
-                                Try
-                                    ' CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
-                                    CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
+    '                            Try
+    '                                ' CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
+    '                                CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
 
-                                Catch ex As Exception
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").InsertRecord(pVal.Row - 1 + i)
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").Offset = pVal.Row - 1 + i
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
-                                    'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
-                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
-                                    'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
-                                End Try
-                            Next
-                            CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).LoadFromDataSource()
+    '                            Catch ex As Exception
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").InsertRecord(pVal.Row - 1 + i)
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").Offset = pVal.Row - 1 + i
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROV", pVal.Row - 1 + i, sCode)
+    '                                'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCode
+    '                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1 + i, sDes)
+    '                                'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_3").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
+    '                            End Try
+    '                        Next
+    '                        CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).LoadFromDataSource()
 
-                        Catch ex As Exception
-                            oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
-                        End Try
+    '                    Catch ex As Exception
+    '                        oForm.DataSources.DBDataSources.Item("@EXO_PLATAFORMASL").SetValue("U_EXO_PROVD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
+    '                    End Try
 
-                        If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then oForm.Mode = SAPbouiCOM.BoFormMode.fm_UPDATE_MODE
-                End Select
-            End If
+    '                    If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then oForm.Mode = SAPbouiCOM.BoFormMode.fm_UPDATE_MODE
+    '            End Select
+    '        End If
 
-            EventHandler_Choose_FromList_After = True
+    '        EventHandler_Choose_FromList_After = True
 
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
-        Finally
-            EXO_CleanCOM.CLiberaCOM.FormDatatable(oDataTable)
-            EXO_CleanCOM.CLiberaCOM.Form(oForm)
-        End Try
-    End Function
+    '    Catch exCOM As System.Runtime.InteropServices.COMException
+    '        Throw exCOM
+    '    Catch ex As Exception
+    '        Throw ex
+    '    Finally
+    '        EXO_CleanCOM.CLiberaCOM.FormDatatable(oDataTable)
+    '        EXO_CleanCOM.CLiberaCOM.Form(oForm)
+    '    End Try
+    'End Function
     Private Function EventHandler_Form_Visible(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""

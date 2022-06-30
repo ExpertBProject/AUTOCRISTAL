@@ -111,6 +111,7 @@ Public Class EXO_PLATAAG
 
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_LOAD
                                 Case SAPbouiCOM.BoEventTypes.et_LOST_FOCUS
+
                             End Select
                     End Select
                 End If
@@ -221,7 +222,7 @@ Public Class EXO_PLATAAG
         Dim oCFLEvento As IChooseFromListEvent = Nothing
         Dim oDataTable As SAPbouiCOM.DataTable = Nothing
         Dim oForm As SAPbouiCOM.Form = Nothing
-
+        Dim sCod As String = "" : Dim sDes As String = ""
         EventHandler_Choose_FromList_After = False
 
         Try
@@ -239,13 +240,26 @@ Public Class EXO_PLATAAG
                 Select Case oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).ObjectType
                     Case "EXO_PLATAFORMAS"
                         Try
-                            Dim sDes As String = oDataTable.GetValue("Name", 0).ToString
-                            oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").SetValue("U_EXO_PLATAD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
-                            CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row).Specific, SAPbouiCOM.EditText).Value = sDes
-                        Catch ex As Exception
-                            oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").SetValue("U_EXO_PLATAD", pVal.Row - 1, oDataTable.GetValue("Name", 0).ToString)
-                        End Try
+                            For i = 0 To oDataTable.Rows.Count - 1
+                                sCod = oDataTable.GetValue("Code", i).ToString
+                                sDes = oDataTable.GetValue("Name", i).ToString
+                                If i <> 0 Then
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").InsertRecord(oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").Offset + 1)
+                                    oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").Offset = oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").Offset + 1
+                                End If
+                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").SetValue("U_EXO_PLATA", oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").Offset, sCod)
+                                oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").SetValue("U_EXO_PLATAD", oForm.DataSources.DBDataSources.Item("@EXO_PLATAAGL").Offset, sDes)
+                                'If i <> 0 Then
+                                '    CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).AddRow(i)
+                                'End If
+                                'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_1").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sCod
+                                'CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(pVal.Row + i).Specific, SAPbouiCOM.EditText).Value = sDes
+                            Next
 
+                        Catch ex As Exception
+                            Throw ex
+                        End Try
+                        CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).LoadFromDataSource()
                         If oForm.Mode = SAPbouiCOM.BoFormMode.fm_OK_MODE Then oForm.Mode = SAPbouiCOM.BoFormMode.fm_UPDATE_MODE
                 End Select
             End If
