@@ -605,6 +605,7 @@ Public Class EXO_ENVTRANS
                     objGlobal.SBOApp.ActivateMenuItem("1304")
                 End If
 
+
             End If
 
             EventHandler_Form_Visible = True
@@ -716,10 +717,10 @@ Public Class EXO_ENVTRANS
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("26_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oform.Items.Item("26_U_Cb").DisplayDesc = True
 
-            'Plataforma
-            sSQL = "SELECT ""U_EXO_PLATA"",""U_EXO_PLATAD"" FROM ""@EXO_PLATAAGL"" WHERE ""Code""='" & sAgencia & "' "
-            objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").ValidValues, sSQL)
-            CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").DisplayDesc = True
+            ''Plataforma
+            'sSQL = "SELECT ""U_EXO_PLATA"",""U_EXO_PLATAD"" FROM ""@EXO_PLATAAGL"" WHERE ""Code""='" & sAgencia & "' "
+            'objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").ValidValues, sSQL)
+            'CType(oform.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_1_5").DisplayDesc = True
 
         Catch ex As Exception
             Throw ex
@@ -730,14 +731,17 @@ Public Class EXO_ENVTRANS
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oConds As SAPbouiCOM.Conditions = Nothing
         Dim oCond As SAPbouiCOM.Condition = Nothing
+
         Dim oRs As SAPbobsCOM.Recordset = Nothing
+        Dim sSQL As String = ""
+
         Dim oXml As System.Xml.XmlDocument = New System.Xml.XmlDocument
         Dim oNodes As System.Xml.XmlNodeList = Nothing
         Dim oNode As System.Xml.XmlNode = Nothing
-
         EventHandler_Choose_FromList_Before = False
 
         Try
+            oRs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
             If pVal.ItemUID = "23_U_E" Then 'Agencia de transporte
                 oForm = Me.objGlobal.SBOApp.Forms.Item(pVal.FormUID)
                 oCFLEvento = CType(pVal, IChooseFromListEvent)
@@ -750,6 +754,27 @@ Public Class EXO_ENVTRANS
                 'oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
 
                 oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            ElseIf pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_1_5" Then
+                oForm = Me.objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+                Dim sAgencia As String = CType(oForm.Items.Item("23_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+                sSQL = "SELECT ""U_EXO_PLATA"" FROM ""@EXO_PLATAAGL"" WHERE ""Code""='" & sAgencia & "'"
+                oRs.DoQuery(sSQL)
+                oConds = New SAPbouiCOM.Conditions
+                oCond = oConds.Add
+                oCond.Alias = "Code"
+                oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                oCond.CondVal = "0"
+                oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+                For i = 0 To oRs.RecordCount - 1
+                    oCond = oConds.Add
+                    oCond.Alias = "Code"
+                    oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                    oCond.CondVal = oRs.Fields.Item("U_EXO_PLATA").Value.ToString
+                    oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+                    oRs.MoveNext()
+                Next
+                If oConds.Count > 0 Then oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_NONE
+                oForm.ChooseFromLists.Item("CFLPT").SetConditions(oConds)
             End If
 
             EventHandler_Choose_FromList_Before = True
@@ -758,14 +783,14 @@ Public Class EXO_ENVTRANS
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
         End Try
     End Function
     Private Function EventHandler_Choose_FromList_After(ByVal pVal As ItemEvent) As Boolean
         Dim oCFLEvento As IChooseFromListEvent = Nothing
         Dim oDataTable As DataTable = Nothing
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim oRs As SAPbobsCOM.Recordset = Nothing
-        Dim sSQL As String = ""
+
         Dim sNombre As String = ""
         EventHandler_Choose_FromList_After = False
 
@@ -780,32 +805,27 @@ Public Class EXO_ENVTRANS
 
             oDataTable = oCFLEvento.SelectedObjects
             If Not oDataTable Is Nothing Then
+                oDataTable = oCFLEvento.SelectedObjects
                 Select Case oCFLEvento.ChooseFromListUID
                     Case "CFLAT"
-                        oDataTable = oCFLEvento.SelectedObjects
-
                         If oDataTable IsNot Nothing Then
                             If pVal.ItemUID = "23_U_E" Then
                                 CType(oForm.Items.Item("24_U_E").Specific, SAPbouiCOM.EditText).Value = oDataTable.GetValue("CardName", 0).ToString
                                 Cargar_Combo_Matricula_Conductor_Plataforma(oForm, oDataTable.GetValue("CardCode", 0).ToString)
                             End If
                         End If
-                    'Case "CFLIC"
-                    '    oDataTable = oCFLEvento.SelectedObjects
-
-                    '    If oDataTable IsNot Nothing Then
-                    '        If pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_0_1" Then
-                    '            sNombre = oDataTable.GetValue("CardName", 0).ToString
-                    '            oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANSEX").SetValue("U_EXO_EMPRESA", pVal.Row - 1, sNombre)
-                    '        End If
-                    '    End If
                     Case "CFLAB"
-                        oDataTable = oCFLEvento.SelectedObjects
-
                         If oDataTable IsNot Nothing Then
                             If pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_1_1" Then
                                 sNombre = oDataTable.GetValue("Name", 0).ToString
                                 oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANSAB").SetValue("U_EXO_AGNAME", pVal.Row - 1, sNombre)
+                            End If
+                        End If
+                    Case "CFLPT"
+                        If oDataTable IsNot Nothing Then
+                            If pVal.ItemUID = "0_U_G" And pVal.ColUID = "C_1_5" Then
+                                sNombre = oDataTable.GetValue("Name", 0).ToString
+                                oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANSAB").SetValue("U_EXO_PLATAD", pVal.Row - 1, sNombre)
                             End If
                         End If
                 End Select
@@ -817,7 +837,7 @@ Public Class EXO_ENVTRANS
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             EXO_CleanCOM.CLiberaCOM.FormDatatable(oDataTable)
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
