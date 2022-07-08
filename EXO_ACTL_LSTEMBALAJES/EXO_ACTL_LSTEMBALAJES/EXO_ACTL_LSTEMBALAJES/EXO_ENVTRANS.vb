@@ -95,6 +95,7 @@ Public Class EXO_ENVTRANS
 
             objGlobal.SBOApp.StatusBar.SetText("Cerrando Documento Nº " & sDocNum & "...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             sStatus = objGlobal.refDi.SQL.sqlStringB1("SELECT ""Status"" FROM ""@EXO_ENVTRANS"" Where ""DocEntry""=" & sDocEntry)
+            objGlobal.SBOApp.StatusBar.SetText("Status: " & sStatus, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             If sStatus.Trim = "O" Then
                 sSQL = "SELECT TC.""DocEntry"", TC.""DocNum"", COUNT(""U_EXO_IDBULTO"" || ' - ' ||  ""U_EXO_TBULTO"") ""Cantidad"", MAX(""U_EXO_IDBULTO"") ""ID BULTO"", MAX(""U_EXO_TBULTO"") ""BULTO""
                     FROM ""@EXO_LSTEMBL"" TL
