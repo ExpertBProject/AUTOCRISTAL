@@ -80,6 +80,14 @@ Public Class INICIO
             Else
                 objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "VEXO_PICKING.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: VEXO_PICKING", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
         End If
     End Sub
     Private Sub cargamenu()

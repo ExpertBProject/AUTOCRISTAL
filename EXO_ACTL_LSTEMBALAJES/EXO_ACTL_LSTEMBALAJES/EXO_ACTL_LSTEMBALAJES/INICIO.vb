@@ -33,6 +33,16 @@ Public Class INICIO
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_GP.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_GP", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OPKL.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OPKL", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
         End If
     End Sub
     Private Sub cargamenu()
