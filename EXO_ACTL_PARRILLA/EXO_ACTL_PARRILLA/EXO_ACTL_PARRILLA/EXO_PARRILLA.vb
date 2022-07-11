@@ -3,6 +3,7 @@ Imports System.Xml
 Imports SAPbouiCOM
 Public Class EXO_PARRILLA
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
+    Public Shared _ClaseExp As String = ""
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
         Me.objGlobal = objG
     End Sub
@@ -33,6 +34,7 @@ Public Class EXO_PARRILLA
     Public Function CargarForm() As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
+        Dim oColumnCb As SAPbouiCOM.ComboBox = Nothing
         Dim oFP As SAPbouiCOM.FormCreationParams = Nothing
         Dim EXO_Xml As New EXO_UIAPI.EXO_XML(objGlobal)
 
@@ -96,6 +98,22 @@ Public Class EXO_PARRILLA
             CType(oForm.Items.Item("cbSAL").Specific, SAPbouiCOM.ComboBox).Select("TODOS", BoSearchKey.psk_ByValue)
             CType(oForm.Items.Item("cbENT").Specific, SAPbouiCOM.ComboBox).Select("TODOS", BoSearchKey.psk_ByValue)
 
+#Region "Carga Combo Exp. Cambiar"
+
+            oColumnCb = CType(oForm.Items.Item("cbEXPCB").Specific, SAPbouiCOM.ComboBox)
+
+            sSQL = " SELECT CAST(""TrnspCode"" as NVARCHAR(50)) ,""TrnspName"" "
+            sSQL &= " From OSHP  "
+            sSQL &= " ORDER By  ""TrnspName"" "
+            Try
+                objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
+                oColumnCb.ValidValues.Add("-1", " ")
+                oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
+                oColumnCb.Select("-1", BoSearchKey.psk_ByValue)
+            Catch ex As Exception
+
+            End Try
+#End Region
             CargarForm = True
         Catch exCOM As System.Runtime.InteropServices.COMException
             objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -213,7 +231,9 @@ Public Class EXO_PARRILLA
                         Case "EXO_PARRILLA"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
-
+                                    If EventHandler_COMBO_SELECT_Before(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_CLICK
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
@@ -279,11 +299,12 @@ Public Class EXO_PARRILLA
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             oForm.Items.Item("grdSPTE").Height = 140
             oForm.Items.Item("Item_5").Top = oForm.Items.Item("grdSPTE").Top - 15
-            oForm.Items.Item("btLPicking").Top = oForm.Items.Item("grdSPTE").Top + 5
-            oForm.Items.Item("btCPed").Top = oForm.Items.Item("grdSPTE").Top + 31
-            oForm.Items.Item("btCALM").Top = oForm.Items.Item("grdSPTE").Top + 57
-            oForm.Items.Item("btCCEXP").Top = oForm.Items.Item("grdSPTE").Top + 83
-            oForm.Items.Item("btASS").Top = oForm.Items.Item("grdSPTE").Top + 109
+            oForm.Items.Item("btLPicking").Top = oForm.Items.Item("grdSPTE").Top
+            oForm.Items.Item("btCPed").Top = oForm.Items.Item("grdSPTE").Top + 25
+            oForm.Items.Item("btCALM").Top = oForm.Items.Item("grdSPTE").Top + 50
+            oForm.Items.Item("cbEXPCB").Top = oForm.Items.Item("grdSPTE").Top + 75
+            oForm.Items.Item("btCCEXP").Top = oForm.Items.Item("grdSPTE").Top + 90
+            oForm.Items.Item("btASS").Top = oForm.Items.Item("grdSPTE").Top + 115
 
             oForm.Items.Item("grdSLIB").Height = 140
             oForm.Items.Item("Item_6").Top = oForm.Items.Item("grdSLIB").Top - 15
@@ -304,6 +325,30 @@ Public Class EXO_PARRILLA
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
+    Private Function EventHandler_COMBO_SELECT_Before(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+
+        EventHandler_COMBO_SELECT_Before = False
+
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            If oForm.Visible = True Then
+                If pVal.ItemUID = "grdSPTE" And pVal.ColUID = "CLASE EXP." Then
+                    _ClaseExp = oForm.DataSources.DataTables.Item("DTSPTE").GetValue("CLASE EXP.", pVal.Row).ToString
+                End If
+            End If
+
+            EventHandler_COMBO_SELECT_Before = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
     Private Function EventHandler_COMBO_SELECT_After(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
@@ -321,6 +366,12 @@ Public Class EXO_PARRILLA
                     Dim sAGE As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                     sAGE = IIf(sAGE = "", "-1", sAGE)
                     CType(oForm.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).DataTable.SetValue("AG. TRANSPORTE", pVal.Row, sAGE)
+                ElseIf pVal.ItemUID = "grdSPTE" And pVal.ColUID = "CLASE EXP." Then
+                    objGlobal.SBOApp.StatusBar.SetText("Cambiando clase de expedición... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    CambiarClaseExpedicionCombo(oForm, "DTSPTE", objGlobal, pVal.Row)
+                    FiltrarPDTE(oForm)
+                    objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                    objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                 End If
             End If
 
@@ -504,13 +555,13 @@ Public Class EXO_PARRILLA
                         'Calculando datos
                         objGlobal.SBOApp.StatusBar.SetText("Cambiando clase de expedición... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                         oForm.Freeze(True)
-                        If CambiarClaseExpedicion(oForm, "DTSPTE", objGlobal) = False Then
+                        If CambiarClaseExpedicionMasiva(oForm, "DTSPTE", objGlobal) = False Then
                             Exit Function
                         End If
                         oForm.Freeze(False)
                         FiltrarPDTE(oForm)
-                        FiltrarLIB(oForm)
-                        FiltrarCOM(oForm)
+                        'FiltrarLIB(oForm)
+                        'FiltrarCOM(oForm)
                         objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                         objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
                     End If
@@ -828,6 +879,198 @@ Public Class EXO_PARRILLA
             oDocFinal = Nothing : oDocFinal_Lines = Nothing
             oDocuments = Nothing : oDocument_Lines = Nothing
             oDocStockTransfer = Nothing : oDocStockTransfer_Lines = Nothing
+        End Try
+    End Function
+    Public Shared Function CambiarClaseExpedicionCombo(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal i As Integer) As Boolean
+        CambiarClaseExpedicionCombo = False
+#Region "VARIABLES"
+        Dim oRs As SAPbobsCOM.Recordset = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sSQL As String = ""
+        Dim sTIPODOC As String = "" : Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sIC As String = "" : Dim sClaseExp As String = ""
+        Dim sAgenenClase As String = "" : Dim sAgenciaListaNegra As String = ""
+        Dim oDocuments As SAPbobsCOM.Documents = Nothing
+        Dim oDocStockTransfer As SAPbobsCOM.StockTransfer = Nothing
+#End Region
+
+        Try
+            sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
+            sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
+            sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
+            sIC = oForm.DataSources.DataTables.Item(sData).GetValue("CÓDIGO", i).ToString
+            sClaseExp = oForm.DataSources.DataTables.Item(sData).GetValue("CLASE EXP.", i).ToString
+#Region "Comprobamos que la clase de expedicion sea permitida y no este en la lista negra"
+            sSQL = " SELECT ""U_EXO_AGE"" FROM OSHP WHERE ""TrnspCode""='" & sClaseExp & "' "
+            sAgenenClase = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+            sSQL = " SELECT ""U_EXO_COD"" FROM ""@EXO_LNEGRAL"" WHERE ""Code""='" & sIC & "' and ""U_EXO_COD""='" & sAgenenClase & "' "
+            sAgenciaListaNegra = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+            Dim bActualiza As Boolean = True
+            If sAgenciaListaNegra <> "" Then
+                oobjGlobal.SBOApp.StatusBar.SetText("En el documento Nº: " & sDocNum & ", la clase de expedición tiene asignada la agencia """ & sAgenciaListaNegra & """ en la lista negra. No puede actualizarlo." & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                bActualiza = False
+            End If
+
+            If bActualiza = True Then
+                sSQL = " SELECT ""U_EXO_COD"" FROM ""@EXO_LNEGRAL"" WHERE ""Code""='" & sIC & "' and ""U_EXO_COD""='" & sAgenenClase & "' "
+                sAgenciaListaNegra = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                If sAgenciaListaNegra <> "" Then
+                    oobjGlobal.SBOApp.StatusBar.SetText("En el documento Nº: " & sDocNum & ", la clase de expedición tiene asignada la agencia """ & sAgenciaListaNegra & """ en la lista negra. No puede actualizarlo." & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                Else
+                    Select Case sTIPODOC
+                        Case "PEDVTA" ' Pedido de venta
+                            oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
+                            If oDocuments.GetByKey(sDocEntry) = True Then
+                                For i = 0 To oDocuments.Lines.Count - 1
+                                    oDocuments.Lines.SetCurrentLine(i)
+                                    If oDocuments.Lines.ShippingMethod = _ClaseExp Then
+                                        oDocuments.Lines.ShippingMethod = sClaseExp
+                                    End If
+                                Next
+
+                                If oDocuments.Update() <> 0 Then
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar el pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                Else
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Se ha actualizado la clase de expedición en el pedido Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                End If
+                            Else
+                                oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el pedido para cambiar la clase de expedición con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                            End If
+                        Case "SOLTRA" ' Sol. de Traslado                           
+                            oDocStockTransfer = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
+                            If oDocStockTransfer.GetByKey(sDocEntry) = True Then
+                                oDocStockTransfer.UserFields.Fields.Item("U_EXO_CLASEE").Value = sClaseExp
+                                If oDocStockTransfer.Update() <> 0 Then
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar la Sol. de traslado Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                Else
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Se ha actualizado la clase de expedición en la Sol. de traslado Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                End If
+                            Else
+                                oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Traslado  Nº: " & sDocNum & ". No s epuede cerrar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                            End If
+                        Case "SDPROV" ' Sol. de dev. de Proveedor
+                            oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oGoodsReturnRequest), SAPbobsCOM.Documents)
+                            If oDocuments.GetByKey(sDocEntry) = True Then
+                                oDocuments.TransportationCode = sClaseExp
+                                If oDocuments.Update() <> 0 Then
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar la clase de expedición de la Sol. de Dev de proveedor Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                Else
+                                    oobjGlobal.SBOApp.StatusBar.SetText("Sol. de Dev de proveedor actualizada Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                End If
+                            Else
+                                oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Dev de proveedor para cerrarla con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                            End If
+                    End Select
+                End If
+            End If
+#End Region
+
+            CambiarClaseExpedicionCombo = True
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+
+            oDocStockTransfer = Nothing
+            oDocuments = Nothing
+        End Try
+    End Function
+    Public Shared Function CambiarClaseExpedicionMasiva(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
+        CambiarClaseExpedicionMasiva = False
+#Region "VARIABLES"
+        Dim oRs As SAPbobsCOM.Recordset = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sSQL As String = ""
+        Dim sTIPODOC As String = "" : Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sIC As String = "" : Dim sClaseExp As String = "" : Dim sClaseExpNew As String = ""
+        Dim sAgenenClase As String = "" : Dim sAgenciaListaNegra As String = ""
+        Dim oDocuments As SAPbobsCOM.Documents = Nothing
+        Dim oDocStockTransfer As SAPbobsCOM.StockTransfer = Nothing
+#End Region
+
+        Try
+            sClaseExpNew = oForm.DataSources.UserDataSources.Item("UDEXPCB").Value.ToString
+            For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
+                If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
+                    sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
+                    sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
+                    sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
+                    sIC = oForm.DataSources.DataTables.Item(sData).GetValue("CÓDIGO", i).ToString
+                    sClaseExp = oForm.DataSources.DataTables.Item(sData).GetValue("CLASE EXP.", i).ToString
+#Region "Comprobamos que la clase de expedicion sea permitida y no este en la lista negra"
+                    sSQL = " SELECT ""U_EXO_AGE"" FROM OSHP WHERE ""TrnspCode""='" & sClaseExp & "' "
+                    sAgenenClase = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    sSQL = " SELECT ""U_EXO_COD"" FROM ""@EXO_LNEGRAL"" WHERE ""Code""='" & sIC & "' and ""U_EXO_COD""='" & sAgenenClase & "' "
+                    sAgenciaListaNegra = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    Dim bActualiza As Boolean = True
+                    If sAgenciaListaNegra <> "" Then
+                        oobjGlobal.SBOApp.StatusBar.SetText("En el documento Nº: " & sDocNum & ", la clase de expedición tiene asignada la agencia """ & sAgenciaListaNegra & """ en la lista negra. No puede actualizarlo." & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        bActualiza = False
+                    End If
+
+                    If bActualiza = True Then
+                        sSQL = " SELECT ""U_EXO_COD"" FROM ""@EXO_LNEGRAL"" WHERE ""Code""='" & sIC & "' and ""U_EXO_COD""='" & sAgenenClase & "' "
+                        sAgenciaListaNegra = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        If sAgenciaListaNegra <> "" Then
+                            oobjGlobal.SBOApp.StatusBar.SetText("En el documento Nº: " & sDocNum & ", la clase de expedición tiene asignada la agencia """ & sAgenciaListaNegra & """ en la lista negra. No puede actualizarlo." & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        Else
+                            Select Case sTIPODOC
+                                Case "PEDVTA" ' Pedido de venta
+                                    oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
+                                    If oDocuments.GetByKey(sDocEntry) = True Then
+                                        For l = 0 To oDocuments.Lines.Count - 1
+                                            oDocuments.Lines.SetCurrentLine(l)
+                                            If oDocuments.Lines.ShippingMethod = sClaseExp Then
+                                                oDocuments.Lines.ShippingMethod = sClaseExpNew
+                                            End If
+                                        Next
+                                        If oDocuments.Update() <> 0 Then
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar el pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        Else
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Se ha actualizado la clase de expedición en el pedido Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                        End If
+                                    Else
+                                        oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el pedido para cambiar la clase de expedición con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                    End If
+                                Case "SOLTRA" ' Sol. de Traslado                           
+                                    oDocStockTransfer = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
+                                    If oDocStockTransfer.GetByKey(sDocEntry) = True Then
+                                        oDocStockTransfer.UserFields.Fields.Item("U_EXO_CLASEE").Value = sClaseExpNew
+                                        If oDocStockTransfer.Update() <> 0 Then
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar la Sol. de traslado Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        Else
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Se ha actualizado la clase de expedición en la Sol. de traslado Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                        End If
+                                    Else
+                                        oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Traslado  Nº: " & sDocNum & ". No s epuede cerrar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                    End If
+                                Case "SDPROV" ' Sol. de dev. de Proveedor
+                                    oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oGoodsReturnRequest), SAPbobsCOM.Documents)
+                                    If oDocuments.GetByKey(sDocEntry) = True Then
+                                        oDocuments.TransportationCode = sClaseExpNew
+                                        If oDocuments.Update() <> 0 Then
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Error al actualizar la clase de expedición de la Sol. de Dev de proveedor Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        Else
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Sol. de Dev de proveedor actualizada Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                        End If
+                                    Else
+                                        oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Dev de proveedor para cerrarla con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                    End If
+                            End Select
+                        End If
+                    End If
+#End Region
+                End If
+            Next
+
+            CambiarClaseExpedicionMasiva = True
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+
+            oDocStockTransfer = Nothing
+            oDocuments = Nothing
         End Try
     End Function
     Public Shared Function CambiarClaseExpedicion(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
@@ -1182,7 +1425,7 @@ Public Class EXO_PARRILLA
                                                     oDocStockTransfer.Lines.ItemCode = oDocuments.Lines.ItemCode
                                                     oDocStockTransfer.Lines.Quantity = oDocuments.Lines.RemainingOpenQuantity
                                                     oDocStockTransfer.Lines.FromWarehouseCode = oDocuments.Lines.WarehouseCode.ToString
-                                                    oDocuments.Lines.WarehouseCode = sALMPedido
+                                                    oDocuments.Lines.WarehouseCode = sALMPedido : oDocuments.Lines.ShippingMethod = -1
                                                     oDocStockTransfer.Lines.WarehouseCode = sALMPedido
                                                 End If
                                             Next
@@ -1208,6 +1451,7 @@ Public Class EXO_PARRILLA
                                                 oDocuments.DocumentReferences.ReferencedObjectType = SAPbobsCOM.ReferencedObjectTypeEnum.rot_InventoryTransferRequest
                                                 oDocuments.DocumentReferences.ReferencedDocEntry = sDocEntryTraslado
                                             End If
+
                                             If oDocuments.Update() <> 0 Then
                                                 oobjGlobal.SBOApp.StatusBar.SetText("Error modificar  el pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                             Else
@@ -1534,7 +1778,7 @@ Public Class EXO_PARRILLA
                 Case "-"
                     sSQL = "SELECT CAST('' as nVARCHAR(50)) ""T. SALIDA"", CAST('' as nVARCHAR(50)) ""DELEGACIÓN"", CAST('' as nVARCHAR(50)) ""Nº INTERNO"", CAST('' as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST('' as nVARCHAR(50)) ""CÓDIGO"",  CAST('' as nVARCHAR(150))	""EMPRESA"", CAST('' as nVARCHAR(50)) ""CLASE EXP."", 'N' ""ROT. STOCK"", "
-                    sSQL &= " 'N' ""A"", CAST('' as nVARCHAR(50)) ""UBICACIÓN"", CAST('' as nVARCHAR(50)) ""ZONA TRANSPORTE"", 'N' ""Sel"" "
+                    sSQL &= " 'N' ""A"", CAST('' as nVARCHAR(50)) ""UBICACIÓN"", CAST('' as nVARCHAR(50)) ""ZONA TRANSPORTE"", 0 ""Cant."", 0 ""Cant. Pdte."", 'N' ""Sel"" "
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
