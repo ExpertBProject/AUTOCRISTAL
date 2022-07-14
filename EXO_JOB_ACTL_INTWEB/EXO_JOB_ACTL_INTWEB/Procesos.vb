@@ -189,6 +189,7 @@ Public Class Procesos
                         sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
                         sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
                         sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
+                        sID = odtDatosWeb.Rows.Item(iCab).Item("ID").ToString
                         oLog.escribeMensaje("Tratando pedido Nº " & sDocNum & " de Cliente " & sCliente & "...", EXO_Log.EXO_Log.Tipo.informacion)
 
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
