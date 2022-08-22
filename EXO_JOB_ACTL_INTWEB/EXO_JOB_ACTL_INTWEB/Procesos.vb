@@ -218,6 +218,8 @@ Public Class Procesos
                                         oLog.escribeMensaje(sSubject, EXO_Log.EXO_Log.Tipo.advertencia)
                                         sComen = ""
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
+                                        'Crear Cobro a cuenta por transferencia  a la cta de un parámetro
+
                                     End If
                                 Case "3" 'Cancelar pedido
                                     'oORDR.Comments &= ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB."
