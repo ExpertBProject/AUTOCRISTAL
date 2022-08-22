@@ -58,11 +58,8 @@ Public Class EXO_OPUBI
                 End Select
             End If
 
-            Return MyBase.SBOApp_MenuEvent(infoEvento)
+            Return True
 
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
-            Return False
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
@@ -298,10 +295,10 @@ Public Class EXO_OPUBI
                                 FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
                     LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
 						                                                            SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
-						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+						                                                            WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
 						                                                            UNION ALL
 						                                                            SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
-						                                                            WHERE C.""DocDate""<='" & sFechaH & "'and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+						                                                            WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
 						                                                            )S GROUP BY ""ItemCode""
 		                       )V ON V.""ItemCode""=I.""ItemCode""
                     WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
