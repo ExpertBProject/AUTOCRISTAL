@@ -432,7 +432,11 @@ Public Class EXO_PNEC
                                     sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                     sSQLGrid &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')) ""24Q-" & sAlmacen & """ "
                                     sSQLGrid &= " ,IFNULL((SELECT SUM(""OnHand"")  FROM OITW WHERE ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""Stock " & sAlmacen & """ "
-                                    sSQLGrid &= ",IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""PTE " & sAlmacen & """ "
+                                    sSQLGrid &= " , SELECT SUM(""OpenQty"" FROM ("
+                                    sSQLGrid &= " IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) "
+                                    sSQLGrid &= " UNION ALL "
+                                    sSQLGrid &= " IFNULL((SELECT SUM(""OpenQty"") FROM WTQ1 where ""LineStatus""<>'C' and ""WhsCode"" in (" & sAlmacenes & ") and ""WhsCode""<>""FromWhsCod"" and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) "
+                                    sSQLGrid &= ") T ""PTE " & sAlmacen & """ "
                                     sSQLGrid &= ", (CASE WHEN (SELECT IFNULL(SUM(PCH1.""Quantity""),0) FROM PCH1 INNER JOIN OPCH ON PCH1.""DocEntry"" = OPCH.""DocEntry""  "
                                     sSQLGrid &= " WHERE OPCH.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And OPCH.""DocDate"">='" & dFechaSemestre.Year.ToString("0000") & dFechaSemestre.Month.ToString("00") & dFechaSemestre.Day.ToString("00") & "' "
@@ -465,7 +469,7 @@ Public Class EXO_PNEC
 #Region "Proveedores"
                                     Dim dPedir As Double = 0
                                     'Tenemos que saber si el Artículo es de Stock
-                                    sSQL = "SELECT ""QryGroup1"" FROM OITM WHERE ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'"
+                                    sSQL = "SELECT ""QryGroup2"" FROM OITM WHERE ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'"
                                     Dim sEsStock As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                                     If sEsStock = "Y" Then
 #Region "QryGroup1='Y'"
@@ -585,7 +589,7 @@ Public Class EXO_PNEC
                                     sSQL &= " and OPLN.""U_EXO_TARCOM""='Si' "
                                     dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                                     For t = 0 To dtTarifas.Rows.Count - 1
-                                        sSQLGrid &= ", " & dtTarifas.Rows(t).Item("Precio").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListNum").ToString & """ "
+                                        sSQLGrid &= ", " & dtTarifas.Rows(t).Item("Precio").ToString.Replace(",", ".") & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
                                     Next
 #End Region
 
@@ -618,6 +622,11 @@ Public Class EXO_PNEC
                                             sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                             sSQLGrid &= " And RIN1.""WhsCode""='" & sAlmacen & "' and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')) ""24Q-" & sAlmacen & """ "
                                             sSQLGrid &= " ,IFNULL((SELECT ""OnHand""  FROM OITW WHERE ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""Stock " & sAlmacen & """ "
+                                            sSQLGrid &= " , SELECT SUM(""OpenQty"" FROM ("
+                                            sSQLGrid &= " IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) "
+                                            sSQLGrid &= " UNION ALL "
+                                            sSQLGrid &= " IFNULL((SELECT SUM(""OpenQty"") FROM WTQ1 where ""LineStatus""<>'C' and ""WhsCode""='" & sAlmacen & "' and ""WhsCode""<>""FromWhsCod"" and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) "
+                                            sSQLGrid &= ") T ""PTE " & sAlmacen & """ "
                                             sSQLGrid &= ",IFNULL((SELECT SUM(""OpenQty"") FROM POR1 where ""LineStatus""<>'C' and ""WhsCode""='" & sAlmacen & "' and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'),0) ""PTE " & sAlmacen & """ "
                                             sSQLGrid &= ", (CASE WHEN (SELECT IFNULL(SUM(PCH1.""Quantity""),0) FROM PCH1 INNER JOIN OPCH ON PCH1.""DocEntry"" = OPCH.""DocEntry""  "
                                             sSQLGrid &= " WHERE OPCH.""DocDate""<='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
@@ -643,7 +652,7 @@ Public Class EXO_PNEC
 #Region "Proveedores"
                                     Dim dPedir As Double = 0
                                     'Tenemos que saber si el Artículo es de Stock
-                                    sSQL = "SELECT ""QryGroup1"" FROM OITM WHERE ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'"
+                                    sSQL = "SELECT ""QryGroup2"" FROM OITM WHERE ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "'"
                                     Dim sEsStock As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                                     If sEsStock = "Y" Then
 #Region "QryGroup1='Y'"
@@ -795,7 +804,7 @@ Public Class EXO_PNEC
                                     sSQL &= " and OPLN.""U_EXO_TARCOM""='Si' "
                                     dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                                     For t = 0 To dtTarifas.Rows.Count - 1
-                                        sSQLGrid &= ", " & dtTarifas.Rows(t).Item("Precio").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListNum").ToString & """ "
+                                        sSQLGrid &= ", " & dtTarifas.Rows(t).Item("Precio").ToString.Replace(",", ".") & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
                                     Next
 #End Region
 
