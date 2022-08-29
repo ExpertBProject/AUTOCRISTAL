@@ -197,6 +197,7 @@ Public Class EXO_PLIMP
             oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
             FormateaGrid(oForm)
         Catch ex As Exception
+            oForm.Freeze(False)
             Throw ex
         Finally
             oForm.Freeze(False)
