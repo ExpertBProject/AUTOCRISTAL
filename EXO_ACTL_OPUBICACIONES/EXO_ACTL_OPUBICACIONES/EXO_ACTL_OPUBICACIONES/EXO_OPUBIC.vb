@@ -292,6 +292,7 @@ Public Class EXO_OPUBIC
                     iDocLin = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""LineId"" as int)),0)+1 FROM ""@EXO_TMPOPUBIC"" WHERE ""Code""='" & iDoc.ToString & "'")
                     sUBOrigenTotal &= ", '" & MiDataRow("UBSTANDARD").ToString & "' "
                     Dim dCantidad As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("CMIN").ToString) - EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("OnHand").ToString)
+                    Dim dNecesaria As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("CNEC").ToString)
                     sSQL = "SELECT  ""BinCode"" FROM OBIN B 
                                                 LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
                                                             FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""='" & MiDataRow("ItemCode").ToString & "'
@@ -303,6 +304,9 @@ Public Class EXO_OPUBIC
 
                     sUBOrigenTotal &= ", '" & sUbOrigen & "' "
 
+                    If dNecesaria > dCantidad Then
+                        dCantidad = dNecesaria
+                    End If
                     sSQL = "INSERT INTO ""@EXO_TMPOPUBIC"" values('" & iDoc.ToString & "'," & iDocLin.ToString & ",'EXO_TMPOPUBIC',0,'" & MiDataRow("ItemCode").ToString & "',
                             '" & MiDataRow("ItemName").ToString.Replace("'", "") & " '," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
                             ", " & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("CMIN").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &

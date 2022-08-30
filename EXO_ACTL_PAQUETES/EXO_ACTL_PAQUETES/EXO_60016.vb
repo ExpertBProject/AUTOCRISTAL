@@ -239,7 +239,7 @@ Public Class EXO_60016
             End If
             If bLineaSel = True Then
 
-                sOPKG = oForm.DataSources.DBDataSources.Item("OPKG").GetValue("PkgCode", iLineaSel - 1).ToUpper
+                sOPKG = oForm.DataSources.DBDataSources.Item("OPKG").GetValue("PkgType", iLineaSel - 1).ToUpper
 
                 If sOPKG <> "" Then
                     rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"

@@ -424,11 +424,11 @@ Public Class EXO_PNEC
                                         End If
                                     Next
                                     sSQLGrid &= ", ((SELECT IFNULL(SUM(INV1.""Quantity""),0) FROM INV1 INNER JOIN OINV ON INV1.""DocEntry"" = OINV.""DocEntry"" "
-                                    sSQLGrid &= " WHERE OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                    sSQLGrid &= " WHERE OINV.""CANCELED""='N' and OINV.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                     sSQLGrid &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
                                     sSQLGrid &= " (SELECT IFNULL(SUM(RIN1.""Quantity""),0) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
-                                    sSQLGrid &= " WHERE ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                    sSQLGrid &= " WHERE OINV.""CANCELED""='N' and ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                     sSQLGrid &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')) ""24Q-" & sAlmacen & """ "
                                     sSQLGrid &= " ,(SELECT SUM(IFNULL(""OnHand"",0))  FROM OITW WHERE ""WhsCode"" in (" & sAlmacenes & ") and ""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "') ""Stock " & sAlmacen & """ "

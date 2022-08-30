@@ -404,13 +404,17 @@ Public Class EXO_OPUBI
                     oColumnCb.ValidValues.Add("D", "Muy baja rotación")
                     oColumnCb.Editable = False
                 ElseIf i = 8 Then
-                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
-                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
-                    sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
-                            And IFNULL(V.""ItemQty"",0)=0 "
-                    objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
-                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Value
-                    oColumnCb.Editable = True
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                    'oColumnTxt.ChooseFromListAlias = "BinCode"
+                    'oColumnTxt.ChooseFromListUID = "CFLUBI"
+
+                    'sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
+                    ' And IFNULL(V.""ItemQty"",0)=0 "
+                    'objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
+                    ' oColumnCb.DisplayType = BoComboDisplayType.cdt_Value
+                    ' oColumnCb.Editable = True
+                    oColumnTxt.Editable = True
                 ElseIf i = 1 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
