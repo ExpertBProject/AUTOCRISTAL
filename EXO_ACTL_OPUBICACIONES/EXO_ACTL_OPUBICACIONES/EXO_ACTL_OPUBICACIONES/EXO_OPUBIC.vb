@@ -320,7 +320,7 @@ Public Class EXO_OPUBIC
 #End Region
 #Region "Cargar Datos Grid"
             objGlobal.SBOApp.StatusBar.SetText("Cargando en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_CMIN"" ""Cant. Min."", "
+            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_CMIN"" ""Cant. Min."", "
             sSQL &= " ""U_EXO_CNEC"" ""Cant. Nec. "", ""U_EXO_UBI"" ""Ub. Std."", ""U_EXO_UBIO"" ""Ub. Origen"", ""U_EXO_TRASLADO"" ""Traslado"", ""U_EXO_UBID"" ""Ub. Destino"" "
             sSQL &= " From ""@EXO_TMPOPUBIC"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -356,7 +356,7 @@ Public Class EXO_OPUBIC
             oForm.DataSources.UserDataSources.Item("UDDE").Value = ""
 
             'Ahora cargamos el Grid con los datos guardados
-            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_CMIN"" ""Cant. Min."", "
+            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_CMIN"" ""Cant. Min."", "
             sSQL &= " ""U_EXO_CNEC"" ""Cant. Nec. "", ""U_EXO_UBI"" ""Ub. Std."", ""U_EXO_UBIO"" ""Ub. Origen"", ""U_EXO_TRASLADO"" ""Traslado"", ""U_EXO_UBID"" ""Ub. Destino"" "
             sSQL &= " From ""@EXO_TMPOPUBIC"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -506,7 +506,7 @@ Public Class EXO_OPUBIC
                     If (i > 0) Then
                         oDocStockTransfer.Lines.Add()
                     End If
-                    oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString
+                    oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString
                     oDocStockTransfer.Lines.ItemDescription = oForm.DataSources.DataTables.Item(sData).GetValue("Descripción", i).ToString
                     oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Origen", i).ToString
                     oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Destino", i).ToString

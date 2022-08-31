@@ -328,8 +328,8 @@ Public Class EXO_OPUBI
 #End Region
 #Region "Cargar Datos Grid"
             objGlobal.SBOApp.StatusBar.SetText("Cargando en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel"",""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
-            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Clas. Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
+            sSQL = "SELECT 'Y' ""Sel"",""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
+            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
             sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
             sSQL &= " From ""@EXO_TMPOPUBI"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -365,8 +365,8 @@ Public Class EXO_OPUBI
             oForm.DataSources.UserDataSources.Item("UDDE").Value = ""
 
             'Ahora cargamos el Grid con los datos guardados
-            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Cod. Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
-            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Clas. Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
+            sSQL = "SELECT 'Y' ""Sel"",  ""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
+            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
             sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
             sSQL &= " From ""@EXO_TMPOPUBI"" "
             sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
@@ -530,7 +530,7 @@ Public Class EXO_OPUBI
                     If (i > 0) Then
                         oDocStockTransfer.Lines.Add()
                     End If
-                    oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString
+                    oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString
                     oDocStockTransfer.Lines.ItemDescription = oForm.DataSources.DataTables.Item(sData).GetValue("Descripción", i).ToString
                     oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación actual", i).ToString
                     oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
@@ -541,15 +541,15 @@ Public Class EXO_OPUBI
                     If sUbStandard <> "" Then
                         sSQL = "UPDATE OITW SET ""DftBinAbs""='" & sUbStandard & "', 
                                 ""U_EXO_FUPDATE""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "', 
-                                ""U_EXO_CLASIF""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Clas. Rotación", i).ToString & "'
-                                WHERE ""ItemCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & "' AND 
+                                ""U_EXO_CLASIF""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Rotación", i).ToString & "'
+                                WHERE ""ItemCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & "' AND 
                                 ""WhsCode""='" & sAlmacen & "' "
                         If objGlobal.refDi.SQL.executeNonQuery(sSQL) = False Then
-                            sMensaje = sSQL & " - No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
+                            sMensaje = sSQL & " - No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
                             objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                         End If
                     Else
-                        sMensaje = "No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Cod. Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
+                        sMensaje = "No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
                         objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                     End If
 
