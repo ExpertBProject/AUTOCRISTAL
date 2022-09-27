@@ -26,7 +26,7 @@ Public Class Procesos
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
-                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString Then
+                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString Then
                         iLin = 0
                         If iCab <> 0 Then
                             If oORDR.Add() <> 0 Then
@@ -43,7 +43,7 @@ Public Class Procesos
                                 sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                                 'udpate BBDD
-                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                                 oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
                                 Conexiones.ExecuteSqlDB(dbWEB, sSQL)
                                 oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
@@ -60,7 +60,7 @@ Public Class Procesos
                         End If
 
 
-                        sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
+                        sCliente = odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString
                         oORDR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
 #Region "Serie"
                         Dim sSerieName As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""@EXO_OGEN1""", """U_EXO_INFV""", """U_EXO_NOMV"" ='EXO_SERIEPEDWEB' and ""Code""='EXO_KERNEL'", oLog)
@@ -98,11 +98,12 @@ Public Class Procesos
                         Dim sAgencia As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_AGENCIA""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'", oLog)
                         Dim sTransporte As String = ""
                         sDELALMACEN = odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString
-                        If sAgencia = "" Or sAgencia = "-" Then
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'", oLog)
-                        Else
-                            sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ", oLog)
-                        End If
+                        'If sAgencia = "" Or sAgencia = "-" Then
+                        '    sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" ='" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "'", oLog)
+                        'Else
+                        '    sTransporte = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OSHP""", """TrnspCode""", """U_EXO_SERVIC"" = '" & odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE").ToString & "' and ""U_EXO_AGE""='" & sAgencia & "' ", oLog)
+                        'End If
+                        sTransporte = odtDatosWeb.Rows.Item(iCab).Item("TRANSPORTE_F").ToString
                         If IsNumeric(sTransporte) Then
                             oORDR.TransportationCode = CInt(sTransporte)
                         End If
@@ -184,8 +185,8 @@ Public Class Procesos
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
-                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString Then
-                        sCliente = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
+                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString Then
+                        sCliente = odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString
                         sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
                         sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
                         sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
@@ -209,7 +210,7 @@ Public Class Procesos
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
                                         'udpate BBDD
-                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                                         Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                                         'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -235,7 +236,7 @@ Public Class Procesos
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
                                         'udpate BBDD
-                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                                         Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                                         'OK
