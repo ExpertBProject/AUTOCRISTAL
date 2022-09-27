@@ -141,7 +141,7 @@ Public Class Procesos
                     sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                     'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""CLIENTE""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                     Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
