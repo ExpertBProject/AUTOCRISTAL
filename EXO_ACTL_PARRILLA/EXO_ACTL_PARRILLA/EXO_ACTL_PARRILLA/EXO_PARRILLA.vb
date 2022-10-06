@@ -1614,7 +1614,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
-                    sSQL = "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", "
+                    sSQL = "SELECT * FROM ("
+                    sSQL &= "SELECT ""T. SALIDA"", ""DELEGACIÓN"", ""Nº INTERNO"", ""Nº DOCUMENTO"", ""AUTORIZADO"", ""CÓDIGO"",  ""EMPRESA"", ""CLASE EXP."", "
                     sSQL &= " ""ROT. STOCK"", ""A"", ""UBICACIÓN"", ""ZONA TRANSPORTE"", ""Sel""  FROM ""EXO_PEDIDOS_VENTA"" "
                     sSQL &= " WHERE 1=1 "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -1673,6 +1674,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= ") Z ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "PEDVTA"
 #Region "Pedidos de Ventas"
@@ -1708,6 +1710,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SOLTRA"
 #Region "Sol de traslado"
@@ -1743,6 +1746,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SDPROV"
 #Region "Sol de Devolución"
@@ -1778,6 +1782,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
             End Select
             oForm.DataSources.DataTables.Item("DTSPTE").ExecuteQuery(sSQL)
@@ -1813,7 +1818,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
-                    sSQL = "SELECT DISTINCT CAST('PEDVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    sSQL = "SELECT * FROM ( "
+                    sSQL &= "SELECT DISTINCT CAST('PEDVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(TL.""TrnsCode"" as nVARCHAR(50)) ""CLASE EXP."", "
                     sSQL &= " ifnull(R.""ROTURA"",'N') ""ROT. STOCK"", "
                     sSQL &= " IFNULL(A.""A"",'N') ""A"", CAST(IFNULL(S.""Sit"",'SIN SITUACIÓN') as nVARCHAR(50)) ""UBICACIÓN"", CAST(TT.""descript"" as nVARCHAR(50)) ""ZONA TRANSPORTE"",  "
@@ -1907,6 +1913,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= ") Z ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "PEDVTA"
 #Region "Pedidos de Ventas"
@@ -1941,6 +1948,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SOLTRA"
 #Region "Sol de traslado"
@@ -1975,6 +1983,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SDPROV"
 #Region "Sol de Devolución"
@@ -2008,6 +2017,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
             End Select
             oForm.DataSources.DataTables.Item("DTSLIB").ExecuteQuery(sSQL)
@@ -2042,7 +2052,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
-                    sSQL = "SELECT DISTINCT CAST('ALBVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    sSQL = "SELECT * FROM ("
+                    sSQL &= " SELECT DISTINCT CAST('ALBVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"",  "
                     sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
                     sSQL &= "FROM ODLN T0 "
@@ -2123,6 +2134,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= ") Z ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "PEDVTA"
 #Region "Entregas de Ventas"
@@ -2152,6 +2164,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SOLTRA"
 #Region "Sol de traslado"
@@ -2182,6 +2195,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SDPROV"
 #Region "Devolución"
@@ -2211,6 +2225,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. SALIDA"", ""Nº DOCUMENTO"" "
 #End Region
             End Select
             oForm.DataSources.DataTables.Item("DTSCOM").ExecuteQuery(sSQL)
@@ -2246,7 +2261,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
-                    sSQL = "SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
+                    sSQL = "SELECT * FROM ( "
+                    sSQL &= " SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
                     sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"""
@@ -2340,6 +2356,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= ") Z ORDER BY ""T. ENTRADA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "PED"
 #Region "Pedidos de compra"
@@ -2371,6 +2388,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. ENTRADA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "STR"
 #Region "Sol de traslado en destino"
@@ -2406,6 +2424,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. ENTRADA"", ""Nº DOCUMENTO"" "
 #End Region
                 Case "SDE"
 #Region "Sol de Devolución de cliente"
@@ -2441,6 +2460,7 @@ Public Class EXO_PARRILLA
                     If sTerri <> "-" Then
                         sSQL &= " And (T1.""Territory""='" & sTerri & "' )"
                     End If
+                    sSQL &= " ORDER BY ""T. ENTRADA"", ""Nº DOCUMENTO"" "
 #End Region
             End Select
             oForm.DataSources.DataTables.Item("DTE").ExecuteQuery(sSQL)
