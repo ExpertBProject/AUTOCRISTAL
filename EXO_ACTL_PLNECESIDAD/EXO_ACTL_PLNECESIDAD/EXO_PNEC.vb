@@ -451,7 +451,7 @@ Public Class EXO_PNEC
                                     sSQLGrid &= " And OINV.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                     sSQLGrid &= " And INV1.""WhsCode"" in (" & sAlmacenes & ") and INV1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')- "
                                     sSQLGrid &= " (SELECT SUM(IFNULL(RIN1.""Quantity"",0)) FROM RIN1 INNER JOIN ORIN ON RIN1.""DocEntry"" = ORIN.""DocEntry"" "
-                                    sSQLGrid &= " WHERE OINV.""CANCELED""='N' and ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
+                                    sSQLGrid &= " WHERE ORIN.""CANCELED""='N' and ORIN.""DocDate"" <='" & dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00") & "' "
                                     sSQLGrid &= " And ORIN.""DocDate"">='" & dFechaAnt.Year.ToString("0000") & dFechaAnt.Month.ToString("00") & dFechaAnt.Day.ToString("00") & "' "
                                     sSQLGrid &= " And RIN1.""WhsCode"" in (" & sAlmacenes & ") and RIN1.""ItemCode""='" & dtArticulos.Rows(a).Item("ItemCode").ToString & "')=0  "
                                     sSQLGrid &= " then 'SI' else 'NO' END) ""N " & sAlmacen & """ "
