@@ -416,36 +416,36 @@ Public Class EXO_LSTEMB
                     objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
                     oForm.Items.Item("1_U_Cb").DisplayDesc = True
                 ElseIf pVal.ItemUID = "22_U_Cb" Then
-                    sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
-                    If sFecha = "" Then
-                        sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
-                        oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
-                    End If
-                    sAlmacen = CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
-                    'Expedición
-                    sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
-                    sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
-                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
-                    sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-                    sSQL &= " UNION ALL "
-                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
-                    sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-                    sSQL &= " UNION ALL "
-                    sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
-                    sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-                    sSQL &= " UNION ALL "
-                    sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
-                    sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
-                    sSQL &= " UNION ALL "
-                    sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
-                    sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
-                    sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
-                    sSQL &= " ) ORDER BY ""TrnspName"""
-                    objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                    'sFecha = CType(oForm.Items.Item("26_U_E").Specific, SAPbouiCOM.EditText).Value.ToString
+                    'If sFecha = "" Then
+                    '    sFecha = dFecha.Year.ToString("0000") & dFecha.Month.ToString("00") & dFecha.Day.ToString("00")
+                    '    oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("U_EXO_DOCDATE", 0, sFecha)
+                    'End If
+                    'sAlmacen = CType(oForm.Items.Item("22_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
+                    ''Expedición
+                    'sSQL = "SELECT ""TrnspCode"",""TrnspName"" FROM OSHP WHERE ""Active""='Y' and ""TrnspCode"" in ("
+                    'sSQL &= " SELECT distinct  ""TrnspCode"" FROM ("
+                    'sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ORDR T0 "
+                    'sSQL &= " Inner JOIN RDR1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    'sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    'sSQL &= " UNION ALL "
+                    'sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM ODLN T0 "
+                    'sSQL &= " Inner JOIN DLN1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    'sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    'sSQL &= " UNION ALL "
+                    'sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OPRR T0 "
+                    'sSQL &= " Inner JOIN PRR1 t1 on  T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    'sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    'sSQL &= " UNION ALL "
+                    'sSQL &= " Select T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM  ORPD T0 "
+                    'sSQL &= " Inner JOIN RPD1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    'sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' "
+                    'sSQL &= " UNION ALL "
+                    'sSQL &= "Select  T0.""DocNum"", T0.""DocDueDate"", T0.""TrnspCode"", T0.""DocStatus"" FROM OWTQ T0 "
+                    'sSQL &= " Inner JOIN WTQ1 t1 on T1.""DocEntry"" = T0.""DocEntry"" and T1.""WhsCode"" = '" & sAlmacen & "' "
+                    'sSQL &= " Where T0.""DocDueDate"" = '" & sFecha & "' )"
+                    'sSQL &= " ) ORDER BY ""TrnspName"""
+                    'objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("20_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
                 End If
             End If
 

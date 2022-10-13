@@ -58,10 +58,8 @@ Public Class EXO_PARRILLA
                 End If
             End Try
             sSQL = "SELECT T2.""WhsCode"",T2.""WhsName"" "
-            sSQL &= " From OUSR T0  "
-            sSQL &= " INNER JOIN OHEM T1 ON T0.""USERID"" = T1.""userId"" "
-            sSQL &= " INNER JOIN OWHS T2 ON T2.""U_EXO_SUCURSAL""=T1.""branch"" "
-            sSQL &= " WHERE T0.""USERID""='" & objGlobal.compañia.UserSignature.ToString & "' order by T2.""WhsName"" "
+            sSQL &= " From OWHS T2 "
+            sSQL &= " Order by T2.""WhsName"" "
             Try
                 objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
                 CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Select(0, BoSearchKey.psk_Index)
@@ -125,6 +123,7 @@ Public Class EXO_PARRILLA
             End Try
 #End Region
             oForm.Items.Item("btCCEXPC").Visible = False
+            oForm.State = BoFormStateEnum.fs_Maximized
             CargarForm = True
         Catch exCOM As System.Runtime.InteropServices.COMException
             objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
@@ -356,9 +355,9 @@ Public Class EXO_PARRILLA
             EventHandler_COMBO_SELECT_Before = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
 
@@ -399,13 +398,13 @@ Public Class EXO_PARRILLA
             EventHandler_COMBO_SELECT_After = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
-            EXO_CleanCOM.CLiberaCOM.Form(oForm)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oItem, Object))
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
@@ -940,6 +939,7 @@ Public Class EXO_PARRILLA
                         Case "PEDVTA" ' Pedido de venta
                             oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
                             If oDocuments.GetByKey(sDocEntry) = True Then
+                                oDocuments.TransportationCode = _ClaseExp
                                 For i = 0 To oDocuments.Lines.Count - 1
                                     oDocuments.Lines.SetCurrentLine(i)
                                     If oDocuments.Lines.ShippingMethod = _ClaseExp Then
@@ -1471,6 +1471,8 @@ Public Class EXO_PARRILLA
                                                 bActualiza = True
                                             End If
 #End Region
+                                        Else
+                                            bActualiza = False
                                         End If
                                         If bActualiza = True Then
                                             'hacemos referencia al documento creado
@@ -2570,11 +2572,13 @@ Public Class EXO_PARRILLA
                         CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                         oColumnCb = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
 
-                        sSQL = " SELECT ""CardCode"" ,""CardFName"" "
+                        sSQL = "SELECT '-1', ' ' FROM DUMMY "
+                        sSQL &= " UNION ALL "
+                        sSQL = " SELECT ""CardCode"" ,""CardFName"" WHERE ""QryGroup1""='Y' "
                         sSQL &= " From OCRD  "
                         Try
                             objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
-                            oColumnCb.ValidValues.Add("-1", " ")
+                            'oColumnCb.ValidValues.Add("-1", " ")
                             oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
                         Catch ex As Exception
 

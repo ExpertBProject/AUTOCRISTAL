@@ -191,7 +191,7 @@ Public Class EXO_GLOBALES
                                 Select Case i
                                     Case 1 : sCatalogo = scampos(i)
                                     Case 2 : sArticulo = scampos(i)
-                                    Case 3 : sPrecio = EXO_GLOBALES.DblTextToNumber(oCompany, scampos(i))
+                                    Case 3 : sPrecio = scampos(i)
                                 End Select
                             Next
                             If sCatalogo = "" And sArticulo = "" Then
