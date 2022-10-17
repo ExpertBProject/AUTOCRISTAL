@@ -695,7 +695,7 @@ Public Class EXO_PARRILLA
                     sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
                     sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
                     Select Case sTIPODOC
-                        Case "PEDVTA"
+                        Case "ALBVTA"
 #Region "Entregas"
                             sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='DLN2' "
 #End Region
@@ -743,9 +743,9 @@ Public Class EXO_PARRILLA
                     sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
                     sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
                     Select Case sTIPODOC
-                        Case "PEDVTA"
+                        Case "ALBVTA"
 #Region "Entregas"
-                            sSQL = sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='DLN2' "
+                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='DLN2' "
 
 #End Region
                         Case "SOLTRA" ' Sol. de Traslado                           

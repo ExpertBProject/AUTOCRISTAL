@@ -545,27 +545,40 @@ Public Class EXO_GLOBALES
             oDtLin.Clear()
 
             sAlmacenDestino = oformE.DataSources.DBDataSources.Item("PDN1").GetValue("WhsCode", 0).ToString.Trim
-            'sSQL = "SELECT Z.""BinCode"", Z.""Cantidad"", ""PDN1"".""WhsCode"", ""EXO"".* FROM ""@EXO_PACKINGL"" ""EXO""  "
-            'sSQL &= " INNER JOIN ""PDN1"" ON ""PDN1"".""DocEntry""=""EXO"".""Code"" and ""PDN1"".""LineNum""=""EXO"".""U_EXO_LINEA"" "
-            'sSQL &= " Left JOIN (Select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"",X.""DocEntry"", X.""DocLineNum"" "
-            'sSQL &= " from ""OBIN"" T1 inner join (  "
-            'sSQL &= " Select T1.""DocEntry"",T1.""DocLineNum"", T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  "
-            'sSQL &= " T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , "
-            'sSQL &= " T2.""DistNumber""  From OBTL T0 "
-            'sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 20   And T1.""DocEntry"" =" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim
-            'sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
-            'sSQL &= " WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
-            'sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
-            'sSQL &= " )Z ON Z.""DocEntry""=""PDN1"".""DocEntry"" And Z.""DocLineNum""=""PDN1"".""LineNum"" "
-            'sSQL &= " where ""Object""='OPDN' and ""Code""='" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim & "' Order by ""U_EXO_LINEA"", ""LineId"" "
-            sSQL = "SELECT Z.""BinCode"", Z.""DistNumber"", Z.""ItemCode"", Z.""Cantidad"",Z.""DocEntry"", Z.""DocLineNum"", TT.* FROM PDN1 TT "
+            sDocEntry = oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim
+            ''sSQL = "SELECT Z.""BinCode"", Z.""Cantidad"", ""PDN1"".""WhsCode"", ""EXO"".* FROM ""@EXO_PACKINGL"" ""EXO""  "
+            ''sSQL &= " INNER JOIN ""PDN1"" ON ""PDN1"".""DocEntry""=""EXO"".""Code"" and ""PDN1"".""LineNum""=""EXO"".""U_EXO_LINEA"" "
+            ''sSQL &= " Left JOIN (Select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"",X.""DocEntry"", X.""DocLineNum"" "
+            ''sSQL &= " from ""OBIN"" T1 inner join (  "
+            ''sSQL &= " Select T1.""DocEntry"",T1.""DocLineNum"", T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  "
+            ''sSQL &= " T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , "
+            ''sSQL &= " T2.""DistNumber""  From OBTL T0 "
+            ''sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 20   And T1.""DocEntry"" =" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim
+            ''sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" "
+            ''sSQL &= " WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
+            ''sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"" "
+            ''sSQL &= " )Z ON Z.""DocEntry""=""PDN1"".""DocEntry"" And Z.""DocLineNum""=""PDN1"".""LineNum"" "
+            ''sSQL &= " where ""Object""='OPDN' and ""Code""='" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim & "' Order by ""U_EXO_LINEA"", ""LineId"" "
+            'sSQL = "SELECT Z.""BinCode"", Z.""DistNumber"", Z.""ItemCode"", Z.""Cantidad"",Z.""DocEntry"", Z.""DocLineNum"", TT.* FROM PDN1 TT "
+            'sSQL &= " Left JOIN (Select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"",X.""DocEntry"", X.""DocLineNum"" from obin T1 inner join ( "
+            'sSQL &= " Select T1.""DocEntry"",T1.""DocLineNum"", T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
+            'sSQL &= " From OBTL T0 "
+            'sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 20   And T1.""DocEntry"" = " & sDocEntry
+            'sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
+            'sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"")Z ON Z.""DocEntry""=TT.""DocEntry"" And Z.""DocLineNum""=TT.""LineNum"" "
+            'sSQL &= " where TT.""DocEntry""=" & sDocEntry & " Order by TT.""LineNum"" "
+            sSQL = "SELECT Z.""BinCode"", Z.""ItemCode"", SUM(Z.""Cantidad"") ""Cantidad"",Z.""DocEntry"", Z.""DocLineNum"", TT.""LineNum"", TT.""WhsCode"",TT.""U_EXO_LOT_ID"",TT.""U_EXO_TBULTO"" "
+            sSQL &= " FROM PDN1 TT "
             sSQL &= " Left JOIN (Select  T1.""BinCode"", X.""DistNumber"", X.""ItemCode"", X.""Cantidad"",X.""DocEntry"", X.""DocLineNum"" from obin T1 inner join ( "
             sSQL &= " Select T1.""DocEntry"",T1.""DocLineNum"", T0.""BinAbs"", T0.""Quantity"" as ""Cantidad"" ,  T1.""ItemCode"", T1.""Quantity"",  T1.""EffectQty"" , T2.""DistNumber"" "
             sSQL &= " From OBTL T0 "
-            sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 20   And T1.""DocEntry"" = " & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim
-            sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
+            sSQL &= " inner join OILM T1 on T0.""MessageID"" = T1.""MessageID"" And T1.""TransType"" = 20   And T1.""DocEntry"" = " & sDocEntry
+            sSQL &= " Left join OBTN T2  ON T0.""SnBMDAbs"" = T2.""AbsEntry"" " ' WHERE T1.""LocCode""='" & sAlmacenDestino & "' "
             sSQL &= " ) X on T1.""AbsEntry"" = X.""BinAbs"")Z ON Z.""DocEntry""=TT.""DocEntry"" And Z.""DocLineNum""=TT.""LineNum"" "
-            sSQL &= " where TT.""DocEntry""=" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocEntry", 0).ToString.Trim & " Order by TT.""LineNum"" "
+            sSQL &= " where TT.""DocEntry""=" & sDocEntry
+            sSQL &= " GROUP BY Z.""BinCode"", Z.""ItemCode"", Z.""DocEntry"", Z.""DocLineNum"",TT.""LineNum"", TT.""WhsCode"",TT.""U_EXO_LOT_ID"",TT.""U_EXO_TBULTO"" "
+            sSQL &= " Order by TT.""LineNum"" "
+
             oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
 
             If oDtLin.Rows.Count > 0 Then

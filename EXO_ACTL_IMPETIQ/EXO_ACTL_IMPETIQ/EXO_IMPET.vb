@@ -128,6 +128,7 @@ Public Class EXO_IMPET
             If oForm.Mode = BoFormMode.fm_OK_MODE Then
                 rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
                 sCode = oForm.DataSources.DBDataSources.Item(sTable_Cab).GetValue("DocEntry", 0).ToUpper
+                objGlobal.SBOApp.StatusBar.SetText("Imprimiendo: " & sCode, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
 #Region "Rellena datos Tabla TMP"
                 sSQL = "DELETE FROM ""@EXO_ETIQUETA"" WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserSignature.ToString & "' "
                 objGlobal.refDi.SQL.sqlStringB1(sSQL)
