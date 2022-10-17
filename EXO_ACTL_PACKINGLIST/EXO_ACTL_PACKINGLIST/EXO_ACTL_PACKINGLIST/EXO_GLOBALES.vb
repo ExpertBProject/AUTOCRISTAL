@@ -612,19 +612,19 @@ Public Class EXO_GLOBALES
                     oDoc.Lines.BaseEntry = CType(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString, Integer)
                     oDoc.Lines.BaseLine = CType(oDtLin.Rows.Item(iLin).Item("LineNum").ToString, Integer)
 #Region "Lotes"
-                    'Incluimos los Lotes
-                    sSQL = "Select ""OBTN"".""DistNumber"",""ITL1"".* FROM ""OITL"" INNER JOIN ""ITL1"" On ""ITL1"".""LogEntry""=""OITL"".""LogEntry"" "
-                    sSQL &= " Left Join ""OBTN"" On ""OBTN"".""AbsEntry""=""ITL1"".""SysNumber"" "
-                    sSQL &= " WHERE ""DocEntry"" = " & oDtLin.Rows.Item(iLin).Item("DocEntry").ToString & " And ""DocLine"" =" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                    sSQL &= " And ""DocType""='20' and ""LocCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
-                    oRsLote.DoQuery(sSQL)
-                    For iLote = 1 To oRsLote.RecordCount
-                        'Creamos el lote de la línea del artículo
-                        oDoc.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("DistNumber").Value.ToString
-                        oDoc.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oObjGlobal.compañia, oRsLote.Fields.Item("Quantity").Value.ToString)
-                        oDoc.Lines.BatchNumbers.Add()
-                        oRsLote.MoveNext()
-                    Next
+                    ''Incluimos los Lotes
+                    'sSQL = "Select ""OBTN"".""DistNumber"",""ITL1"".* FROM ""OITL"" INNER JOIN ""ITL1"" On ""ITL1"".""LogEntry""=""OITL"".""LogEntry"" "
+                    'sSQL &= " Left Join ""OBTN"" On ""OBTN"".""AbsEntry""=""ITL1"".""SysNumber"" "
+                    'sSQL &= " WHERE ""DocEntry"" = " & oDtLin.Rows.Item(iLin).Item("DocEntry").ToString & " And ""DocLine"" =" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
+                    'sSQL &= " And ""DocType""='20' and ""LocCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
+                    'oRsLote.DoQuery(sSQL)
+                    'For iLote = 1 To oRsLote.RecordCount
+                    '    'Creamos el lote de la línea del artículo
+                    '    oDoc.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("DistNumber").Value.ToString
+                    '    oDoc.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oObjGlobal.compañia, oRsLote.Fields.Item("Quantity").Value.ToString)
+                    '    oDoc.Lines.BatchNumbers.Add()
+                    '    oRsLote.MoveNext()
+                    'Next
 #End Region
                 Next
                 If oDoc.Add() <> 0 Then
