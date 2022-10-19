@@ -9,6 +9,7 @@ Public Class INICIO
 
         If actualizar Then
             cargaDatos()
+            InsertarReport()
         End If
         cargamenu()
     End Sub
@@ -89,6 +90,49 @@ Public Class INICIO
                 objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
         End If
+    End Sub
+    Private Sub InsertarReport()
+#Region "Variables"
+        Dim sArchivo As String = ""
+        Dim sReport As String = ""
+#End Region
+        Try
+            sArchivo = objGlobal.path & "\05.Rpt\PARRILLADOC\"
+#Region "ENTREGAS"
+            sReport = "ENTREGAS.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+#Region "DEV. PROVEEDOR"
+            sReport = "DEVPROVEEDOR.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+
+#Region "SOL. TRASLADO"
+            sReport = "SOLTRASLADO.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+
+        Catch ex As Exception
+            Throw ex
+        End Try
     End Sub
     Private Sub cargamenu()
         Dim Path As String = ""
