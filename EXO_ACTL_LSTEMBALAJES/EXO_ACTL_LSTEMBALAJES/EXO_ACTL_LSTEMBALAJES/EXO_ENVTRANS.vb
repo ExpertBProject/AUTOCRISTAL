@@ -417,10 +417,9 @@ Public Class EXO_ENVTRANS
                 sDocEntry = CType(oform.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString()
             End If
             objGlobal.SBOApp.StatusBar.SetText("Documento Nº " & sDocEntry, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            sSQL = "SELECT T0.""U_EXO_IC"" ""Interlocutor"", T1.""CardName"" ""Nombre"", T0.""DocEntry"" , T0.""U_EXO_IDENVIO"" "
-            sSQL &= " FROM ""@EXO_LSTEMB""  T0 "
-            sSQL &= " Left Join  OCRD T1 ON T0.""U_EXO_IC"" = T1.""CardCode"" "
-            sSQL &= " where T0.""U_EXO_IDENVIO"" =" & sDocEntry
+            sSQL = "SELECT ""IdExpedicion"", ""U_EXO_DESTINO"" ""Destino"", ""Direccion"", ""Resumenbulto"" ""Resumen Bulto"", ""Peso"", ""Volumen"" "
+            sSQL &= " FROM ""EXO_DetalleBultosEnvioTransporte""  "
+            sSQL &= " where ""IdEnvioTTE"" =" & sDocEntry
             oform.DataSources.DataTables.Item("DTEX").ExecuteQuery(sSQL)
             FormateaGrid(oform)
         Catch ex As Exception
@@ -435,9 +434,9 @@ Public Class EXO_ENVTRANS
         Try
             oform.Freeze(True)
 
-            For i = 0 To 3
+            For i = 0 To 5
                 Select Case i
-                    Case 2
+                    Case 0
                         CType(oform.Items.Item("grdEX").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grdEX").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False

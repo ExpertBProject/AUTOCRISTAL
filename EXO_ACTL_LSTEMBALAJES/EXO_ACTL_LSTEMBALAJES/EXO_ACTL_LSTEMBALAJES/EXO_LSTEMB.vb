@@ -229,13 +229,9 @@ Public Class EXO_LSTEMB
                 sDocEntry = CType(oform.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value.ToString()
             End If
             objGlobal.SBOApp.StatusBar.SetText("Documento Nº " & sDocEntry, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            sSQL = "SELECT DISTINCT T0.""U_EXO_IDBULTO"" ""ID BULTO"", T0.""U_EXO_TBULTO"" ""BULTO"", IFNULL( T3.""U_EXO_VOLUMEN"",0.00) ""VOLUMEN"", ifnull(T3.""U_EXO_PESO"",0.00) ""PESO"" "
-            sSQL &= "FROM ""@EXO_LSTEMBL""  T0 "
-            sSQL &= " Left JOIN  ""@EXO_LSTEMB""   T1  on T0.""DocEntry"" = T1.""DocEntry"" "
-            sSQL &= " Left JOIN  ""OSHP"" T2 ON T2.""TrnspCode"" = T1.""U_EXO_CEXP""  "
-            sSQL &= " Left JOIN  ""OPKG"" T4 ON T4.""PkgType"" = T0.""U_EXO_TBULTO"" "
-            sSQL &= " Left JOIN ""@EXO_BULTOSAGL"" T3 ON T3.""Code"" = T2.""U_EXO_AGE"" and T4.""PkgCode"" = T3.""U_EXO_BULTO"" "
-            sSQL &= " WHERE T0.""DocEntry"" =" & sDocEntry
+            sSQL = "SELECT DISTINCT T0.""U_EXO_IDBULTO"" ""ID BULTO"", T0.""U_EXO_TBULTO"" ""BULTO"", IFNULL( T0.""Volumen"",0.00) ""VOLUMEN"", ifnull(T0.""Peso"",0.00) ""PESO"" "
+            sSQL &= "FROM ""EXO_DetalleBultosExpediciones""  T0 "
+            sSQL &= " WHERE T0.""IdExpedición"" =" & sDocEntry
             oform.DataSources.DataTables.Item("DTRES").ExecuteQuery(sSQL)
             FormateaGrid(oform)
         Catch ex As Exception
