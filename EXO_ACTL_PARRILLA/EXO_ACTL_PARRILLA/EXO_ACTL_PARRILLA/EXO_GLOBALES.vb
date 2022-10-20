@@ -270,6 +270,7 @@ Public Class EXO_GLOBALES
 
             oCRReport.DataSourceConnections.Clear()
 
+            oObjGlobal.SBOApp.StatusBar.SetText("DocKey@: " & sDocEntry & " - ObjectID@: " & sTIPODOC & " - Schema@: " & sSchema, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
             'Establecemos los parámetros para el report.
             oCRReport.SetParameterValue("DocKey@", sDocEntry)
             oCRReport.SetParameterValue("ObjectID@", sTIPODOC)
@@ -336,7 +337,7 @@ Public Class EXO_GLOBALES
                     'Buscamos la impresora por defecto
                     Dim instance As New Printing.PrinterSettings
                     sImpresora = instance.PrinterName
-                    oObjGlobal.SBOApp.StatusBar.SetText("Impresora: " & sImpresora, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+                    'oObjGlobal.SBOApp.StatusBar.SetText("Impresora: " & sImpresora, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
                     If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
                         oObjGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
                         oCRReport.PrintOptions.NoPrinter = False

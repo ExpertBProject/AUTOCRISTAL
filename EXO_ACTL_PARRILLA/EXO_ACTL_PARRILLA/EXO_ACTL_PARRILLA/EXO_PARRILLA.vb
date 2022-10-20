@@ -726,65 +726,12 @@ Public Class EXO_PARRILLA
             oCmpSrv = Nothing
         End Try
     End Function
-    Public Shared Function Impresion_Doc(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
-        Impresion_Doc = False
-#Region "VARIABLES"
-        Dim sTIPODOC As String = "" : Dim sTIPODOCDES As String = ""
-        Dim sDocEntry As String = "" : Dim sDocNum As String = ""
-        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sCrystal As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
-#End Region
-
-        Try
-            For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
-                If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
-                    sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
-                    sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
-                    sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
-
-                    rutaCrystal = oobjGlobal.path & "\05.Rpt\PARRILLADOC\"
-                    sRutaFicheros = My.Computer.FileSystem.SpecialDirectories.Temp
-
-                    Select Case sTIPODOC
-                        Case "ALBVTA"
-#Region "Entregas"
-                            sCrystal = "ENTREGAS.rpt"
-                            sTIPODOCDES = " entrega "
-#End Region
-                        Case "SOLTRA" ' Sol. de Traslado                           
-#Region "Sol de traslado"
-                            sCrystal = "SOLTRASLADO.rpt"
-                            sTIPODOCDES = " sol. de traslado "
-#End Region
-                        Case "DPROV" ' Dev. de Proveedor
-#Region "Dev de proveedor"
-                            sCrystal = "DEVPROVEEDOR.rpt"
-                            sTIPODOCDES = " dev. de proveedor "
-#End Region
-                    End Select
-                    oobjGlobal.SBOApp.StatusBar.SetText("Imprimiendo " & sTIPODOCDES & ": " & sDocNum, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-                    sTipoImp = "IMP"
-                    'Imprimimos la etiqueta
-                    EXO_GLOBALES.GenerarImpCrystal(oobjGlobal, rutaCrystal, sCrystal, sDocNum, sDocEntry, oobjGlobal.compañia.CompanyDB, sTIPODOC, sRutaFicheros, sReport, sTipoImp, oobjGlobal.compañia.UserSignature.ToString)
-                End If
-            Next
-
-            Impresion_Doc = True
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
-        Finally
-
-        End Try
-    End Function
     '    Public Shared Function Impresion_Doc(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
     '        Impresion_Doc = False
     '#Region "VARIABLES"
-    '        Dim oCmpSrv As SAPbobsCOM.CompanyService = oobjGlobal.compañia.GetCompanyService()
-    '        Dim oReportLayoutService As SAPbobsCOM.ReportLayoutsService = CType(oCmpSrv.GetBusinessService(SAPbobsCOM.ServiceTypes.ReportLayoutsService), SAPbobsCOM.ReportLayoutsService)
-    '        Dim oPrintParam As SAPbobsCOM.ReportLayoutPrintParams = CType(oReportLayoutService.GetDataInterface(SAPbobsCOM.ReportLayoutsServiceDataInterfaces.rlsdiReportLayoutPrintParams), SAPbobsCOM.ReportLayoutPrintParams)
-    '        Dim sTIPODOC As String = "" : Dim sDocEntry As String = "" : Dim sDocNum As String = ""
-    '        Dim sLayout As String = "" : Dim sSQL As String = ""
+    '        Dim sTIPODOC As String = "" : Dim sTIPODOCDES As String = ""
+    '        Dim sDocEntry As String = "" : Dim sDocNum As String = ""
+    '        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sCrystal As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
     '#End Region
 
     '        Try
@@ -793,26 +740,31 @@ Public Class EXO_PARRILLA
     '                    sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
     '                    sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
     '                    sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
+
+    '                    rutaCrystal = oobjGlobal.path & "\05.Rpt\PARRILLADOC\"
+    '                    sRutaFicheros = My.Computer.FileSystem.SpecialDirectories.Temp
+
     '                    Select Case sTIPODOC
     '                        Case "ALBVTA"
     '#Region "Entregas"
-    '                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='DLN2' "
-
+    '                            sCrystal = "ENTREGAS.rpt"
+    '                            sTIPODOCDES = " entrega "
     '#End Region
     '                        Case "SOLTRA" ' Sol. de Traslado                           
     '#Region "Sol de traslado"
-    '                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='WTQ1' "
+    '                            sCrystal = "SOLTRASLADO.rpt"
+    '                            sTIPODOCDES = " sol. de traslado "
     '#End Region
     '                        Case "DPROV" ' Dev. de Proveedor
     '#Region "Dev de proveedor"
-    '                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='RPD2' "
+    '                            sCrystal = "DEVPROVEEDOR.rpt"
+    '                            sTIPODOCDES = " dev. de proveedor "
     '#End Region
     '                    End Select
-    '                    sLayout = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
-    '                    oPrintParam.LayoutCode = sLayout 'codigo del formato importado en SAP
-    '                    oPrintParam.DocEntry = sDocEntry 'parametro que se envia al crystal, DocEntry de la transaccion
-
-    '                    oReportLayoutService.Print(oPrintParam)
+    '                    oobjGlobal.SBOApp.StatusBar.SetText("Imprimiendo " & sTIPODOCDES & ": " & sDocNum, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+    '                    sTipoImp = "IMP"
+    '                    'Imprimimos la etiqueta
+    '                    EXO_GLOBALES.GenerarImpCrystal(oobjGlobal, rutaCrystal, sCrystal, sDocNum, sDocEntry, oobjGlobal.compañia.CompanyDB, sTIPODOC, sRutaFicheros, sReport, sTipoImp, oobjGlobal.compañia.UserSignature.ToString)
     '                End If
     '            Next
 
@@ -822,10 +774,58 @@ Public Class EXO_PARRILLA
     '        Catch ex As Exception
     '            Throw ex
     '        Finally
-    '            oReportLayoutService = Nothing
-    '            oCmpSrv = Nothing
+
     '        End Try
     '    End Function
+    Public Shared Function Impresion_Doc(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
+        Impresion_Doc = False
+#Region "VARIABLES"
+        Dim oCmpSrv As SAPbobsCOM.CompanyService = oobjGlobal.compañia.GetCompanyService()
+        Dim oReportLayoutService As SAPbobsCOM.ReportLayoutsService = CType(oCmpSrv.GetBusinessService(SAPbobsCOM.ServiceTypes.ReportLayoutsService), SAPbobsCOM.ReportLayoutsService)
+        Dim oPrintParam As SAPbobsCOM.ReportLayoutPrintParams = CType(oReportLayoutService.GetDataInterface(SAPbobsCOM.ReportLayoutsServiceDataInterfaces.rlsdiReportLayoutPrintParams), SAPbobsCOM.ReportLayoutPrintParams)
+        Dim sTIPODOC As String = "" : Dim sDocEntry As String = "" : Dim sDocNum As String = ""
+        Dim sLayout As String = "" : Dim sSQL As String = ""
+#End Region
+
+        Try
+            For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
+                If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
+                    sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
+                    sDocEntry = oForm.DataSources.DataTables.Item(sData).GetValue("Nº INTERNO", i).ToString
+                    sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", i).ToString
+                    Select Case sTIPODOC
+                        Case "ALBVTA"
+#Region "Entregas"
+                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='DLN2' "
+
+#End Region
+                        Case "SOLTRA" ' Sol. de Traslado                           
+#Region "Sol de traslado"
+                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='WTQ1' "
+#End Region
+                        Case "DPROV" ' Dev. de Proveedor
+#Region "Dev de proveedor"
+                            sSQL = "SELECT ""DEFLT_REP"" FROM RTYP WHERE left(""CODE"",4)='RPD2' "
+#End Region
+                    End Select
+                    sLayout = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    oPrintParam.LayoutCode = sLayout 'codigo del formato importado en SAP
+                    oPrintParam.DocEntry = sDocEntry 'parametro que se envia al crystal, DocEntry de la transaccion
+
+                    oReportLayoutService.Print(oPrintParam)
+                End If
+            Next
+
+            Impresion_Doc = True
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oReportLayoutService = Nothing
+            oCmpSrv = Nothing
+        End Try
+    End Function
     Public Shared Function Gen_DOC(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
         Gen_DOC = False
 #Region "VARIABLES"
