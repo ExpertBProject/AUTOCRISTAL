@@ -127,7 +127,8 @@ Public Class Procesos
                     Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ", oLog)
                     oORDR.Lines.WarehouseCode = sAlmacen
                     Try
-                        oORDR.Lines.TransportMode = oORDR.TransportationCode
+                        oLog.escribeMensaje("El transporte de la cabecera se pasa a la línea " & oORDR.TransportationCode, EXO_Log.EXO_Log.Tipo.advertencia)
+                        oORDR.Lines.ShippingMethod = oORDR.TransportationCode
                     Catch ex As Exception
 
                     End Try
