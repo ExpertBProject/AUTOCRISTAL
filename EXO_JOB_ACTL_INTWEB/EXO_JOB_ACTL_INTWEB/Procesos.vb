@@ -126,6 +126,11 @@ Public Class Procesos
                     sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
                     Dim sAlmacen As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS""", """WhsCode""", """U_EXO_SUCURSAL"" = " & odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString & " AND ""U_EXO_PRINCIPAL""='Y' ", oLog)
                     oORDR.Lines.WarehouseCode = sAlmacen
+                    Try
+                        oORDR.Lines.TransportMode = oORDR.TransportationCode
+                    Catch ex As Exception
+
+                    End Try
                 Next
                 If oORDR.Add() <> 0 Then
                     sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
