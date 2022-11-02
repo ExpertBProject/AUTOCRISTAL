@@ -231,6 +231,46 @@ Public Class EXO_GLOBALES
 
         Return online
     End Function
+
+    Public Shared Sub GetCrystalReportFile(ByRef oobjglobal As EXO_UIAPI.EXO_UIAPI, ByVal sOutFileName As String, ByVal sVariable As String)
+        Dim oBlobParams As SAPbobsCOM.BlobParams = Nothing
+        Dim oKeySegment As SAPbobsCOM.BlobTableKeySegment = Nothing
+        Dim oBlob As SAPbobsCOM.Blob = Nothing
+        Dim sContent As String = ""
+        Dim obuff() As Byte = Nothing
+
+        Try
+            oBlobParams = CType(oobjglobal.compañia.GetCompanyService().GetDataInterface(SAPbobsCOM.CompanyServiceDataInterfaces.csdiBlobParams), SAPbobsCOM.BlobParams)
+
+            oBlobParams.Table = "RDOC"
+            oBlobParams.Field = "Template"
+
+            oKeySegment = oBlobParams.BlobTableKeySegments.Add()
+            oKeySegment.Name = "DocCode"
+
+            oKeySegment.Value = sVariable
+
+            oBlob = oobjglobal.compañia.GetCompanyService().GetBlob(oBlobParams)
+            sContent = oBlob.Content
+
+            obuff = Convert.FromBase64String(sContent)
+
+            Using oFile As New System.IO.FileStream(sOutFileName, System.IO.FileMode.Create)
+                oFile.Write(obuff, 0, obuff.Length)
+
+                oFile.Close()
+            End Using
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oBlobParams, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oKeySegment, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oBlob, Object))
+        End Try
+    End Sub
     Public Shared Sub GenerarImpCrystal(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal rutaCrystal As String, ByVal sCrystal As String,
                                         ByVal sDocNum As String, ByVal sDocEntry As String, ByVal sSchema As String, ByVal sTIPODOC As String,
                                         ByVal sDir As String, ByRef sReport As String, ByVal sTipoImp As String, ByVal sUsuario As String)

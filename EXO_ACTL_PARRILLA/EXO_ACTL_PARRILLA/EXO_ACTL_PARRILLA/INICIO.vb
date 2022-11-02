@@ -18,6 +18,8 @@ Public Class INICIO
         Dim res As String = ""
         Dim sSQL As String = ""
         If objGlobal.refDi.comunes.esAdministrador Then
+            ParametrizacionGeneral()
+
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OCRD.xml")
             objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OCRD", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
@@ -91,6 +93,15 @@ Public Class INICIO
             End If
         End If
     End Sub
+    Private Sub ParametrizacionGeneral()
+        If Not objGlobal.funcionesUI.refDi.OGEN.existeVariable("EXO_ETPARRILLA") Then
+            objGlobal.funcionesUI.refDi.OGEN.fijarValorVariable("EXO_ETPARRILLA", "RCRI0015")
+            objGlobal.SBOApp.StatusBar.SetText("Creado Variable: EXO_ETPARRILLA", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+        Else
+            objGlobal.SBOApp.StatusBar.SetText("Ya existe Variable: EXO_ETPARRILLA", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+        End If
+    End Sub
+
     Private Sub InsertarReport()
 #Region "Variables"
         Dim sArchivo As String = ""
