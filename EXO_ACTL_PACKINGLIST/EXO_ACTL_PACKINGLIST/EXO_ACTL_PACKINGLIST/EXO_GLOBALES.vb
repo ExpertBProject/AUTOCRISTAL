@@ -409,6 +409,7 @@ Public Class EXO_GLOBALES
                             sSQL = "SELECT ""U_EXO_CODE"",""U_EXO_LOTE"", sum(""U_EXO_CANT"") ""CANTIDAD"",""U_EXO_TBULTO"",""U_EXO_FFAB"" FROM ""@EXO_TMPPACKINGL"" "
                             sSQL &= " where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
                             sSQL &= " and ""U_EXO_TBULTO""='" & oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_TBULTO").ToString & "' "
+                            sSQL &= " and ""U_EXO_IDBULTO""='" & oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_IDBULTO").ToString & "'"
                             sSQL &= " GROUP BY ""U_EXO_CODE"",""U_EXO_LOTE"", ""U_EXO_TBULTO"",""U_EXO_FFAB"" "
                             oRsLote.DoQuery(sSQL)
                             For iLote = 1 To oRsLote.RecordCount
