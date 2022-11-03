@@ -155,7 +155,7 @@ Public Class EXO_IMPET
                         sCodeET = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                         sSQL = "insert into ""@EXO_ETIQUETA"" values('" & sCodeET & "','" & sCodeET & " - " & i.ToString & " de " & iCopias & "','" & MiDataRow("ItemCode").ToString & "',"
                         sSQL &= "'" & MiDataRow("Lote").ToString & "','" & MiDataRow("Fabricante").ToString & "','" & objGlobal.compañia.UserSignature & "',"
-                        sSQL &= "'" & MiDataRow("ItemName").ToString & "','" & MiDataRow("Ubicacion").ToString & "')"
+                        sSQL &= "'" & MiDataRow("Ubicacion").ToString & "','" & MiDataRow("ItemName").ToString & "')"
                         objGlobal.refDi.SQL.sqlUpdB1(sSQL)
                     Next
                 Next
