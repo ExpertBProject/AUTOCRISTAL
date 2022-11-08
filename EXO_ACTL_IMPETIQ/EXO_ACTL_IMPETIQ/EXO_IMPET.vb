@@ -134,7 +134,7 @@ Public Class EXO_IMPET
                 objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
                 sSQL = "SELECT L.""ItemCode"", I.""ItemName"", ifnull(BT.""Quantity"",L.""Quantity"") ""Cantidad"", I.""QryGroup7"", ifnull(BT.""BatchNum"",'') ""Lote"", "
-                sSQL &= " ifnull(LT.""MnfSerial"",'') ""Fabricante"", ifnull(B.""BinCode"",'') ""Ubicacion"" "
+                sSQL &= " ifnull(LT.""MnfSerial"",'') ""Fabricante"", ifnull(B.""BinCode"",'') ""Ubicacion"",L.""DocEntry"", L.""LineNum"" "
                 sSQL &= " From " & sTable_Lin & " L INNER JOIN OITM I ON L.""ItemCode""=I.""ItemCode"" "
                 sSQL &= " LEFT JOIN " & sTable_Cab & " C ON C.""DocEntry""=L.""DocEntry"" "
                 sSQL &= " LEFT JOIN IBT1 BT ON BT.""BaseEntry"" = L.""DocEntry"" And BT.""BaseLinNum"" = L.""LineNum"" And  BT.""BaseType"" = C.""ObjType"" "
@@ -155,7 +155,7 @@ Public Class EXO_IMPET
                         sCodeET = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                         sSQL = "insert into ""@EXO_ETIQUETA"" values('" & sCodeET & "','" & sCodeET & " - " & i.ToString & " de " & iCopias & "','" & MiDataRow("ItemCode").ToString & "',"
                         sSQL &= "'" & MiDataRow("Lote").ToString & "','" & MiDataRow("Fabricante").ToString & "','" & objGlobal.compañia.UserSignature & "',"
-                        sSQL &= "'" & MiDataRow("Ubicacion").ToString & "','" & MiDataRow("ItemName").ToString & "')"
+                        sSQL &= "'" & MiDataRow("Ubicacion").ToString & "','" & MiDataRow("ItemName").ToString & "', " & MiDataRow("DocEntry").ToString & ", " & MiDataRow("LineNum").ToString & ")"
                         objGlobal.refDi.SQL.sqlUpdB1(sSQL)
                     Next
                 Next

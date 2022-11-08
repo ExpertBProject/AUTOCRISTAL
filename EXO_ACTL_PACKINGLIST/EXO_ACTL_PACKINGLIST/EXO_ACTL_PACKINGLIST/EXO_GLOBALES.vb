@@ -387,12 +387,14 @@ Public Class EXO_GLOBALES
                     sSQL &= " GROUP BY ""U_EXO_CODE"",""U_EXO_TBULTO"",""U_EXO_IDBULTO"" "
                     oDtLinFichero = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                     If oDtLinFichero.Rows.Count > 0 Then
-                        If bPlinea = False Then
-                            oOPDN.Lines.Add()
-                        Else
-                            bPlinea = False
-                        End If
+
                         For iLinFich As Integer = 0 To oDtLinFichero.Rows.Count - 1
+                            dCantLotes = 0
+                            If bPlinea = False Then
+                                oOPDN.Lines.Add()
+                            Else
+                                bPlinea = False
+                            End If
                             oOPDN.Lines.ItemCode = oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
                             oOPDN.Lines.ItemDescription = oDtLin.Rows.Item(iLin).Item("Dscription").ToString
                             Dim dCantFichero As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLinFichero.Rows.Item(iLinFich).Item("CANTIDAD").ToString)
