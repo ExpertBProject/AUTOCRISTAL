@@ -58,7 +58,7 @@ Module JOB
             End If
             oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
         Finally
-
+            Conexiones.Disconnect_Company(oCompany)
             Conexiones.Disconnect_SQLHANA(oDBSAP)
         End Try
     End Sub
