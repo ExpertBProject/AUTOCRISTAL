@@ -153,6 +153,7 @@ Public Class Procesos
             Conexiones.Disconnect_SQLHANA(oDB)
             Conexiones.Disconnect_Company(oCompanyO)
             Conexiones.Disconnect_Company(oCompanyD)
+            Conexiones.Disconnect_Company(oCompany)
         End Try
     End Sub
 
@@ -352,6 +353,7 @@ Public Class Procesos
             Conexiones.Disconnect_SQLHANA(oDB)
             Conexiones.Disconnect_Company(oCompanyO)
             Conexiones.Disconnect_Company(oCompanyD)
+            Conexiones.Disconnect_Company(oCompany)
         End Try
     End Sub
     Public Shared Sub OMRC()
@@ -497,6 +499,7 @@ Public Class Procesos
             Conexiones.Disconnect_SQLHANA(oDB)
             Conexiones.Disconnect_Company(oCompanyO)
             Conexiones.Disconnect_Company(oCompanyD)
+            Conexiones.Disconnect_Company(oCompany)
         End Try
     End Sub
 
@@ -631,6 +634,7 @@ Public Class Procesos
             Conexiones.Disconnect_SQLHANA(oDB)
             Conexiones.Disconnect_Company(oCompanyO)
             Conexiones.Disconnect_Company(oCompanyD)
+            Conexiones.Disconnect_Company(oCompany)
         End Try
     End Sub
 
@@ -887,6 +891,7 @@ Public Class Procesos
             Conexiones.Disconnect_SQLHANA(oDB)
             Conexiones.Disconnect_Company(oCompanyO)
             Conexiones.Disconnect_Company(oCompanyD)
+            Conexiones.Disconnect_Company(oCompany)
         End Try
     End Sub
 
