@@ -12,15 +12,20 @@ Public Class EXO_OPDN
         End If
     End Sub
     Private Sub cargaCampos()
+        Dim result As Boolean = False
         If objGlobal.refDi.comunes.esAdministrador Then
             Dim oXML As String = ""
-            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UTs_EXO_PACKINGL.xml")
-            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
-            objGlobal.SBOApp.StatusBar.SetText("Validado: UTs_EXO_PACKINGL", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_PACKING.xml")
+            result = objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_PACKING", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 
             oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_WTQ1.xml")
-            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            result = objGlobal.refDi.comunes.LoadBDFromXML(oXML)
             objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_WTQ1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OPOR.xml")
+            result = objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_OPOR", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters

@@ -164,9 +164,6 @@
     <EmbeddedResource Include="XML_BD\UDFs_WTQ1.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UTs_EXO_PACKINGL.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="XML_BD\UDFs_OCRD.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -188,6 +185,12 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_PACKING.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDFs_OPOR.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
