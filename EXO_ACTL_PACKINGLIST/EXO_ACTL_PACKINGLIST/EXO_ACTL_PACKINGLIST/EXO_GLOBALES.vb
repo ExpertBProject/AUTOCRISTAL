@@ -548,6 +548,7 @@ Public Class EXO_GLOBALES
         Dim sSQL As String = "" : Dim sMensaje As String = ""
         Dim oRsLote As SAPbobsCOM.Recordset = Nothing
         Dim sDocEntry As String = "" : Dim sDocnum As String = "" : Dim sAlmacenDestino As String = ""
+        Dim sPacking As String = ""
 #End Region
 
         Try
@@ -561,6 +562,8 @@ Public Class EXO_GLOBALES
             oDoc.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
             oDoc.CardCode = oformE.DataSources.DBDataSources.Item("OPDN").GetValue("CardCode", 0).ToString.Trim
             oDoc.Comments = oDoc.Comments.Trim & " " & "Basado en la Entrada de Mercancía Nº" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocNum", 0).ToString.Trim
+            sPacking = oformE.DataSources.DBDataSources.Item("OPDN").GetValue("U_EXO_PACKING", 0).ToString.Trim
+            oDoc.UserFields.Fields.Item("U_EXO_PACKING").Value = sPacking
             oDtLin.Clear()
 
             sAlmacenDestino = oformE.DataSources.DBDataSources.Item("PDN1").GetValue("WhsCode", 0).ToString.Trim
@@ -630,21 +633,18 @@ Public Class EXO_GLOBALES
                     oDoc.Lines.BaseType = InvBaseDocTypeEnum.PurchaseDeliveryNotes
                     oDoc.Lines.BaseEntry = CType(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString, Integer)
                     oDoc.Lines.BaseLine = CType(oDtLin.Rows.Item(iLin).Item("LineNum").ToString, Integer)
-#Region "Lotes"
-                    ''Incluimos los Lotes
-                    'sSQL = "Select ""OBTN"".""DistNumber"",""ITL1"".* FROM ""OITL"" INNER JOIN ""ITL1"" On ""ITL1"".""LogEntry""=""OITL"".""LogEntry"" "
-                    'sSQL &= " Left Join ""OBTN"" On ""OBTN"".""AbsEntry""=""ITL1"".""SysNumber"" "
-                    'sSQL &= " WHERE ""DocEntry"" = " & oDtLin.Rows.Item(iLin).Item("DocEntry").ToString & " And ""DocLine"" =" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                    'sSQL &= " And ""DocType""='20' and ""LocCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
-                    'oRsLote.DoQuery(sSQL)
-                    'For iLote = 1 To oRsLote.RecordCount
-                    '    'Creamos el lote de la línea del artículo
-                    '    oDoc.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("DistNumber").Value.ToString
-                    '    oDoc.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oObjGlobal.compañia, oRsLote.Fields.Item("Quantity").Value.ToString)
-                    '    oDoc.Lines.BatchNumbers.Add()
-                    '    oRsLote.MoveNext()
-                    'Next
+
+#Region "Actualizamos tabla EXO_PACKINGL el campo EXO_UBIDES"
+                    sSQL = "SELECT ""UBICADESTINO"" FROM ""EXO_UbicacionDestinoEntradaCompra_2"" WHERE ""Code""='" & sPacking & "' 
+                            AND ""LineId""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
+                    Dim sUBIDESTINO As String = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+                    sSQL = "UPDATE ""@EXO_PACKINGL"" Set ""EXO_UBIDES""='" & sUBIDESTINO & "' WHERE ""Code""='" & sPacking & "' 
+                            AND ""LineId""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
+                    oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
+
 #End Region
+
                 Next
                 If oDoc.Add() <> 0 Then
                     sMensaje = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")

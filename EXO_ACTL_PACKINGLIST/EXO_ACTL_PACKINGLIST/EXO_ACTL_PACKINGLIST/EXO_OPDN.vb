@@ -13,6 +13,7 @@ Public Class EXO_OPDN
     End Sub
     Private Sub cargaCampos()
         Dim result As Boolean = False
+        Dim sSQL As String = ""
         If objGlobal.refDi.comunes.esAdministrador Then
             Dim oXML As String = ""
             oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_PACKING.xml")
@@ -26,6 +27,14 @@ Public Class EXO_OPDN
             oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OPOR.xml")
             result = objGlobal.refDi.comunes.LoadBDFromXML(oXML)
             objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_OPOR", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "UBIDESTINO.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_UbicacionDestinoEntradaCompra_2", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
