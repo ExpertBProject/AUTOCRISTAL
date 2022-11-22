@@ -170,19 +170,131 @@ Public Class Procesos
 
         End Try
     End Sub
+    Public Shared Function DblTextToNumber(ByVal sValor As String, ByRef oCompany As SAPbobsCOM.Company) As Double
+        Dim cValor As Double = 0
+        Dim sValorAux As String = "0"
+        Dim oDBHana As EXO_DIAPI.EXO_DIAPI = New EXO_DIAPI.EXO_DIAPI(oCompany)
+        DblTextToNumber = 0
+
+        Try
+
+            sValorAux = sValor
+
+            If sValorAux <> "" Then
+                If Left(sValorAux, 1) = "." Then sValorAux = "0" & sValorAux
+
+                If oDBHana.OADM.separadorMillarB1 = "." AndAlso oDBHana.OADM.separadorDecimalB1 = "," Then 'Decimales ES
+                    If sValorAux.IndexOf(".") > 0 AndAlso sValorAux.IndexOf(",") > 0 Then
+                        cValor = CDbl(sValorAux.Replace(".", ""))
+                    ElseIf sValorAux.IndexOf(".") > 0 Then
+                        cValor = CDbl(sValorAux.Replace(".", ","))
+                    Else
+                        cValor = CDbl(sValorAux)
+                    End If
+                Else 'Decimales USA
+                    If sValorAux.IndexOf(".") > 0 AndAlso sValorAux.IndexOf(",") > 0 Then
+                        cValor = CDbl(sValorAux.Replace(",", "").Replace(".", ","))
+                    ElseIf sValorAux.IndexOf(".") > 0 Then
+                        cValor = CDbl(sValorAux.Replace(".", ","))
+                    Else
+                        cValor = CDbl(sValorAux)
+                    End If
+                End If
+            End If
+
+            DblTextToNumber = cValor
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Function
+    Public Shared Function Generar_Cobro_a_Cuenta(ByRef oCompany As SAPbobsCOM.Company, ByRef db As HanaConnection, ByRef oLog As EXO_Log.EXO_Log,
+                                            ByVal sCardCode As String, ByVal sImporte As String, ByVal sPedido As String, sPedidoDocEntry As String) As Boolean
+        Dim ORCT As SAPbobsCOM.Payments = Nothing
+        Dim sDocEntryORCT As String = ""
+        Dim sDocNumORCT As String = ""
+        Dim sSQL As String = ""
+        Dim sTIPO As String = ""
+        Dim sAccount As String = ""
+        Dim odtDatosCTA As System.Data.DataTable = New System.Data.DataTable
+        Dim sError As String = "" : Dim sSubject As String = ""
+        Generar_Cobro_a_Cuenta = False
+        Try
+
+            ORCT = CType(oCompany.GetBusinessObject(BoObjectTypes.oIncomingPayments), SAPbobsCOM.Payments)
+            ORCT.CardCode = sCardCode
+            ORCT.DocType = BoRcptTypes.rCustomer
+            ORCT.CashSum = DblTextToNumber(sImporte, oCompany)
+            sSQL = "SELECT ""U_EXO_INFV"" FROM ""@EXO_OGEN1"" WHERE ""U_EXO_NOMV""='CTA_TPV'"
+            Conexiones.FillDtDB(db, odtDatosCTA, sSQL)
+            If odtDatosCTA.Rows.Count > 0 Then
+                sAccount = odtDatosCTA.Rows.Item(0).Item("U_EXO_INFV").ToString
+            Else
+                sError = "Pedido WEB del Cliente " & sCardCode & " ha tenido un error al crear el cobro. No encuentra la Cta TPV."
+                oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+
+                'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
+                sSubject = sError
+                sTIPO = "Pedido WEB. Creación de cobro. "
+                EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTIPO, sError, "", "")
+                Return False
+            End If
+
+            ORCT.CashAccount = sAccount
+            ORCT.Remarks = "Pedido Nº" & sPedido
+            If sAccount <> "" Then
+                If ORCT.Add() = 0 Then
+                    oCompany.GetNewObjectCode(sDocEntryORCT)
+                    oLog.escribeMensaje("Creado cobro a cuenta. Se procede a actualizar la pedido...", EXO_Log.EXO_Log.Tipo.advertencia)
+
+                    sSQL = "Select ""DocNum"" FROM ""ORCT"" WHERE ""DocEntry""=" & sDocEntryORCT
+                    sDocNumORCT = Conexiones.GetValueDB(db, """ORCT""", """DocEntry""", """DocEntry""=" & sDocEntryORCT, oLog)
+
+                    sSQL = "UPDATE ORDR Set "
+                    sSQL &= " ""EXO_COBRODE""='" & sDocEntryORCT & "', "
+                    sSQL &= " ""EXO_COBRODN""='" & sDocNumORCT & "', "
+                    sSQL &= " WHERE ""DocEntry""= " & sPedidoDocEntry
+                    If Conexiones.ExecuteSqlDB(db, sSQL) = True Then
+                        oLog.escribeMensaje("Actualizado pedido Nº" & sPedido, EXO_Log.EXO_Log.Tipo.informacion)
+                    Else
+                        oLog.escribeMensaje("No se ha podido actualizar el pedido Nº" & sPedido, EXO_Log.EXO_Log.Tipo.error)
+                    End If
+                    Generar_Cobro_a_Cuenta = True
+                Else
+                    oLog.escribeMensaje("Error generando cobro a cuenta. Por favor realicelo de forma manual: " + oCompany.GetLastErrorDescription, EXO_Log.EXO_Log.Tipo.error)
+                    Generar_Cobro_a_Cuenta = False
+                End If
+            Else
+                oLog.escribeMensaje("No ha definido una cuenta para esta operación. Por favor, revise la parametrización", EXO_Log.EXO_Log.Tipo.error)
+                Generar_Cobro_a_Cuenta = False
+            End If
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            sError = exCOM.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Catch ex As Exception
+            sError = ex.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Finally
+            If ORCT IsNot Nothing Then System.Runtime.InteropServices.Marshal.FinalReleaseComObject(ORCT)
+            ORCT = Nothing
+        End Try
+    End Function
     Public Shared Sub REPROCESAR(ByRef db As HanaConnection, ByRef dbWEB As HanaConnection, ByRef oCompany As SAPbobsCOM.Company, ByRef oLog As EXO_Log.EXO_Log)
 #Region "Variables"
         Dim sError As String = ""
         Dim sSQL As String = ""
         Dim sBBDDWEB As String = Conexiones.Datos_Confi("HANAWEB", "databaseName")
         Dim odtDatosWeb As System.Data.DataTable = New System.Data.DataTable
-        Dim sCliente As String = "" : Dim sID As String = ""
+        Dim sCliente As String = "" : Dim sID As String = "" : Dim sCardCode As String = ""
         Dim oORDR As SAPbobsCOM.Documents = Nothing : Dim iLin As Integer = 0
         Dim sPAGADO As String = ""
         Dim sSubject As String = ""
         Dim sTipo As String = ""
         Dim sComen As String = ""
-        Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = ""
+        Dim sDocEntry As String = "" : Dim sDocNum As String = "" : Dim sDELALMACEN As String = "" : Dim sDELEGACION As String = "" : Dim sImporte As String = ""
 #End Region
         Try
             oLog.escribeMensaje("Reprocesar el carrito...", EXO_Log.EXO_Log.Tipo.informacion)
@@ -193,6 +305,7 @@ Public Class Procesos
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
                     If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString Then
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString
+                        sCardCode = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
                         sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
                         sDocNum = odtDatosWeb.Rows.Item(iCab).Item("NPEDIDO").ToString
                         sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
@@ -226,7 +339,8 @@ Public Class Procesos
                                         sComen = ""
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                         'Crear Cobro a cuenta por transferencia  a la cta de un parámetro
-
+                                        sImporte = Conexiones.GetValueDB(db, """ORDR""", """DocTotal""", """DocEntry""=" & sDocEntry, oLog)
+                                        Generar_Cobro_a_Cuenta(oCompany, db, oLog, sCardCode, sImporte, sDocNum, sDocEntry)
                                     End If
                                 Case "3" 'Cancelar pedido
                                     'oORDR.Comments &= ChrW(13) & ChrW(10) & "CANCELADO POR FALTA DE PAGO VIA WEB."
@@ -434,11 +548,12 @@ Public Class Procesos
         Try
 #Region "CREAR EN SAP EN BBDD"
             Dim sruta As String = ""
-            For F = 0 To 2
+            For F = 0 To 3
                 Select Case F
                     Case 0 : sruta = sDir & "\01.XML\XML_BD\UDFs_OUSR.xml"
                     Case 1 : sruta = sDir & "\01.XML\XML_BD\UDFs_OWHS.xml"
                     Case 2 : sruta = sDir & "\01.XML\XML_BD\UDFs_RDR1.xml"
+                    Case 2 : sruta = sDir & "\01.XML\XML_BD\UDFs_ORDR.xml"
                 End Select
 #Region "Importación"
                 oLog.escribeMensaje("######                                                      ###### ", EXO_Log.EXO_Log.Tipo.informacion)
