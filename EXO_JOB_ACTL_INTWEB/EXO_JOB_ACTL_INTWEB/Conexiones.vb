@@ -240,6 +240,7 @@ Public Class Conexiones
                 sSQL = "SELECT " & sField & " FROM " & sTable & " WHERE " & sCondition
             End If
 
+            oLog.escribeMensaje("SQL GET VALUE: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
             cmd = New HanaCommand(sSQL, db)
             cmd.CommandTimeout = 0
 

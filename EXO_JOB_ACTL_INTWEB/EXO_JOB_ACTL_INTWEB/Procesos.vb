@@ -70,6 +70,8 @@ Public Class Procesos
                         End If
 #End Region
                         oORDR.CardCode = sCliente
+                        oORDR.UserFields.Fields.Item("U_EXO_DELE").Value = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OCRD""", """U_EXO_DELE""", """CardCode"" ='" & odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString & "'", oLog)
+
 #Region "Dirección"
                         If odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString <> "" Then
                             oORDR.AddressExtension.ShipToStreet = odtDatosWeb.Rows.Item(iCab).Item("DIRECCION_ENVIO").ToString
@@ -118,8 +120,14 @@ Public Class Procesos
                         oORDR.Lines.Add()
                     End If
                     oORDR.Lines.ItemCode = odtDatosWeb.Rows.Item(iCab).Item("CREF").ToString
-                    oORDR.Lines.Quantity = CDbl(odtDatosWeb.Rows.Item(iCab).Item("NUNIDADES").ToString)
-                    oORDR.Lines.UnitPrice = CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString)
+                    If CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString) < 0 Then
+                        oORDR.Lines.Quantity = -1 * CDbl(odtDatosWeb.Rows.Item(iCab).Item("NUNIDADES").ToString)
+                        oORDR.Lines.UnitPrice = -1 * CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString)
+                    Else
+                        oORDR.Lines.Quantity = CDbl(odtDatosWeb.Rows.Item(iCab).Item("NUNIDADES").ToString)
+                        oORDR.Lines.UnitPrice = CDbl(odtDatosWeb.Rows.Item(iCab).Item("PRECIO").ToString)
+                    End If
+
                     oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT001").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString)
                     oORDR.Lines.UserFields.Fields.Item("U_EXO_DCT002").Value = CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString)
                     oORDR.Lines.DiscountPercent = (CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) + CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) - ((CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO").ToString) * CDbl(odtDatosWeb.Rows.Item(iCab).Item("DTO_WEB").ToString) / 100)))
@@ -227,7 +235,7 @@ Public Class Procesos
             ORCT.CardCode = sCardCode
             ORCT.DocType = BoRcptTypes.rCustomer
             ORCT.CashSum = DblTextToNumber(sImporte, oCompany)
-            sSQL = "SELECT ""U_EXO_INFV"" FROM ""@EXO_OGEN1"" WHERE ""U_EXO_NOMV""='CTA_TPV'"
+            sSQL = "SELECT ""U_EXO_INFV"" FROM """ & oCompany.CompanyDB & """.""@EXO_OGEN1"" WHERE ""U_EXO_NOMV""='CTA_TPV'"
             Conexiones.FillDtDB(db, odtDatosCTA, sSQL)
             If odtDatosCTA.Rows.Count > 0 Then
                 sAccount = odtDatosCTA.Rows.Item(0).Item("U_EXO_INFV").ToString
@@ -249,13 +257,14 @@ Public Class Procesos
                     oCompany.GetNewObjectCode(sDocEntryORCT)
                     oLog.escribeMensaje("Creado cobro a cuenta. Se procede a actualizar la pedido...", EXO_Log.EXO_Log.Tipo.advertencia)
 
-                    sSQL = "Select ""DocNum"" FROM ""ORCT"" WHERE ""DocEntry""=" & sDocEntryORCT
-                    sDocNumORCT = Conexiones.GetValueDB(db, """ORCT""", """DocEntry""", """DocEntry""=" & sDocEntryORCT, oLog)
+                    'sSQL = "Select ""DocNum"" FROM """ & oCompany.CompanyDB & """.""ORCT"" WHERE ""DocEntry""=" & sDocEntryORCT
+                    sDocNumORCT = Conexiones.GetValueDB(db, """" & oCompany.CompanyDB & """.""ORCT""", """DocNum""", """DocEntry""=" & sDocEntryORCT, oLog)
 
-                    sSQL = "UPDATE ORDR Set "
-                    sSQL &= " ""EXO_COBRODE""='" & sDocEntryORCT & "', "
-                    sSQL &= " ""EXO_COBRODN""='" & sDocNumORCT & "', "
+                    sSQL = "UPDATE """ & oCompany.CompanyDB & """.""ORDR"" Set "
+                    sSQL &= " ""U_EXO_COBRODE""='" & sDocEntryORCT & "', "
+                    sSQL &= " ""U_EXO_COBRODN""='" & sDocNumORCT & "' "
                     sSQL &= " WHERE ""DocEntry""= " & sPedidoDocEntry
+                    oLog.escribeMensaje("UPDATE PEDIDO:" & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
                     If Conexiones.ExecuteSqlDB(db, sSQL) = True Then
                         oLog.escribeMensaje("Actualizado pedido Nº" & sPedido, EXO_Log.EXO_Log.Tipo.informacion)
                     Else
@@ -339,7 +348,7 @@ Public Class Procesos
                                         sComen = ""
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                         'Crear Cobro a cuenta por transferencia  a la cta de un parámetro
-                                        sImporte = Conexiones.GetValueDB(db, """ORDR""", """DocTotal""", """DocEntry""=" & sDocEntry, oLog)
+                                        sImporte = Conexiones.GetValueDB(db, """" & oCompany.CompanyDB.ToString & """.""ORDR""", """DocTotal""", """DocEntry""=" & sDocEntry, oLog)
                                         Generar_Cobro_a_Cuenta(oCompany, db, oLog, sCardCode, sImporte, sDocNum, sDocEntry)
                                     End If
                                 Case "3" 'Cancelar pedido
@@ -553,7 +562,7 @@ Public Class Procesos
                     Case 0 : sruta = sDir & "\01.XML\XML_BD\UDFs_OUSR.xml"
                     Case 1 : sruta = sDir & "\01.XML\XML_BD\UDFs_OWHS.xml"
                     Case 2 : sruta = sDir & "\01.XML\XML_BD\UDFs_RDR1.xml"
-                    Case 2 : sruta = sDir & "\01.XML\XML_BD\UDFs_ORDR.xml"
+                    Case 3 : sruta = sDir & "\01.XML\XML_BD\UDFs_ORDR.xml"
                 End Select
 #Region "Importación"
                 oLog.escribeMensaje("######                                                      ###### ", EXO_Log.EXO_Log.Tipo.informacion)

@@ -554,10 +554,10 @@ Public Class EXO_GLOBALES
         Try
             oRsLote = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
 
-            If oCompany.InTransaction = True Then
-                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-            End If
-            oCompany.StartTransaction()
+            'If oCompany.InTransaction = True Then
+            '    oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            'End If
+            'oCompany.StartTransaction()
             oDoc = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
             oDoc.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
             oDoc.CardCode = oformE.DataSources.DBDataSources.Item("OPDN").GetValue("CardCode", 0).ToString.Trim
@@ -656,15 +656,16 @@ Public Class EXO_GLOBALES
                     sDocnum = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                     sMensaje = "Se ha generado correctamente la sol. de traslado con Nº " & sDocnum & " y Nº interno " & sDocEntry.ToString
                     oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
                 End If
             Else
                 sMensaje = "No se encuentra las líneas de la entrada de Mercancía Nº" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocNum", 0).ToString.Trim & ". Se interrumpe el proceso."
                 oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                 oObjGlobal.SBOApp.MessageBox(sMensaje)
             End If
-            If oCompany.InTransaction = True Then
-                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-            End If
+            'If oCompany.InTransaction = True Then
+            '    oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+            'End If
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
         Catch ex As Exception
@@ -672,9 +673,9 @@ Public Class EXO_GLOBALES
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRsLote, Object))
 
-            If oCompany.InTransaction = True Then
-                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-            End If
+            'If oCompany.InTransaction = True Then
+            '    oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            'End If
 
             oDtLin.Clear()
         End Try
