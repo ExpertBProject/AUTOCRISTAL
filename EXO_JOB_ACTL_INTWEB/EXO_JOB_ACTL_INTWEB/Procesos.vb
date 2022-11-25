@@ -312,7 +312,7 @@ Public Class Procesos
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
-                    If sCliente <> odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString Then
+                    If sDocEntry <> odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString Then
                         sCliente = odtDatosWeb.Rows.Item(iCab).Item("USUARIO").ToString
                         sCardCode = odtDatosWeb.Rows.Item(iCab).Item("CLIENTE").ToString
                         sDELEGACION = odtDatosWeb.Rows.Item(iCab).Item("ALMACEN").ToString
@@ -390,7 +390,7 @@ Public Class Procesos
                             EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTipo, sComen, "", sDELEGACION)
                         End If
                     Else
-                        oLog.escribeMensaje("##### No existen registros para crear pedidos.", EXO_Log.EXO_Log.Tipo.advertencia)
+                        sDocEntry = odtDatosWeb.Rows.Item(iCab).Item("NUMPEDIDO").ToString
                     End If
                 Next
             End If
