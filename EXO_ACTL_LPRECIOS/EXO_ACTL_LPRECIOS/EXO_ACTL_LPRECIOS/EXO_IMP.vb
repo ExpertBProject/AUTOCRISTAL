@@ -203,7 +203,7 @@ Public Class EXO_IMP
 #Region "Variables"
         Dim sAsiento As String = "" : Dim bPrimeraVez As Boolean = True
         Dim oOJDT As SAPbobsCOM.JournalEntries = Nothing : Dim sTransId As String = "" : Dim sNumber As String = ""
-        Dim iLinea As String = ""
+        Dim iLinea As Integer = 0
         Dim sEstado As String = "OK" : Dim sEstadoDes As String = ""
 #End Region
         Try

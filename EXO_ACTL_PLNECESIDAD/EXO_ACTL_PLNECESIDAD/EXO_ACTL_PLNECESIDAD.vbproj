@@ -69,23 +69,29 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EXO_BasicDLL">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_BasicDLL.dll</HintPath>
+    <Reference Include="EXO_BasicDLL, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_BasicDLL.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_CleanCOM">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_CleanCOM.dll</HintPath>
+    <Reference Include="EXO_CleanCOM, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_CleanCOM.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_DIAPI">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_DIAPI.dll</HintPath>
+    <Reference Include="EXO_DIAPI, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_DIAPI.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_Generales">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_Generales.dll</HintPath>
+    <Reference Include="EXO_Generales, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_Generales.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_Log">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_Log.dll</HintPath>
+    <Reference Include="EXO_Log, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_Log.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_UIAPI">
-      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.4\ClienteLigeroWeb\x64Client\EXO_UIAPI.dll</HintPath>
+    <Reference Include="EXO_UIAPI, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_UIAPI.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -181,7 +187,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.4\x64\desarrollo\DLLs\$(TargetFileName)"
+    <PostBuildEvent>copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
 copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
