@@ -115,11 +115,11 @@ Public Class EXO_RSTOCK
             sTipo = CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).DataTable.GetValue("TIPO", pVal.Row).ToString
             Select Case sTipo
                 Case "17" 'Pedidos de ventas
-                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_Order
+                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_Order.ToString
                 Case "234000032" ' Sol de devolución de proveedor
                     oColumnTxt.LinkedObjectType = "234000032"
                 Case "1250000001" ' Sol de traslado
-                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_StockTransfersRequest
+                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_StockTransfersRequest.ToString
             End Select
 
 

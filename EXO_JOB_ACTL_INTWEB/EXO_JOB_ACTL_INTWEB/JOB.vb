@@ -42,6 +42,7 @@ Module JOB
                 Else
                     Procesos.LecturaTabla(oDBSAP, oDBWEB, oCompany, oLog)
                     Procesos.REPROCESAR(oDBSAP, oDBWEB, oCompany, oLog)
+                    Procesos.Conciliar_Factura_Cobros(oDBSAP, oCompany, oLog)
                 End If
                 oLog.escribeMensaje("#######################################################", EXO_Log.EXO_Log.Tipo.informacion)
                 oLog.escribeMensaje("#####                 FIN PROCESO                 #####", EXO_Log.EXO_Log.Tipo.informacion)

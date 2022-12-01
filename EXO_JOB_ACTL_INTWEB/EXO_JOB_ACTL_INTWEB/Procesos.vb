@@ -404,6 +404,101 @@ Public Class Procesos
 
         End Try
     End Sub
+
+    Public Shared Sub Conciliar_Factura_Cobros(ByRef db As HanaConnection, ByRef oCompany As SAPbobsCOM.Company, ByRef oLog As EXO_Log.EXO_Log)
+#Region "Variables"
+        Dim sError As String = ""
+        Dim sSQL As String = ""
+        Dim odtDatos As System.Data.DataTable = New System.Data.DataTable
+
+#End Region
+        Try
+            oLog.escribeMensaje("Conciliando Facturas con cobros...", EXO_Log.EXO_Log.Tipo.informacion)
+            sSQL = "SELECT DISTINCT C.""CardCode"", C.""DocEntry"" ""Fact_INT"", C.""DocNum"" ""Factura"", AF.""TransId"" ""ATO_FACTURA"", 
+                    AF.""Line_ID"" ""LIN_FACT"", AF.""LocTotal"" ""IMPFACT"", L.""BaseEntry"" ""Alb_INT"", A.""DocNum"" ""Albaran"", 
+                    A.""U_EXO_COBRODE"" ""Cob_INT"", A.""U_EXO_COBRODN"" ""Cobro"", AC.""TransId"" ""ATO_COBRO"", AC.""Line_ID"" ""LIN_COBRO"",AC.""LocTotal"" ""IMPCOB""
+                    FROM """ & oCompany.CompanyDB & """.""OINV"" C 
+                    INNER JOIN """ & oCompany.CompanyDB & """.""INV1"" L ON L.""DocEntry""=C.""DocEntry""
+                    INNER JOIN (SELECT OJDT.""CreatedBy"", JDT1.""ShortName"", JDT1.""TransId"", JDT1.""Line_ID"", OJDT.""LocTotal""
+			                    FROM """ & oCompany.CompanyDB & """.""OJDT"" INNER JOIN  """ & oCompany.CompanyDB & """.""JDT1"" ON OJDT.""TransId""=JDT1.""TransId""
+			                    WHERE OJDT.""TransType""='13')AF ON AF.""CreatedBy""= C.""DocEntry"" and AF.""ShortName""=C.""CardCode""
+                    INNER JOIN """ & oCompany.CompanyDB & """.""ODLN"" A ON L.""BaseEntry""=A.""DocEntry""
+                    INNER JOIN (SELECT OJDT.""CreatedBy"", JDT1.""ShortName"", JDT1.""TransId"", JDT1.""Line_ID"", OJDT.""LocTotal""
+			                    FROM """ & oCompany.CompanyDB & """.""OJDT"" INNER JOIN  """ & oCompany.CompanyDB & """.""JDT1"" ON OJDT.""TransId""=JDT1.""TransId""
+			                    WHERE OJDT.""TransType""='24')AC ON AC.""CreatedBy""= A.""U_EXO_COBRODE"" and AC.""ShortName""=C.""CardCode""
+                    WHERE C.""DocStatus""<>'C' and C.""CANCELED""='N' and C.""DocTotal"">C.""PaidToDate"" 
+                    and IFNULL(L.""BaseEntry"",0)<>0 and IFNULL(A.""U_EXO_COBRODE"",'')<>''
+                    ORDER BY C.""DocEntry"",L.""BaseEntry"" "
+            oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
+            Conexiones.FillDtDB(db, odtDatos, sSQL)
+            If odtDatos.Rows.Count > 0 Then
+                For iCab As Integer = 0 To odtDatos.Rows.Count - 1
+                    oLog.escribeMensaje("Factura nº " & odtDatos.Rows.Item(iCab).Item("Factura").ToString & " - Cobro nº " & odtDatos.Rows.Item(iCab).Item("Cobro").ToString, EXO_Log.EXO_Log.Tipo.informacion)
+                    Crear_Reconciliacion(oCompany, odtDatos.Rows.Item(iCab).Item("ATO_FACTURA").ToString, odtDatos.Rows.Item(iCab).Item("LIN_FACT").ToString, odtDatos.Rows.Item(iCab).Item("ATO_COBRO").ToString,
+odtDatos.Rows.Item(iCab).Item("LIN_COBRO").ToString, DblTextToNumber(odtDatos.Rows.Item(iCab).Item("IMPFACT").ToString, oCompany), DblTextToNumber(odtDatos.Rows.Item(iCab).Item("IMPCOB").ToString, oCompany), oLog)
+                Next
+            End If
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            sError = exCOM.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Catch ex As Exception
+            sError = ex.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Finally
+
+        End Try
+    End Sub
+
+    Private Shared Function Crear_Reconciliacion(ByRef oCompany As SAPbobsCOM.Company, ByRef TransIDFac As String, ByRef TransRowIdFac As String,
+                                                 ByRef TransIDCobro As String, ByRef TransRowIdCobro As String, ByRef dblImpFac As Double, ByRef dblImpCob As Double,
+                                                 ByRef oLog As EXO_Log.EXO_Log) As Boolean
+
+        Crear_Reconciliacion = False
+        Dim sError As String = ""
+        Dim oParam As SAPbobsCOM.InternalReconciliationParams
+        Dim oReconService As SAPbobsCOM.InternalReconciliationsService
+        Dim openTrans As SAPbobsCOM.InternalReconciliationOpenTrans
+        Try
+            oReconService = CType(oCompany.GetCompanyService.GetBusinessService(SAPbobsCOM.ServiceTypes.InternalReconciliationsService), SAPbobsCOM.InternalReconciliationsService)
+            oParam = CType(oReconService.GetDataInterface(SAPbobsCOM.InternalReconciliationsServiceDataInterfaces.irsInternalReconciliationParams), SAPbobsCOM.InternalReconciliationParams)
+            openTrans = CType(oReconService.GetDataInterface(SAPbobsCOM.InternalReconciliationsServiceDataInterfaces.irsInternalReconciliationOpenTrans), SAPbobsCOM.InternalReconciliationOpenTrans)
+            openTrans.ReconDate = DateTime.Today
+
+            openTrans.CardOrAccount = SAPbobsCOM.CardOrAccountEnum.coaCard
+            openTrans.InternalReconciliationOpenTransRows.Add()
+            openTrans.InternalReconciliationOpenTransRows.Item(0).Selected = SAPbobsCOM.BoYesNoEnum.tYES
+            openTrans.InternalReconciliationOpenTransRows.Item(0).TransId = CInt(TransIDFac) '151836 '202202395
+            openTrans.InternalReconciliationOpenTransRows.Item(0).TransRowId = CInt(TransRowIdFac)
+            If dblImpCob < dblImpFac Then
+                openTrans.InternalReconciliationOpenTransRows.Item(0).ReconcileAmount = dblImpCob
+            Else
+                openTrans.InternalReconciliationOpenTransRows.Item(0).ReconcileAmount = dblImpFac
+            End If
+
+
+
+            openTrans.InternalReconciliationOpenTransRows.Add()
+            openTrans.InternalReconciliationOpenTransRows.Item(1).Selected = SAPbobsCOM.BoYesNoEnum.tYES
+            openTrans.InternalReconciliationOpenTransRows.Item(1).TransId = CInt(TransIDCobro) '151855 ' 
+            openTrans.InternalReconciliationOpenTransRows.Item(1).TransRowId = CInt(TransRowIdCobro)
+            If dblImpCob < dblImpFac Then
+                openTrans.InternalReconciliationOpenTransRows.Item(1).ReconcileAmount = dblImpCob
+            Else
+                openTrans.InternalReconciliationOpenTransRows.Item(1).ReconcileAmount = dblImpFac
+            End If
+
+
+            oParam = oReconService.Add(openTrans)
+            oLog.escribeMensaje("Reconciliado OK.", EXO_Log.EXO_Log.Tipo.informacion)
+            Crear_Reconciliacion = True
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            sError = exCOM.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Catch ex As Exception
+            sError = ex.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        End Try
+    End Function
 #Region "Actualizar campos"
 #Region "SAP"
     Public Shared Function exiteCampoUsuario(ByVal tabla As String, ByVal campo As String, ByRef interfazDatos As SAPbobsCOM.Company) As Boolean

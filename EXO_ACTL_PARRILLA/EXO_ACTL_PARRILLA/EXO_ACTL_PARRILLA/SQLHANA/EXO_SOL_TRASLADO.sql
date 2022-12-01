@@ -12,5 +12,5 @@ FROM OWTQ T0
  LEFT JOIN "EXO_SITUACION" S ON S."DocEntry"=T0."DocEntry" and S."ObjType"=T0."ObjType" 
  LEFT JOIN "EXO_A" A ON A."CardCode"=T0."CardCode" and A."WhsCode"=TL."WhsCode" 
  LEFT JOIN OTER TT ON T1."Territory"=TT."territryID" 
- WHERE TL."LineStatus"='O' and T0."U_EXO_STATUSP"='P' 
+ WHERE TL."LineStatus"='O' and T0."U_EXO_STATUSP"='P' and T0."U_EXO_TIPO"='ITC'
 

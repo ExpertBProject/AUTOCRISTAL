@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0"?>
 <Connection>
-  <ACTUALIZAR CAMPOS="Y"/>
+  <ACTUALIZAR CAMPOS="N"/>
   <HANA Server="xper-hanades02:30015" DbUser="B1SLDUSER" DbPwd="12629iYk" databaseName="SBO_AUTO_TEST" providerName="Sap.Data.Hana"/>
   <DI Server="TS1@xper-hanades02.hanab1.local:30013" LicenseServer="xper-hanades02:40000" CompanyDB="SBO_AUTO_TEST" UserName="omartinez" Password="Osma@2015" DbPassword="12629iYk" DbUserName="B1SLDUSER"/>
   <HANAWEB Server="xper-hanades02:30015" DbUser="B1SLDUSER" DbPwd="12629iYk" databaseName="INTERNETAC_NEW" providerName="Sap.Data.Hana"/>

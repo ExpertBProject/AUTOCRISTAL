@@ -633,18 +633,6 @@ Public Class EXO_GLOBALES
                     oDoc.Lines.BaseType = InvBaseDocTypeEnum.PurchaseDeliveryNotes
                     oDoc.Lines.BaseEntry = CType(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString, Integer)
                     oDoc.Lines.BaseLine = CType(oDtLin.Rows.Item(iLin).Item("LineNum").ToString, Integer)
-
-#Region "Actualizamos tabla EXO_PACKINGL el campo EXO_UBIDES"
-                    sSQL = "SELECT ""UBICADESTINO"" FROM ""EXO_UbicacionDestinoEntradaCompra_2"" WHERE ""Code""='" & sPacking & "' 
-                            AND ""LineId""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                    Dim sUBIDESTINO As String = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
-
-                    sSQL = "UPDATE ""@EXO_PACKINGL"" Set ""EXO_UBIDES""='" & sUBIDESTINO & "' WHERE ""Code""='" & sPacking & "' 
-                            AND ""LineId""=" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString
-                    oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
-
-#End Region
-
                 Next
                 If oDoc.Add() <> 0 Then
                     sMensaje = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
@@ -657,6 +645,16 @@ Public Class EXO_GLOBALES
                     sMensaje = "Se ha generado correctamente la sol. de traslado con Nº " & sDocnum & " y Nº interno " & sDocEntry.ToString
                     oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 
+#Region "Actualizamos tabla EXO_PACKINGL el campo EXO_UBIDES"
+                    sSQL = "UPDATE ""PACKINGL""
+                            SET ""PACKINGL"".""U_EXO_UBIDES"" = ""VISTA"".""UBICADESTINO""
+                            FROM ""@EXO_PACKINGL"" AS ""PACKINGL""
+                            INNER JOIN ""EXO_UbicacionDestinoEntradaCompra_2"" AS ""VISTA""
+                            ON ""PACKINGL"".""Code"" = ""VISTA"".""Code""
+                            and ""PACKINGL"".""LineId""=""VISTA"".""LineId""
+                            WHERE ""PACKINGL"".""Code""= '" & sPacking & "' "
+                    oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
+#End Region
                 End If
             Else
                 sMensaje = "No se encuentra las líneas de la entrada de Mercancía Nº" & oformE.DataSources.DBDataSources.Item("OPDN").GetValue("DocNum", 0).ToString.Trim & ". Se interrumpe el proceso."
