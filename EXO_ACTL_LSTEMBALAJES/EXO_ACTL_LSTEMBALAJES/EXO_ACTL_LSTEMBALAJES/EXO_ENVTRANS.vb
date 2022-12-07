@@ -109,7 +109,7 @@ Public Class EXO_ENVTRANS
                 dtDatos = New System.Data.DataTable
                 dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
                 If dtDatos.Rows.Count > 0 Then
-                    Omercancias = objGlobal.compañia.GetBusinessObject(BoObjectTypes.oInventoryGenExit)
+                    Omercancias = CType(objGlobal.compañia.GetBusinessObject(BoObjectTypes.oInventoryGenExit), SAPbobsCOM.Documents)
                     Omercancias.DocDate = Date.Now
                     Omercancias.TaxDate = Date.Now
                     For Each MiDataRow As DataRow In dtDatos.Rows
@@ -125,7 +125,7 @@ Public Class EXO_ENVTRANS
                                 'Get a handle to the SM_MOR UDO
                                 oGeneralService = oCompService.GetGeneralService("EXO_LSTEMB")
                                 'Close UDO record
-                                oGeneralParams = oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams)
+                                oGeneralParams = CType(oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams), SAPbobsCOM.GeneralDataParams)
                                 oGeneralParams.SetProperty("DocEntry", sDocEntryCerrar)
                                 oGeneralService.Close(oGeneralParams)
                                 objGlobal.SBOApp.StatusBar.SetText("Se ha cerrado la Lista de Embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)

@@ -83,7 +83,7 @@ Public Class EXO_LSTEMB
             If infoEvento.EventType = SAPbouiCOM.BoProgressBarEventTypes.pbet_ProgressBarStopped And infoEvento.BeforeAction Then
                 'Fail to handle document numbering:
             End If
-
+            Return True
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
@@ -286,16 +286,16 @@ Public Class EXO_LSTEMB
             End If
 
 
-            oMatrix = oForm.Items.Item("0_U_G").Specific
+            oMatrix = CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix)
             oColumn = oMatrix.Columns.Item("C_0_5")
-            oLinkedButton = oColumn.ExtendedObject
+            oLinkedButton = CType(oColumn.ExtendedObject, SAPbouiCOM.LinkedButton)
 
             sTipo = CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_4").Cells.Item(pVal.Row).Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
             Select Case sTipo
                 Case "PEDVTA" 'Pedidos de ventas
                     oLinkedButton.LinkedObject = BoLinkedObject.lf_Order
                 Case "SDPROV" ' Sol de devolución de proveedor
-                    oLinkedButton.LinkedObject = "234000032"
+                    oLinkedButton.LinkedObject = CType("234000032", BoLinkedObject)
                 Case "SOLTRA" ' Sol de traslado
                     oLinkedButton.LinkedObject = BoLinkedObject.lf_StockTransfersRequest
             End Select

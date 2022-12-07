@@ -27,6 +27,7 @@ Public Class INICIO
             objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_ENVTRANS", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
+            objGlobal.SBOApp.StatusBar.SetText("Validando: " & res, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_IGE1.xml")
             objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_IGE1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
