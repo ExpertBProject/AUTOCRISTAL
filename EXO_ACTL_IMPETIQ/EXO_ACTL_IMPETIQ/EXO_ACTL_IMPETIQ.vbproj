@@ -160,6 +160,10 @@
     <EmbeddedResource Include="REPORT\code128.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="REPORT\Et_Art_Art_Lote.rpt" />
+    <EmbeddedResource Include="REPORT\Et_Art_Art.rpt" />
+    <EmbeddedResource Include="REPORT\Et_Art_Compra.rpt" />
+    <EmbeddedResource Include="REPORT\Et_Art_Ubi.rpt" />
     <EmbeddedResource Include="REPORT\Et_Ubicaciones.rpt" />
     <EmbeddedResource Include="XML_FILTROS\XML_FILTROS.xml">
       <SubType>Designer</SubType>

@@ -4,7 +4,14 @@ Imports EXO_UIAPI.EXO_UIAPI
 Public Class INICIO
     Inherits EXO_UIAPI.EXO_DLLBase
 #Region "Variables Globales"
+    Public Shared _WidthALM As Integer = 328
+    Public Shared _HeightALM As Integer = 113
 
+    Public Shared _WidthGRU As Integer = 223
+    Public Shared _HeightGRU As Integer = 95
+
+    Public Shared _WidthCLAS As Integer = 120
+    Public Shared _HeightCLAS As Integer = 95
 #End Region
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)
@@ -18,6 +25,7 @@ Public Class INICIO
     Private Sub cargaDatos()
         Dim sXML As String = ""
         Dim res As String = ""
+        Dim sSQL As String = ""
 
         If objGlobal.refDi.comunes.esAdministrador Then
 
@@ -26,6 +34,85 @@ Public Class INICIO
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Clasif_Art.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Clasificacion_Artículos", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Compras8Q.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Compras8Q", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_ComprasSemestre.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_ComprasSemestre", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Pdte.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Pdte", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_StocksActuales.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_StocksActuales", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Ventas24Q.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Ventas24Q", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Ventas8Q.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Ventas8Q", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_VentasA_8Q.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_VentasA_8Q", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Proveedores.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Proveedores", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
+
+            sSQL = objGlobal.funciones.leerEmbebido(Me.GetType(), "EXO_MRP_Ventas_MED_24Q.sql")
+            objGlobal.SBOApp.StatusBar.SetText("Creando Vista: EXO_MRP_Ventas_MED_24Q", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            If objGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                objGlobal.SBOApp.StatusBar.SetText("Vista Creada...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("No se ha podido crear la vista...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+            End If
         End If
     End Sub
 

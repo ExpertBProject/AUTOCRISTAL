@@ -14,7 +14,7 @@ Public Class EXO_IMPET
 
             If infoEvento.BeforeAction = True Then
                 Select Case oForm.TypeEx
-                    Case "142", "143", "1250000940", "940", "180", "150"
+                    Case "142", "143", "1250000940", "940", "180", "150", "1470000002", "65053"
                         If objGlobal.SBOApp.Menus.Exists("EXO-ETIMS") Then
                             objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMS")
                         End If
@@ -55,12 +55,20 @@ Public Class EXO_IMPET
                 End Select
             Else
                 Select Case oForm.TypeEx
-                    Case "142", "143", "1250000940", "940", "180", "150"
+                    Case "142", "143", "1250000940", "940", "180", "150", "1470000002", "65053"
                         If infoEvento.ItemUID = "" Then
                             'If infoEvento.Row > 0 Then
                             '    _iLineNumRightClick = infoEvento.Row
                             'End If
 
+                        End If
+                    Case Else
+                        If objGlobal.SBOApp.Menus.Exists("EXO-ETIMS") Then
+                            objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMS")
+                        End If
+
+                        If objGlobal.SBOApp.Menus.Exists("EXO-ETIMP") Then
+                            objGlobal.SBOApp.Menus.RemoveEx("EXO-ETIMP")
                         End If
                 End Select
             End If
@@ -89,10 +97,17 @@ Public Class EXO_IMPET
                 Select Case infoEvento.MenuUID
                     Case "EXO-ETIMP"
                         Select Case oForm.TypeEx
-                            Case "142", "143", "1250000940", "940", "180"
+                            Case "142", "1250000940", "940", "180"
                                 Return Menu_Imprimir_Etiquetas(oForm)
                             Case "150"
-                                Return Menu_Imprimir_Etiquetas_ART(oForm)
+                                ' Return Menu_Imprimir_Etiquetas_ART(oForm)
+                                Return Menu_Imprimir_Etiquetas_ART2(oForm)
+                            Case "1470000002"
+                                Return Menu_Imprimir_Etiquetas_ART3(oForm)
+                            Case "143"
+                                Return Menu_Imprimir_Etiquetas_ART4(oForm)
+                            Case "65053"
+                                Return Menu_Imprimir_Etiquetas_ART5(oForm)
                         End Select
                 End Select
             End If
@@ -128,7 +143,7 @@ Public Class EXO_IMPET
             If oForm.Mode = BoFormMode.fm_OK_MODE Then
                 rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
                 sCode = oForm.DataSources.DBDataSources.Item(sTable_Cab).GetValue("DocEntry", 0).ToUpper
-                objGlobal.SBOApp.StatusBar.SetText("Imprimiendo: " & sCode, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+                objGlobal.SBOApp.StatusBar.SetText("Imprimiendo: " & sCode, BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Success)
 #Region "Rellena datos Tabla TMP"
                 sSQL = "DELETE FROM ""@EXO_ETIQUETA"" WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserSignature.ToString & "' "
                 objGlobal.refDi.SQL.sqlStringB1(sSQL)
@@ -164,7 +179,7 @@ Public Class EXO_IMPET
                 'Imprimimos la etiqueta
                 EXO_GLOBALES.GenerarImpCrystal(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
             Else
-                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
             End If
 
 
@@ -228,7 +243,7 @@ Public Class EXO_IMPET
                 'Imprimimos la etiqueta
                 EXO_GLOBALES.GenerarImpCrystal(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
             Else
-                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
             End If
 
 
@@ -245,5 +260,138 @@ Public Class EXO_IMPET
         End Try
     End Function
 
+    Private Function Menu_Imprimir_Etiquetas_ART2(ByRef oForm As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
+        Dim sCrystal As String = "Et_Art_Art.rpt"
+        Dim sCode As String = "" : Dim sTable As String = "OITM"
+        Dim sSQL As String = ""
+#End Region
+        Menu_Imprimir_Etiquetas_ART2 = False
 
+        Try
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable).GetValue("ItemCode", 0).ToString
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal2(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
+            End If
+
+
+
+            Menu_Imprimir_Etiquetas_ART2 = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
+    Private Function Menu_Imprimir_Etiquetas_ART3(ByRef oForm As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
+        Dim sCrystal As String = "Et_Art_Ubi.rpt"
+        Dim sCode As String = "" : Dim sTable As String = "OBIN"
+        Dim sSQL As String = ""
+#End Region
+        Menu_Imprimir_Etiquetas_ART3 = False
+
+        Try
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable).GetValue("BinCode", 0).ToString
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal3(objGlobal, rutaCrystal, sCrystal, sCode, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
+            End If
+
+
+
+            Menu_Imprimir_Etiquetas_ART3 = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
+    Private Function Menu_Imprimir_Etiquetas_ART4(ByRef oForm As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
+        Dim sCrystal As String = "Et_Art_Compra.rpt"
+        Dim sCode As String = "" : Dim sObjType As String = "" : Dim sTable As String = CType(oForm.Items.Item("8").Specific, SAPbouiCOM.EditText).DataBind.TableName
+        Dim sSQL As String = ""
+#End Region
+        Menu_Imprimir_Etiquetas_ART4 = False
+
+        Try
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable).GetValue("DocEntry", 0).ToString
+                sObjType = oForm.DataSources.DBDataSources.Item(sTable).GetValue("ObjType", 0).ToString
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal4(objGlobal, rutaCrystal, sCrystal, sCode, sObjType, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
+            End If
+
+
+
+            Menu_Imprimir_Etiquetas_ART4 = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
+    Private Function Menu_Imprimir_Etiquetas_ART5(ByRef oForm As SAPbouiCOM.Form) As Boolean
+#Region "Variables"
+        Dim rutaCrystal As String = "" : Dim sRutaFicheros As String = "" : Dim sReport As String = "" : Dim sTipoImp As String = ""
+        Dim sCrystal As String = "Et_Art_Art_Lote.rpt"
+        Dim sCode As String = "" : Dim sLote As String = "" : Dim sTable As String = "OBTN"
+        Dim sSQL As String = ""
+#End Region
+        Menu_Imprimir_Etiquetas_ART5 = False
+
+        Try
+            If oForm.Mode = BoFormMode.fm_OK_MODE Then
+                rutaCrystal = objGlobal.path & "\05.Rpt\ETIQUETAS\"
+                sCode = oForm.DataSources.DBDataSources.Item(sTable).GetValue("ItemCode", 0).ToString
+                sLote = oForm.DataSources.DBDataSources.Item(sTable).GetValue("DistNumber", 0).ToString
+                sTipoImp = "IMP"
+                'Imprimimos la etiqueta
+                EXO_GLOBALES.GenerarImpCrystal5(objGlobal, rutaCrystal, sCrystal, sCode, sLote, sRutaFicheros, sReport, sTipoImp, objGlobal.compañia.UserSignature.ToString)
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("Antes de imprimir, guarde los cambios...", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
+            End If
+
+
+
+            Menu_Imprimir_Etiquetas_ART5 = True
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
 End Class

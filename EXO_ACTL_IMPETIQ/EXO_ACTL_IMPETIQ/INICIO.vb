@@ -93,7 +93,46 @@ Public Class INICIO
                 EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
             End If
 #End Region
-
+#Region "Etiquetas desde Artículos"
+            sReport = "Et_Art_Art.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+#Region "Etiquetas desde Ubicaciones"
+            sReport = "Et_Art_Ubi.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+#Region "Etiquetas desde Compras"
+            sReport = "Et_Art_Compra.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
+#Region "Etiquetas desde Artículo-Lote"
+            sReport = "Et_Art_Art_Lote.rpt"
+            'Si no existe lo importamos
+            If IO.File.Exists(sArchivo & sReport) = False Then
+                If IO.Directory.Exists(sArchivo) = False Then
+                    IO.Directory.CreateDirectory(sArchivo)
+                End If
+                EXO_GLOBALES.CopiarRecurso(Reflection.Assembly.GetExecutingAssembly(), sReport, sArchivo & sReport)
+            End If
+#End Region
         Catch ex As Exception
             Throw ex
         End Try
@@ -123,7 +162,7 @@ Public Class INICIO
             oForm = objGlobal.SBOApp.Forms.Item(infoEvento.FormUID)
 
             Select Case oForm.TypeEx
-                Case "142", "143", "1250000940", "940", "180", "150"
+                Case "142", "143", "1250000940", "940", "180", "150", "1470000002", "65053"
                     Clase = New EXO_IMPET(objGlobal)
                     Return CType(Clase, EXO_IMPET).SBOApp_RightClickEvent(infoEvento)
             End Select
