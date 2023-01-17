@@ -5,13 +5,13 @@ Public Class INICIO
     Inherits EXO_UIAPI.EXO_DLLBase
 #Region "Variables Globales"
     Public Shared _WidthALM As Integer = 328
-    Public Shared _HeightALM As Integer = 113
+    Public Shared _HeightALM As Integer = 149
 
     Public Shared _WidthGRU As Integer = 223
-    Public Shared _HeightGRU As Integer = 95
+    Public Shared _HeightGRU As Integer = 131
 
     Public Shared _WidthCLAS As Integer = 120
-    Public Shared _HeightCLAS As Integer = 95
+    Public Shared _HeightCLAS As Integer = 131
 #End Region
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)

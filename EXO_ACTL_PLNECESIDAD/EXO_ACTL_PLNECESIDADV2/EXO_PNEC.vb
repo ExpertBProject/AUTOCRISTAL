@@ -163,8 +163,8 @@ Public Class EXO_PNEC
                         sProv = ""
                     Else
                         If sProv.Trim = "" Then
-                            sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Cod. Prov. 1").Cells.Item(pVal.Row).Value.ToString
-                            sProvD = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Proveedor 1").Cells.Item(pVal.Row).Value.ToString
+                            sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
+                            sProvD = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value.ToString
                         End If
                     End If
 
@@ -194,12 +194,26 @@ Public Class EXO_PNEC
                         oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = sProvD
                         CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
                     End If
+                    Dim sALM As String = "" : Dim bVarios As Boolean = False
+                    For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM").Rows.Count - 1
+                        If oForm.DataSources.DataTables.Item("DTALM").GetValue("Sel", i).ToString = "Y" Then
+                            If sALM = "" Then
+                                sALM = "'" & oForm.DataSources.DataTables.Item("DTALM").GetValue("Cod.", i).ToString & "' "
+                                bVarios = False
+                            Else
+                                sALM &= ", '" & oForm.DataSources.DataTables.Item("DTALM").GetValue("Cod.", i).ToString & "' "
+                                bVarios = True
+                            End If
 
-                    Dim sALM As String = oForm.DataSources.UserDataSources.Item("UDALM").Value
+                        End If
+                    Next
+
                     If dCant = 0 Then
                         sALM = ""
                     End If
-
+                    If bVarios = True Then
+                        sALM = ""
+                    End If
                     oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value = sALM
                 ElseIf pVal.ColUID = "Prov.Pedido" Then
                     sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
@@ -460,8 +474,8 @@ Public Class EXO_PNEC
                         sMensaje = "Cargando datos..."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                         oForm.Freeze(True)
-                        sSQLGrid = "Select T0.""ItemCode"" ""EUROCODE"", T0.""ItemName"" ""Descripción"",  T0.""ItmsGrpCod"" ""Grupo"", 
-((T1.""Ventas_24Q""/12)*2)+(T1.""Ventas_24Q""/12) +((T1.""Ventas_24Q""/12)*((" & sMGS & "/15)+" & sTSUM & ")-(0)-(0)) ""Pedir"",
+                        sSQLGrid = "Select 'N' ""Sel."", T0.""ItemCode"" ""EUROCODE"", T0.""ItemName"" ""Descripción"",  T0.""ItmsGrpCod"" ""Grupo"", 
+IFNULL(((T1.""Ventas_24Q""/12)*2)+(T1.""Ventas_24Q""/12) +((T1.""Ventas_24Q""/12)*((" & sMGS & "/15)+" & sTSUM & ")-(PDTE.""PDTE"")-(STOCK.""Stock"")),0) ""Pedir"",
 0.00 ""Order"", ifnull(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Prov.Pedido"", ifnull(T7.""CardName"",CAST('     ' AS VARCHAR(150))) ""Nombre"", 
 CAST('     ' AS VARCHAR(50)) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."", 0.00 ""Traslado"", CAST('     ' AS VARCHAR(50)) ""Alm.Origen"", 
 CAST('     ' AS VARCHAR(50)) ""Alm.Destino"", IFNull(T0.""CardCode"", 'S_PROV._Principal') as ""Proveedor Principal"",
@@ -478,8 +492,17 @@ IFNULL(T5.""Stock_AL7"",0) ""Stock_AL7"", IFNULL(T5.""Stock_AL8"",0) ""Stock_AL8
 IFNULL(T6.""Pdte_AL14"",0) ""Pdte_AL14"", IFNULL(T6.""Pdte_AL16"",0) ""Pdte_AL16"", IFNULL(T6.""Pdte_AL7"",0) ""Pdte_AL7"" , 
 IFNULL(T6.""Pdte_AL8"",0) ""Pdte_AL8"", IFNULL(T7.""Provee"",CAST('     ' AS VARCHAR(50))) ""Provee"", 
 IFNULL(T7.""Provee_II"" ,CAST('     ' AS VARCHAR(50))) ""Provee_II"", IFNULL(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Provee_III"",
-IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P""
-From OITM T0
+IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P"" "
+
+#Region "Tarifas"
+                        sSQL = "SELECT DISTINCT 0 ""Precio"", OPLN.""ListNum"", OPLN.""ListName"" FROM OPLN 
+                                    WHERE OPLN.""U_EXO_TARCOM""='Si' "
+                        dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                        For t = 0 To dtTarifas.Rows.Count - 1
+                            sSQLGrid &= ", " & dtTarifas.Rows(t).Item("ListNum").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """, 0.00  ""Precio " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
+                        Next
+#End Region
+                        sSQLGrid &= " From OITM T0
 LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum(X.""8Q"") as ""8Q"" ,SUM(X.""C_12Q"") as ""C_12Q"",SUM(X.""A_8Q"") as ""A_8Q"" 
 			FROM (Select T0.""ItemCode"" , T0.""WhsCode"", Coalesce(T1.""Ventas_Ult_Año"",0) as ""24Q"", Coalesce(T2.""Ventas_8Q"",0) as ""8Q"",
 			coalesce(T3.""Compras_Ult_SEM"",0) as ""C_12Q"" , Coalesce(T4.""Ventas_A_8Q"",0) as ""A_8Q""
@@ -488,8 +511,21 @@ LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum
             Left Join ""EXO_MRP_Ventas8Q""  T2 On T0.""ItemCode"" = T2.""ItemCode"" And T0.""WhsCode""  = T2.""WhsCode""
             Left Join ""EXO_MRP_ComprasSemestre"" T3 On T0.""ItemCode"" = T3.""ItemCode"" And T0.""WhsCode""  = T3.""WhsCode""
             Left Join ""EXO_MRP_VentasA_8Q"" T4 On T0.""ItemCode"" = T4.""ItemCode"" And T0.""WhsCode""  = T4.""WhsCode""
-            Where T0.""WhsCode"" IN (" & sAlmacenes & ")
+            Where T0.""WhsCode"" IN (" & sAlmacenes & ") 
 		  ) as X Group by X.""ItemCode"" ) TX  ON TX.""ItemCode"" = T0.""ItemCode""
+LEFT JOIN (select T0.""ItemCode"", Sum(COALESCE(T0.""OnOrder"" - TX.""CantidadSolTraInt"" , 0)) as ""PDTE""
+            from OITW T0 
+            left join ( Select      T1.""ItemCode"" ,  T1.""WhsCode"" ,      coalesce(Sum(T1.""OpenQty""),  0) as ""CantidadSolTraInt"" 
+                        from OWTQ T0 
+                        LEFT JOIN WTQ1 T1 ON T0.""DocEntry"" = T1.""DocEntry"" 
+                        Where T0.""DocStatus"" = 'O' and T1.""LineStatus"" = 'O' and T1.""FromWhsCod"" = T1.""WhsCode"" 
+                        and T1.""WhsCode"" in (" & sAlmacenes & ") group by T1.""ItemCode"" ,   T1.""WhsCode"" 
+                      )TX ON T0.""ItemCode"" = TX.""ItemCode"" and T0.""WhsCode"" = TX.""WhsCode"" 
+            Where  T0.""OnOrder"" > 0  Group BY T0.""ItemCode""
+         )PDTE ON PDTE.""ItemCode""= T0.""ItemCode""
+LEFT JOIN (Select T1.""ItemCode"", Sum(T1.""OnHand"") as  ""Stock""
+            From OITW T1 Where T1.""WhsCode"" in (" & sAlmacenes & ") Group by T1.""ItemCode"" 
+          )STOCK ON STOCK.""ItemCode""= T0.""ItemCode""
 Left Join(Select ""ItemCode"", Sum(""Ventas_Ult_Año"") as ""Ventas_24Q"" 
           FROM ""EXO_MRP_Ventas24Q""  Where ""WhsCode"" IN (" & sAlmacenes & " ) Group  by ""ItemCode"" 
           )  T1  On T1.""ItemCode"" = T0.""ItemCode""
@@ -517,7 +553,7 @@ Left Join(Select T0.""ItemCode"",Case WHen T0.""QryGroup1"" = 'Y' then 'STOCK' E
 					) TY 	ON TY.""ItemCode"" = T0.""ItemCode""
 			GROUP BY  T0.""ItemCode"" , T0.""QryGroup1"" , T0.""CardCode"", 	TY.""CardName"" ,  TY.""CardCode"" , TY.""Price""	
 		   )  T7 ON T7.""ItemCode"" = T0.""ItemCode""
-WHERE  1=1 "
+WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         If sArtD <> "" Then
                             sSQLGrid &= " and T0.""ItemCode"" >='" & sArtD & "' "
                         End If
@@ -538,7 +574,7 @@ WHERE  1=1 "
                         End If
                         sSQLGrid &= " order by T0.""ItemCode"" "
                         oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQLGrid)
-                        ' FormateaGridDOC(oForm)
+                        FormateaGridDOC(oForm)
                         sMensaje = "Fin de la carga de datos."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     End If
@@ -548,31 +584,38 @@ WHERE  1=1 "
                         If oForm.DataSources.DataTables.Item("DT_DOC").Rows.Count > 0 Then
                             Dim dt As SAPbouiCOM.DataTable = Nothing : Dim dtDatos As New System.Data.DataTable
                             oForm.Freeze(True)
-                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Documentos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
 
                             'Añadimos Columnas
-                            For iCol As Integer = 0 To 9
+                            For iCol As Integer = 0 To 12
                                 dtDatos.Columns.Add(dt.Columns.Item(iCol).Name)
                             Next
 
                             'Añadimos los registros
                             For iRow As Integer = 0 To dt.Rows.Count - 1
-                                Dim oRow As DataRow = dtDatos.NewRow
-                                For iCol As Integer = 0 To 9
-                                    oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(iRow).Value
-                                Next
-                                dtDatos.Rows.Add(oRow)
+                                If dt.Columns.Item(0).Cells.Item(iRow).Value.ToString = "Y" Then
+                                    Dim oRow As DataRow = dtDatos.NewRow
+                                    For iCol As Integer = 0 To 12
+                                        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(iRow).Value
+                                    Next
+                                    dtDatos.Rows.Add(oRow)
+                                End If
                             Next
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Documentos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 #Region "Solicitud de pedido"
 #Region "Filtro y Orden"
                             Dim dtSolPedido As New System.Data.DataTable
 
                             expression = "Order>0 and Prov.Pedido<>'' and Alm.Destino<>'' "
-                            sortOrder = "Prov.Pedido, Alm.Destino ASC"
+                            'sortOrder = "Prov.Pedido, Alm.Destino ASC"
 
                             Try
-                                dtSolPedido = dtDatos.Select(expression, sortOrder).CopyToDataTable()
+                                dtSolPedido = dtDatos.Select(expression).CopyToDataTable()
+                                sortOrder = "Prov.Pedido, Alm.Destino ASC"
+                                dtSolPedido.DefaultView.Sort = sortOrder
+                                dtSolPedido = dtSolPedido.DefaultView.ToTable()
+
                             Catch ex As Exception
 
                             End Try
@@ -683,10 +726,13 @@ WHERE  1=1 "
                             Dim dtSolTraslado As New System.Data.DataTable
 
                             expression = "Traslado>0 and Alm.Origen<>'' and Alm.Destino<>'' "
-                            sortOrder = "Alm.Origen, Alm.Destino ASC"
+
 
                             Try
-                                dtSolTraslado = dtDatos.Select(expression, sortOrder).CopyToDataTable()
+                                dtSolTraslado = dtDatos.Select(expression).CopyToDataTable()
+                                sortOrder = "Alm.Origen, Alm.Destino ASC"
+                                dtSolTraslado.DefaultView.Sort = sortOrder
+                                dtSolTraslado = dtSolTraslado.DefaultView.ToTable()
                             Catch ex As Exception
 
                             End Try
@@ -932,12 +978,12 @@ WHERE  1=1 "
         Try
             oform.Freeze(True)
             iColumnas = CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Count
-            'CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
-            'oColumnChk = CType(CType(oform.Items.Item("grdALM").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
-            'oColumnChk.Editable = True
-            'oColumnChk.Width = 30
+            CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+            oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
+            oColumnChk.Editable = True
+            oColumnChk.Width = 30
 
-            For i = 0 To iColumnas - 1
+            For i = 1 To iColumnas - 1
                 CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                 oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                 oColumnTxt.Editable = False
@@ -960,9 +1006,10 @@ WHERE  1=1 "
                     oColumnTxt.Editable = True
                     oColumnTxt.ChooseFromListUID = "CFLALMD"
                     oColumnTxt.ChooseFromListAlias = "WhsCode"
-                ElseIf Left(sTitulo, 3) = "24Q" Then
+                ElseIf sTitulo.Contains("PRECIO") Then
+                    oColumnTxt.Editable = True
                     oColumnTxt.RightJustified = True
-                ElseIf sTitulo.Contains("STOCK") Or sTitulo.Contains("PTE") Or sTitulo.Contains("TARIFA") Or sTitulo.Contains("PEDIR") Then
+                ElseIf sTitulo.Contains("VENTAS") Or sTitulo.Contains("24M_Q") Or sTitulo.Contains("STOCK") Or sTitulo.Contains("PDTE") Or sTitulo.Contains("TARIFA") Or sTitulo.Contains("PEDIR") Then
                     oColumnTxt.RightJustified = True
                 ElseIf Left(sTitulo, 2) = "N " Then
                     oColumnTxt.RightJustified = True
