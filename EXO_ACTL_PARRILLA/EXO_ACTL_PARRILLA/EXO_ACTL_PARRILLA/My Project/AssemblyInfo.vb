@@ -11,8 +11,8 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyTitle("EXO_ACTL_PARRILLA")> 
 <Assembly: AssemblyDescription("")>
 <Assembly: AssemblyCompany("EXPERT ONE")>
-<Assembly: AssemblyProduct("EXO_ACTL_PARRILLA")> 
-<Assembly: AssemblyCopyright("Copyright ©  2022")> 
+<Assembly: AssemblyProduct("EXO_ACTL_PARRILLA")>
+<Assembly: AssemblyCopyright("Copyright ©  2023")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
@@ -31,5 +31,5 @@ Imports System.Runtime.InteropServices
 ' mediante el carácter '*', como se muestra a continuación:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("10.1.8.010")>
-<Assembly: AssemblyFileVersion("10.1.8.010")>
+<Assembly: AssemblyVersion("10.1.8.012")>
+<Assembly: AssemblyFileVersion("10.1.8.012")>

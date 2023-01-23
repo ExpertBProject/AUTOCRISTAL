@@ -455,6 +455,8 @@ Public Class EXO_PARRILLA
                         Case "SOLTRA" 'Sol de traslado
                             oColumnTxt.LinkedObjectType = BoLinkedObject.lf_StockTransfersRequest
                     End Select
+
+
                 Case "grdE"
                     oColumnTxt = CType(CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(2), SAPbouiCOM.EditTextColumn)
                     sTipo = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("T. ENTRADA", pVal.Row).ToString
@@ -2171,7 +2173,7 @@ Public Class EXO_PARRILLA
                 Case "-"
                     sSQL = "SELECT CAST('' as nVARCHAR(50)) ""T. SALIDA"", CAST('' as nVARCHAR(50)) ""DELEGACIÓN"", CAST('' as nVARCHAR(50)) ""Nº INTERNO"", CAST('' as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST('' as nVARCHAR(50)) ""CÓDIGO"",  CAST('' as nVARCHAR(150))	""EMPRESA"", CAST('' as nVARCHAR(50)) ""CLASE EXP."", 'N' ""ROT. STOCK"", "
-                    sSQL &= " 'N' ""A"", CAST('' as nVARCHAR(50)) ""UBICACIÓN"", CAST('' as nVARCHAR(50)) ""ZONA TRANSPORTE"", 0 ""Cant."", 0 ""Cant. Pdte."", ""Picking"", 'N' ""Sel"" "
+                    sSQL &= " 'N' ""A"", CAST('' as nVARCHAR(50)) ""UBICACIÓN"", CAST('' as nVARCHAR(50)) ""ZONA TRANSPORTE"", 0 ""Cant."", 0 ""Cant. Pdte."", CAST('' as nVARCHAR(50)) ""Picking"", 'N' ""Sel"" "
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
@@ -2416,13 +2418,13 @@ Public Class EXO_PARRILLA
                     sSQL = "SELECT * FROM ("
                     sSQL &= " SELECT DISTINCT CAST('ALBVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"",  "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= "FROM ODLN T0 "
                     sSQL &= " LEFT JOIN DLN1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='ALBVTA' "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -2443,13 +2445,13 @@ Public Class EXO_PARRILLA
                     sSQL &= " UNION ALL "
                     sSQL &= " SELECT DISTINCT CAST('SOLTRA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""U_EXO_CLASEE"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"", "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= "FROM OWTQ T0 "
                     sSQL &= " LEFT JOIN WTQ1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""U_EXO_CLASEE"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='SOLTRA' "
                     sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -2471,13 +2473,13 @@ Public Class EXO_PARRILLA
                     sSQL &= " UNION ALL "
                     sSQL &= " SELECT DISTINCT CAST('DPROV' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"",  "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= " FROM ORPD T0 "
                     sSQL &= " LEFT JOIN RPD1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='DPROV' "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -2501,13 +2503,13 @@ Public Class EXO_PARRILLA
 #Region "Entregas de Ventas"
                     sSQL = " SELECT DISTINCT CAST('ALBVTA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"",  "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= " FROM ODLN T0 "
                     sSQL &= " LEFT JOIN DLN1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='ALBVTA' "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -2531,13 +2533,13 @@ Public Class EXO_PARRILLA
 #Region "Sol de traslado"
                     sSQL = "SELECT DISTINCT CAST('SOLTRA' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""U_EXO_CLASEE"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"", "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= "FROM OWTQ T0 "
                     sSQL &= " LEFT JOIN WTQ1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""U_EXO_CLASEE"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='SOLTRA' "
                     sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -2562,13 +2564,13 @@ Public Class EXO_PARRILLA
 #Region "Devolución"
                     sSQL = "SELECT DISTINCT CAST('DPROV' as nVARCHAR(50)) ""T. SALIDA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", CAST(T0.""TrnspCode"" as nVARCHAR(50)) ""CLASE EXP."", IFNULL(CAST(AG.""U_EXO_AGE"" as nVARCHAR(50)),'-1') ""AG. TRANSPORTE"",  "
-                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", 'N' ""Sel"" "
+                    sSQL &= " CASE WHEN IFNULL(E.""U_EXO_DOCNUM"",'')='' THEN 'PE' ELSE 'EE' END ""ESTADO"", E.""DocEntry"" ""List. Embalaje"", 'N' ""Sel"" "
                     sSQL &= " FROM ORPD T0 "
                     sSQL &= " LEFT JOIN RPD1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='DPROV' "
                     sSQL &= " WHERE T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -2625,14 +2627,14 @@ Public Class EXO_PARRILLA
                     sSQL = "SELECT * FROM ( "
                     sSQL &= " SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
-                    sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"""
+                    sSQL &= " CAST((CASE WHEN T4.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"" "
                     sSQL &= " FROM OPOR T0 "
                     sSQL &= " LEFT JOIN POR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN PDN1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
-                    sSQL &= " Left JOIN OPDN T4 ON T3.""DocEntry""=T4.""DocEntry"" "
+                    sSQL &= " Left JOIN OPDN T4 On T3.""DocEntry""=T4.""DocEntry"" "
                     sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""DocDueDate""<='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "') "
                     sSQL &= " OR ( T4.""DocDate""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "')) "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -2666,8 +2668,8 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
                     sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
                     sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" "
-                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""DocDueDate""<='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "') "
-                    sSQL &= " OR ( T4.""DocDate""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "')) "
+                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""U_EXO_TIPO""='ITC') and (T0.""DocDueDate""<='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "' "
+                    sSQL &= " OR  T4.""DocDate""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "')) "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
@@ -2723,7 +2725,7 @@ Public Class EXO_PARRILLA
 #Region "Pedidos de compra"
                     sSQL = "SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
-                    sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
+                    sSQL &= " CAST((CASE WHEN T4.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
                     sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"""
                     sSQL &= " FROM OPOR T0 "
                     sSQL &= " LEFT JOIN POR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
@@ -2767,8 +2769,8 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
                     sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
                     sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" "
-                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""DocDueDate""<='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "') "
-                    sSQL &= " OR ( T4.""DocDate""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "')) "
+                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""U_EXO_TIPO""='ITC') and (T0.""DocDueDate""<='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "' "
+                    sSQL &= " OR  T4.""DocDate""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "')) "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
@@ -2887,12 +2889,12 @@ Public Class EXO_PARRILLA
         Dim sSQL As String = ""
         Try
             oform.Freeze(True)
-            CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(9).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
-            oColumnChk = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(9), SAPbouiCOM.CheckBoxColumn)
+            CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(10).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+            oColumnChk = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(10), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
             oColumnChk.Width = 30
 
-            For i = 0 To 8
+            For i = 0 To 9
                 Select Case i
                     Case 0
                         CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
@@ -2945,6 +2947,11 @@ Public Class EXO_PARRILLA
                         End Try
                         oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
                         oColumnCb.Editable = False
+                    Case 9
+                        CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                        oColumnTxt = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                        oColumnTxt.LinkedObjectType = "EXO_LSTEMB"
+                        oColumnTxt.Editable = False
                     Case 8
                         CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                         oColumnCb = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)

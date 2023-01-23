@@ -214,7 +214,7 @@ Public Class EXO_PNEC
                     If bVarios = True Then
                         sALM = ""
                     End If
-                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value = sALM
+                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value = sALM.Replace("'", "")
                 ElseIf pVal.ColUID = "Prov.Pedido" Then
                     sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
                     If sProv <> "" Then
@@ -449,6 +449,23 @@ Public Class EXO_PNEC
             sMGS = oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx.ToString
 
             Select Case pVal.ItemUID
+                Case "grd_DOC"
+                    If pVal.ColUID = "Sel." Then
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        Dim dt As SAPbouiCOM.DataTable = Nothing
+                        dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
+
+                        If dt.Columns.Item(0).Cells.Item(pVal.Row).Value.ToString = "Y" Then
+                            Dim oRow As DataRow = INICIO._dtDatos.NewRow
+                            For iCol As Integer = 0 To 12
+                                oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(pVal.Row).Value
+                            Next
+                            oRow.Item("ROW") = pVal.Row
+                            INICIO._dtDatos.Rows.Add(oRow)
+                        Else
+                            INICIO._dtDatos.Rows.Remove(INICIO._dtDatos.Rows.Find(New Object() {pVal.Row}))
+                        End If
+                    End If
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
 #Region "Comprobar si ha elegido un almacen"
@@ -575,6 +592,20 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         sSQLGrid &= " order by T0.""ItemCode"" "
                         oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQLGrid)
                         FormateaGridDOC(oForm)
+#Region "Rellenamos Tabla Temporal"
+                        INICIO._dtDatos = New System.Data.DataTable
+                        Dim dt As SAPbouiCOM.DataTable = Nothing
+                        dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
+                        'Añadimos Columnas                       
+                        For iCol As Integer = 0 To 12
+                            INICIO._dtDatos.Columns.Add(dt.Columns.Item(iCol).Name)
+                        Next
+                        INICIO._dtDatos.Columns.Add("ROW")
+                        Dim primaryKey(0) As System.Data.DataColumn
+                        primaryKey(0) = INICIO._dtDatos.Columns.Item("ROW")
+                        INICIO._dtDatos.PrimaryKey = CType(primaryKey, Data.DataColumn())
+#End Region
+
                         sMensaje = "Fin de la carga de datos."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     End If
@@ -582,27 +613,8 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                     oRs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
                     If objGlobal.SBOApp.MessageBox("¿Esta seguro de generar los documentos según su parametrización?", 1, "Sí", "No") = 1 Then
                         If oForm.DataSources.DataTables.Item("DT_DOC").Rows.Count > 0 Then
-                            Dim dt As SAPbouiCOM.DataTable = Nothing : Dim dtDatos As New System.Data.DataTable
-                            oForm.Freeze(True)
-                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                            dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
-
-                            'Añadimos Columnas
-                            For iCol As Integer = 0 To 12
-                                dtDatos.Columns.Add(dt.Columns.Item(iCol).Name)
-                            Next
-
-                            'Añadimos los registros
-                            For iRow As Integer = 0 To dt.Rows.Count - 1
-                                If dt.Columns.Item(0).Cells.Item(iRow).Value.ToString = "Y" Then
-                                    Dim oRow As DataRow = dtDatos.NewRow
-                                    For iCol As Integer = 0 To 12
-                                        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(iRow).Value
-                                    Next
-                                    dtDatos.Rows.Add(oRow)
-                                End If
-                            Next
                             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Documentos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            oForm.Freeze(True)
 #Region "Solicitud de pedido"
 #Region "Filtro y Orden"
                             Dim dtSolPedido As New System.Data.DataTable
@@ -611,7 +623,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             'sortOrder = "Prov.Pedido, Alm.Destino ASC"
 
                             Try
-                                dtSolPedido = dtDatos.Select(expression).CopyToDataTable()
+                                dtSolPedido = INICIO._dtDatos.Select(expression).CopyToDataTable()
                                 sortOrder = "Prov.Pedido, Alm.Destino ASC"
                                 dtSolPedido.DefaultView.Sort = sortOrder
                                 dtSolPedido = dtSolPedido.DefaultView.ToTable()
@@ -729,7 +741,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
 
                             Try
-                                dtSolTraslado = dtDatos.Select(expression).CopyToDataTable()
+                                dtSolTraslado = INICIO._dtDatos.Select(expression).CopyToDataTable()
                                 sortOrder = "Alm.Origen, Alm.Destino ASC"
                                 dtSolTraslado.DefaultView.Sort = sortOrder
                                 dtSolTraslado = dtSolTraslado.DefaultView.ToTable()

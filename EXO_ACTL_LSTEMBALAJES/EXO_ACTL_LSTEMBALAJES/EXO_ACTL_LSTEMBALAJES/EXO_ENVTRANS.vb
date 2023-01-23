@@ -505,6 +505,7 @@ Public Class EXO_ENVTRANS
                         Dim iNum As Integer
                         iNum = oForm.BusinessObject.GetNextSerialNumber(CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString, oForm.BusinessObject.Type.ToString)
                         oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
+                        objGlobal.SBOApp.StatusBar.SetText("Serie:" & sSerie & " - " & iNum.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                     End If
                 End If
             End If
