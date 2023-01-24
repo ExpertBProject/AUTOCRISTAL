@@ -469,6 +469,14 @@ Public Class EXO_PARRILLA
                             oColumnTxt.LinkedObjectType = BoLinkedObject.lf_StockTransfersRequest
                     End Select
                     oColumnTxt = CType(CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(8), SAPbouiCOM.EditTextColumn)
+                    Select Case sTipo
+                        Case "PED" 'Pedidos de compra
+                            oColumnTxt.LinkedObjectType = "20"
+                        Case "SDE" ' Solicitud de devolución de Clientes
+                            oColumnTxt.LinkedObjectType = "16"
+                        Case "STR" ' Solicitud de traslado Destino
+                            oColumnTxt.LinkedObjectType = "67"
+                    End Select
             End Select
 
 
