@@ -796,6 +796,7 @@ Public Class EXO_PARRILLA
             'Establecemos los parámetros para el report.
             oCRReport.SetParameterValue("DocEntry", sDocEntry)
             oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
+            oCRReport.SetParameterValue("Schema@", oObjGlobal.compañia.CompanyDB)
 
             'Establecemos las conexiones a la BBDD
             sServer = oObjGlobal.funcionesUI.refDi.OGEN.valorVariable("SERVIDOR_HANA") ' objGlobal.compañia.Server
@@ -856,9 +857,11 @@ Public Class EXO_PARRILLA
                 Case "IMP"
 #Region "Imprimir a impresora"
                     'Buscamos la impresora por defecto
-                    Dim instance As New Printing.PrinterSettings
-                    sImpresora = instance.PrinterName
+                    'Dim instance As New Printing.PrinterSettings
+                    'sImpresora = instance.PrinterName
+                    sImpresora = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""U_EXO_IMPBUL"" FROM OUSR WHERE ""USERID""='" & oObjGlobal.compañia.UserSignature.ToString & "' ")
                     'oObjGlobal.SBOApp.StatusBar.SetText("Impresora: " & sImpresora, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+                    oObjGlobal.SBOApp.StatusBar.SetText("Buscando Impresora " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
                     If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
                         oObjGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
                         oCRReport.PrintOptions.NoPrinter = False
