@@ -509,17 +509,68 @@ IFNULL(T5.""Stock_AL7"",0) ""Stock_AL7"", IFNULL(T5.""Stock_AL8"",0) ""Stock_AL8
 IFNULL(T6.""Pdte_AL14"",0) ""Pdte_AL14"", IFNULL(T6.""Pdte_AL16"",0) ""Pdte_AL16"", IFNULL(T6.""Pdte_AL7"",0) ""Pdte_AL7"" , 
 IFNULL(T6.""Pdte_AL8"",0) ""Pdte_AL8"", IFNULL(T7.""Provee"",CAST('     ' AS VARCHAR(50))) ""Provee"", 
 IFNULL(T7.""Provee_II"" ,CAST('     ' AS VARCHAR(50))) ""Provee_II"", IFNULL(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Provee_III"",
-IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P"" "
+IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P"" , TAR1.""TC_AGC"",  TAR2.""TC_NORDGLASS"", TAR3.""TC_GLAVISTA"",
+TAR4.""TC_LUCAS"",  TAR5.""TC_PILK_UNID"", TAR6.""TC_PILK_CAJA"",TAR7.""TC_PILK_PLANTA"",  TAR8.""TC_RIO"", TAR9.""TC_SISECAM"",TAR10.""TC_FUYAO""
+From OITM T0 "
 
 #Region "Tarifas"
-                        sSQL = "SELECT DISTINCT 0 ""Precio"", OPLN.""ListNum"", OPLN.""ListName"" FROM OPLN 
-                                    WHERE OPLN.""U_EXO_TARCOM""='Si' "
-                        dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-                        For t = 0 To dtTarifas.Rows.Count - 1
-                            sSQLGrid &= ", " & dtTarifas.Rows(t).Item("ListNum").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """, 0.00  ""Precio " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
-                        Next
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_AGC""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_AGC'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR1 ON TAR1.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_NORDGLASS""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_NORDGLASS'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR2 ON TAR2.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_GLAVISTA""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_GLAVISTA'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR3 ON TAR3.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_LUCAS""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_LUCAS'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR4 ON TAR4.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_UNID""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_UNID'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR5 ON TAR5.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_CAJA""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_CAJA'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR6 ON TAR6.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_PLANTA""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_PLANTA'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR7 ON TAR7.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_RIO""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_RIO'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR8 ON TAR8.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_SISECAM""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_SISECAM'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR9 ON TAR9.""ItemCode""=T0.""ItemCode"" "
+
+                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_FUYAO""
+                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
+                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_FUYAO'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR10 ON TAR10.""ItemCode""=T0.""ItemCode"" "
+                        'sSQL = "SELECT DISTINCT 0 ""Precio"", OPLN.""ListNum"", OPLN.""ListName"" FROM OPLN 
+                        '            WHERE OPLN.""U_EXO_TARCOM""='Si' "
+                        'dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                        'For t = 0 To dtTarifas.Rows.Count - 1
+                        '    sSQLGrid &= ", " & dtTarifas.Rows(t).Item("ListNum").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """, 0.00  ""Precio " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
+                        'Next
 #End Region
-                        sSQLGrid &= " From OITM T0
+                        sSQLGrid &= "
 LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum(X.""8Q"") as ""8Q"" ,SUM(X.""C_12Q"") as ""C_12Q"",SUM(X.""A_8Q"") as ""A_8Q"" 
 			FROM (Select T0.""ItemCode"" , T0.""WhsCode"", Coalesce(T1.""Ventas_Ult_Año"",0) as ""24Q"", Coalesce(T2.""Ventas_8Q"",0) as ""8Q"",
 			coalesce(T3.""Compras_Ult_SEM"",0) as ""C_12Q"" , Coalesce(T4.""Ventas_A_8Q"",0) as ""A_8Q""
@@ -571,6 +622,9 @@ Left Join(Select T0.""ItemCode"",Case WHen T0.""QryGroup1"" = 'Y' then 'STOCK' E
 			GROUP BY  T0.""ItemCode"" , T0.""QryGroup1"" , T0.""CardCode"", 	TY.""CardName"" ,  TY.""CardCode"" , TY.""Price""	
 		   )  T7 ON T7.""ItemCode"" = T0.""ItemCode""
 WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
+                        If sProveedorPR <> "" Then
+                            sSQLGrid &= " and IFNull(T0.""CardCode"", 'S_PROV._Principal') ='" & sProveedorPR & "' "
+                        End If
                         If sArtD <> "" Then
                             sSQLGrid &= " and T0.""ItemCode"" >='" & sArtD & "' "
                         End If
@@ -992,7 +1046,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             iColumnas = CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Count
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
-            oColumnChk.Editable = True
+            oColumnChk.Editable = False
             oColumnChk.Width = 30
 
             For i = 1 To iColumnas - 1

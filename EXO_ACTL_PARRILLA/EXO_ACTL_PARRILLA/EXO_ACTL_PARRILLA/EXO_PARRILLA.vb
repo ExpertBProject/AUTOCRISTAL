@@ -729,6 +729,9 @@ Public Class EXO_PARRILLA
                             If IO.Directory.Exists(sDirExportar) = False Then
                                 IO.Directory.CreateDirectory(sDirExportar)
                             End If
+                            If IO.Directory.Exists(sRutaFicheros) = False Then
+                                IO.Directory.CreateDirectory(sRutaFicheros)
+                            End If
                             Dim sCrystal As String = "ETIQUETASBULTOS.rpt"
                             EXO_GLOBALES.GetCrystalReportFile(oobjGlobal, sDirExportar & sCrystal, sLayout)
                             oobjGlobal.SBOApp.StatusBar.SetText("Layout " & sDirExportar & sCrystal, BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
@@ -793,10 +796,6 @@ Public Class EXO_PARRILLA
             oCRReport.DataSourceConnections.Clear()
 
             oObjGlobal.SBOApp.StatusBar.SetText("DocEntry: " & sDocEntry & " - IDBULTO: " & sIDBULTO, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-            'Establecemos los parámetros para el report.
-            oCRReport.SetParameterValue("DocEntry", sDocEntry)
-            oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
-            oCRReport.SetParameterValue("Schema@", oObjGlobal.compañia.CompanyDB)
 
             'Establecemos las conexiones a la BBDD
             sServer = oObjGlobal.funcionesUI.refDi.OGEN.valorVariable("SERVIDOR_HANA") ' objGlobal.compañia.Server
@@ -812,6 +811,13 @@ Public Class EXO_PARRILLA
             oLogonProps = oCRReport.DataSourceConnections(0).LogonProperties
             oLogonProps.Set("Provider", sDriver)
             oLogonProps.Set("Connection String", sConnection)
+
+
+            'Establecemos los parámetros para el report.
+            oCRReport.SetParameterValue("DocEntry", sDocEntry)
+            oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
+            oCRReport.SetParameterValue("Schema@", sBBDD)
+
 
             oCRReport.DataSourceConnections(0).SetLogonProperties(oLogonProps)
             oCRReport.DataSourceConnections(0).SetConnection(sServer, sBBDD, False)
