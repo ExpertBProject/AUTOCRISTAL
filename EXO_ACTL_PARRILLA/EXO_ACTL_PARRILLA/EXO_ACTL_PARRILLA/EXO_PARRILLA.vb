@@ -1636,9 +1636,11 @@ Public Class EXO_PARRILLA
         Dim oPickLists As SAPbobsCOM.PickLists = Nothing : Dim oPickLists_Lines As SAPbobsCOM.PickLists_Lines = Nothing
         Dim oDocuments As SAPbobsCOM.Documents = Nothing : Dim oDocument_Lines As SAPbobsCOM.Document_Lines = Nothing
         Dim oDocStockTransfer As SAPbobsCOM.StockTransfer = Nothing : Dim oDocStockTransfer_Lines As SAPbobsCOM.StockTransfer_Lines = Nothing
+        Dim sAlm As String = ""
 #End Region
 
         Try
+            sAlm = CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
             For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
                 If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
                     sTIPODOC = oForm.DataSources.DataTables.Item(sData).GetValue("T. SALIDA", i).ToString
@@ -1653,14 +1655,21 @@ Public Class EXO_PARRILLA
                                 oPickLists = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPickLists), SAPbobsCOM.PickLists)
                                 oPickLists_Lines = oPickLists.Lines
                                 For J = 0 To oDocument_Lines.Count - 1
-                                    If (J > 0) Then
-                                        oPickLists_Lines.Add()
+                                    Dim sarticulo As String = oDocument_Lines.ItemCode
+                                    sSQL = "SELECT ""OnHand"" FROM OITW Where ""ItemCode""='" & sarticulo & "' and ""WhsCode""='" & sAlm & "'"
+                                    Dim dStock As Double = oobjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+                                    If dStock >= oDocument_Lines.Quantity And oDocument_Lines.LineStatus <> "C" Then
+                                        If (J > 0) Then
+                                            oPickLists_Lines.Add()
+                                        End If
+                                        oDocument_Lines.SetCurrentLine(J)
+                                        oPickLists_Lines.BaseObjectType = "17"
+                                        oPickLists_Lines.OrderEntry = oDocuments.DocEntry
+                                        oPickLists_Lines.OrderRowID = J
+                                        oPickLists_Lines.ReleasedQuantity = oDocument_Lines.Quantity
+                                    Else
+                                        oobjGlobal.SBOApp.StatusBar.SetText("Liberar Picking del pedido Nº: " & sDocNum & ". Artículo " & sarticulo & " en Stock " & dStock.ToString & " y en pedido " & oDocument_Lines.Quantity.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                     End If
-                                    oDocument_Lines.SetCurrentLine(J)
-                                    oPickLists_Lines.BaseObjectType = "17"
-                                    oPickLists_Lines.OrderEntry = oDocuments.DocEntry
-                                    oPickLists_Lines.OrderRowID = J
-                                    oPickLists_Lines.ReleasedQuantity = oDocument_Lines.Quantity
                                 Next
                                 If oPickLists.Add() <> 0 Then
                                     oobjGlobal.SBOApp.StatusBar.SetText("Error al liberar Picking del pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
@@ -1722,7 +1731,6 @@ Public Class EXO_PARRILLA
                                         sDocNumPicking = "0"
                                         oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el Picking generado para la Sol. de Traslado Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                     End If
-
                                 End If
                             Else
                                 oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Traslado para liberar Picking con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
@@ -2245,7 +2253,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN ""VEXO_TRASLADOS"" TR ON TR.""BaseObject""= T0.""ObjType"" and TR.""OrderEntry""= TL.""DocEntry"" "
                     sSQL &= " WHERE TL.""LineStatus""='O' and T0.""U_EXO_STATUSP""='L' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and TL.""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
                         sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"
@@ -2348,7 +2356,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN ""VEXO_TRASLADOS"" TR ON TR.""BaseObject""= T0.""ObjType"" and TR.""OrderEntry""= TL.""DocEntry"" "
                     sSQL &= " WHERE TL.""LineStatus""='O' and T0.""U_EXO_STATUSP""='L' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
-                        sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
+                        sSQL &= " and TL.""FromWhsCod""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
                     If sICD <> "" And sICH <> "" Then
                         sSQL &= " And (T0.""CardCode"">='" & sICD & "' and T0.""CardCode""<='" & sICH & "' )"

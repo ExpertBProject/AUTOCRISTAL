@@ -239,7 +239,48 @@ Public Class EXO_PNEC
                     End If
                     oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(pVal.Row).Value = sCatalogo
                 End If
-            ElseIf pVal.ItemUID = "txtProv" And oForm.DataSources.UserDataSources.Item("UDPROV").Value.ToString.Trim = "" Then
+                If pVal.ColUID = "Order" Or pVal.ColUID = "Prov.Pedido" Or pVal.ColUID = "Traslado" Or pVal.ColUID = "Alm.Origen" Or pVal.ColUID = "Alm.Destino" Then
+                    Dim dCantOrder As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(pVal.Row).Value.ToString)
+                    Dim dCantTraslado As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Traslado").Cells.Item(pVal.Row).Value.ToString)
+                    Dim sProveedor As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
+                    Dim AlmOrigen As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Origen").Cells.Item(pVal.Row).Value.ToString
+                    Dim AlmDestino As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value.ToString
+                    Dim blueBackColor As Integer = RGB(52, 135, 255) 'Convert.ToInt32("c002", 16)
+
+                    If dCantOrder > 0 Then
+                        If sProveedor <> "" And AlmDestino <> "" Then
+                            Filtra_Sel(objGlobal, oForm, pVal, "Y")
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 6, blueBackColor)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 7, blueBackColor)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 13, blueBackColor)
+                        Else
+                            Filtra_Sel(objGlobal, oForm, pVal, "N")
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 6, -1)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 7, -1)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 13, -1)
+                        End If
+                    ElseIf dCantTraslado > 0 Then
+                        If AlmOrigen <> "" And AlmDestino <> "" Then
+                            Filtra_Sel(objGlobal, oForm, pVal, "Y")
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 11, blueBackColor)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 12, blueBackColor)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 13, blueBackColor)
+                        Else
+                            Filtra_Sel(objGlobal, oForm, pVal, "N")
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 11, -1)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 12, -1)
+                            CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 13, -1)
+                        End If
+                    Else
+                        Filtra_Sel(objGlobal, oForm, pVal, "N")
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 6, -1)
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 7, -1)
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 11, -1)
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 12, -1)
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).CommonSetting.SetCellBackColor(pVal.Row + 1, 13, -1)
+                    End If
+                End If
+            ElseIf pVal.ItemUID = " ThentxtProv" And oForm.DataSources.UserDataSources.Item("UDPROV").Value.ToString.Trim = "" Then
                 oForm.DataSources.UserDataSources.Item("UDPROVD").Value = ""
             End If
             EventHandler_VALIDATE_After = True
@@ -340,10 +381,10 @@ Public Class EXO_PNEC
                                 oForm.DataSources.UserDataSources.Item("UDPROVD").ValueEx = oDataTable.GetValue("CardName", 0).ToString
                                 oForm.DataSources.UserDataSources.Item("UDPROV").ValueEx = oDataTable.GetValue("CardCode", 0).ToString
                                 'Buscamos el tiempo de suministro
-                                ssql = "SELECT ""U_EXO_TSUM"" FROM OCRD WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "' "
+                                ssql = "Select ""U_EXO_TSUM"" FROM OCRD WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "' "
                                 oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                            ElseIf pVal.ItemUID = "grd_DOC" And pVal.ColUID.Trim = "Prov.Pedido" Then
-                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardName", 0).ToString
+                ElseIf pVal.ItemUID = "grd_DOC" And pVal.ColUID.Trim = "Prov.Pedido" Then
+                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardName", 0).ToString
                                 CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
                                 oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardCode", 0).ToString
                             End If
@@ -451,20 +492,21 @@ Public Class EXO_PNEC
             Select Case pVal.ItemUID
                 Case "grd_DOC"
                     If pVal.ColUID = "Sel." Then
-                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                        Dim dt As SAPbouiCOM.DataTable = Nothing
-                        dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
+                        ' Filtra_Sel(objGlobal, oForm, pVal,"")
+                        'objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        'Dim dt As SAPbouiCOM.DataTable = Nothing
+                        'dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
 
-                        If dt.Columns.Item(0).Cells.Item(pVal.Row).Value.ToString = "Y" Then
-                            Dim oRow As DataRow = INICIO._dtDatos.NewRow
-                            For iCol As Integer = 0 To 12
-                                oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(pVal.Row).Value
-                            Next
-                            oRow.Item("ROW") = pVal.Row
-                            INICIO._dtDatos.Rows.Add(oRow)
-                        Else
-                            INICIO._dtDatos.Rows.Remove(INICIO._dtDatos.Rows.Find(New Object() {pVal.Row}))
-                        End If
+                        'If dt.Columns.Item(0).Cells.Item(pVal.Row).Value.ToString = "Y" Then
+                        '    Dim oRow As DataRow = INICIO._dtDatos.NewRow
+                        '    For iCol As Integer = 0 To 12
+                        '        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(pVal.Row).Value
+                        '    Next
+                        '    oRow.Item("ROW") = pVal.Row
+                        '    INICIO._dtDatos.Rows.Add(oRow)
+                        'Else
+                        '    INICIO._dtDatos.Rows.Remove(INICIO._dtDatos.Rows.Find(New Object() {pVal.Row}))
+                        'End If
                     End If
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
@@ -930,6 +972,32 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oOWTQ, Object))
         End Try
     End Function
+    Private Sub Filtra_Sel(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form, ByVal pVal As ItemEvent, ByVal Valor As String)
+        Try
+            oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Sel.").Cells.Item(pVal.Row).Value = Valor.Trim
+            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+            Dim dt As SAPbouiCOM.DataTable = Nothing
+            dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
+
+            If dt.Columns.Item(0).Cells.Item(pVal.Row).Value.ToString = "Y" Then
+                Dim oRow As DataRow = INICIO._dtDatos.NewRow
+                For iCol As Integer = 0 To 12
+                    oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(pVal.Row).Value
+                Next
+                oRow.Item("ROW") = pVal.Row
+                INICIO._dtDatos.Rows.Add(oRow)
+            Else
+                Try
+                    INICIO._dtDatos.Rows.Remove(INICIO._dtDatos.Rows.Find(New Object() {pVal.Row}))
+                Catch ex As Exception
+
+                End Try
+
+            End If
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Sub
     Private Function Calculo_Pedir(ByRef oObjglobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form, ByVal dFecha As Date, ByVal dFechaAnt As Date,
                                                  ByVal sArticulo As String, ByVal sAlmacenes As String, ByVal sProveedor As String) As Double
         Calculo_Pedir = 0
