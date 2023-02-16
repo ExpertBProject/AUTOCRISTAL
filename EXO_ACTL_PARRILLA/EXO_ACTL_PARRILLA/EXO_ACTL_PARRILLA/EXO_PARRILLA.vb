@@ -816,7 +816,7 @@ Public Class EXO_PARRILLA
             'Establecemos los parámetros para el report.
             oCRReport.SetParameterValue("DocEntry", sDocEntry)
             oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
-            oCRReport.SetParameterValue("Schema@", sBBDD)
+            'oCRReport.SetParameterValue("Schema@", sBBDD)
 
 
             oCRReport.DataSourceConnections(0).SetLogonProperties(oLogonProps)
@@ -838,7 +838,7 @@ Public Class EXO_PARRILLA
                     If IO.Directory.Exists(sDir) = False Then
                         IO.Directory.CreateDirectory(sDir)
                     End If
-                    sReport = sDir & "sTIPODOC_" & sDocEntry & ".pdf"
+                    sReport = sDir & "Et_Bultos_" & sDocEntry & ".pdf"
                     'Compruebo si existe y lo borro
                     If IO.File.Exists(sReport) Then
                         IO.File.Delete(sReport)
@@ -1658,7 +1658,7 @@ Public Class EXO_PARRILLA
                                     Dim sarticulo As String = oDocument_Lines.ItemCode
                                     sSQL = "SELECT ""OnHand"" FROM OITW Where ""ItemCode""='" & sarticulo & "' and ""WhsCode""='" & sAlm & "'"
                                     Dim dStock As Double = oobjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
-                                    If dStock >= oDocument_Lines.Quantity And oDocument_Lines.LineStatus <> "C" Then
+                                    If dStock >= oDocument_Lines.Quantity And oDocument_Lines.LineStatus <> SAPbobsCOM.BoStatus.bost_Close Then
                                         If (J > 0) Then
                                             oPickLists_Lines.Add()
                                         End If
