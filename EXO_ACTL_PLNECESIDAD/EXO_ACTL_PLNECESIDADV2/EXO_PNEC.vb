@@ -129,6 +129,14 @@ Public Class EXO_PNEC
                 oForm.Items.Item("grdCLAS").Height = INICIO._HeightCLAS
                 CType(oForm.Items.Item("grdCLAS").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
 
+                oForm.Items.Item("grdCOMP").Width = INICIO._WidthCOMP
+                oForm.Items.Item("grdCOMP").Height = INICIO._HeightCOMP
+                CType(oForm.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
+                oForm.Items.Item("grdVENT").Width = INICIO._WidthVENT
+                oForm.Items.Item("grdVENT").Height = INICIO._HeightVENT
+                CType(oForm.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
             End If
 
 
@@ -158,6 +166,14 @@ Public Class EXO_PNEC
                 Dim sProv As String = oForm.DataSources.UserDataSources.Item("UDPROV").Value
                 Dim sProvD As String = oForm.DataSources.UserDataSources.Item("UDPROVD").Value
                 Dim sCatalogo As String = ""
+
+                If pVal.ColUID = "Prov.Pedido" And pVal.ItemChanged = True Then
+                    If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString = "" Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(pVal.Row).Value = 1
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = ""
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(pVal.Row).Value = ""
+                    End If
+                End If
                 If pVal.ColUID.ToUpper = "ORDER" And pVal.ItemChanged = True Then
                     If dCant = 0 Then
                         sProv = ""
@@ -299,6 +315,8 @@ Public Class EXO_PNEC
         Dim oConds As SAPbouiCOM.Conditions = Nothing
         Dim oCond As SAPbouiCOM.Condition = Nothing
 
+        Dim sAlmacenes As String = ""
+        Dim sMensaje As String = ""
         EventHandler_Choose_FromList_Before = False
 
         Try
@@ -325,6 +343,45 @@ Public Class EXO_PNEC
                 'oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
 
                 oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            ElseIf pVal.ItemUID = "txtALM" Then
+                'comprobamos que tenga almacenes seleccionados
+#Region "Comprobar si ha elegido un almacen"
+                sAlmacenes = ""
+                For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM").Rows.Count - 1
+                    If oForm.DataSources.DataTables.Item("DTALM").GetValue("Sel", i).ToString = "Y" Then
+                        If sAlmacenes = "" Then
+                            sAlmacenes = oForm.DataSources.DataTables.Item("DTALM").GetValue("Cod.", i).ToString
+                        Else
+                            sAlmacenes &= ", " & oForm.DataSources.DataTables.Item("DTALM").GetValue("Cod.", i).ToString
+                        End If
+
+                    End If
+                Next
+
+                If sAlmacenes = "" Then
+                    sMensaje = "No ha indicado un almacén. Es obligatorio indicar uno."
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.MessageBox(sMensaje)
+                    Return False
+                Else
+                    Dim sAAlmacenes() As String = sAlmacenes.Split(CType(",", Char))
+                    Dim iAlmacenes As Integer = 0
+                    oCFLEvento = CType(pVal, IChooseFromListEvent)
+
+                    oConds = New SAPbouiCOM.Conditions
+                    For Each Almacen In sAAlmacenes
+                        iAlmacenes += 1
+                        If iAlmacenes > 1 Then
+                            oCond.Relationship = SAPbouiCOM.BoConditionRelationship.cr_OR
+                        End If
+                        oCond = oConds.Add
+                        oCond.Alias = "WhsCode"
+                        oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                        oCond.CondVal = Almacen
+                    Next
+                    oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+                End If
+#End Region
             End If
 
             EventHandler_Choose_FromList_Before = True
@@ -370,6 +427,8 @@ Public Class EXO_PNEC
                                     objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                     objGlobal.SBOApp.MessageBox(sMensaje)
                                 End If
+                            ElseIf pVal.ItemUID = "txtALM" Then
+                                oForm.DataSources.UserDataSources.Item("UDALM").ValueEx = oDataTable.GetValue("WhsCode", 0).ToString
                             End If
 
                         Catch ex As Exception
@@ -383,14 +442,26 @@ Public Class EXO_PNEC
                                 'Buscamos el tiempo de suministro
                                 ssql = "Select ""U_EXO_TSUM"" FROM OCRD WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "' "
                                 oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                ElseIf pVal.ItemUID = "grd_DOC" And pVal.ColUID.Trim = "Prov.Pedido" Then
-                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardName", 0).ToString
+                            ElseIf pVal.ItemUID = "grd_DOC" And pVal.ColUID.Trim = "Prov.Pedido" Then
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardName", 0).ToString
                                 CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
                                 oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardCode", 0).ToString
+
+                                'Debemos buscar la Unidad de compra
+                                Dim sUnidadCompra As Double = 1
+                                sSQL = "SELECT IFNULL(""U_EXO_UC"",1) ""UC"" FROM OSCN WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "'"
+                                sSQL &= " and ""ItemCode""='" & oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("EUROCODE").Cells.Item(pVal.Row).Value.ToString & "'"
+                                sUnidadCompra = objGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+                                If sUnidadCompra = 0 Then
+                                    sUnidadCompra = 1
+                                End If
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(pVal.Row).Value = sUnidadCompra
+
                             End If
                         Catch ex As Exception
 
                         End Try
+
                     Case "4" ' Articulos
                         Try
                             Select Case pVal.ItemUID
@@ -434,6 +505,7 @@ Public Class EXO_PNEC
         Dim sSQL As String = "" : Dim sSQLGrid As String = ""
         Dim sArtD As String = "" : Dim sArtH As String = ""
         Dim sAlmacenes As String = "" : Dim sGrupos As String = "" : Dim sCLAS As String = ""
+        Dim sTarifas As String = "" : Dim sATarifas() As String = Nothing
         Dim sProveedorPR As String = "" : Dim sNomProveedorPR As String = ""
         Dim dtArticulos As Data.DataTable = Nothing
         Dim dtProveedores As Data.DataTable = Nothing
@@ -486,6 +558,9 @@ Public Class EXO_PNEC
             Next
 
             sProveedorPR = oForm.DataSources.UserDataSources.Item("UDPROV").ValueEx.ToString
+            If sProveedorPR = "" Then
+                oForm.DataSources.UserDataSources.Item("UDPROVD").ValueEx = ""
+            End If
             sTSUM = oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx.ToString
             sMGS = oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx.ToString
 
@@ -530,89 +605,90 @@ Public Class EXO_PNEC
                         End If
 #End Region
 
+#Region "Comprobar si ha elegido una tarifa"
+                        'Debemos comprobar las tarifas que han seleccionado.
+                        '1º de compras y luego ventas
+                        sTarifas = "" : Dim iTarifa As Integer = 0
+                        For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTCOMP").Rows.Count - 1
+                            If oForm.DataSources.DataTables.Item("DTCOMP").GetValue("Sel", i).ToString = "Y" Then
+                                If sTarifas = "" Then
+                                    sTarifas = oForm.DataSources.DataTables.Item("DTCOMP").GetValue("Nombre", i).ToString.Trim
+                                Else
+                                    sTarifas &= ", " & oForm.DataSources.DataTables.Item("DTCOMP").GetValue("Nombre", i).ToString.Trim
+                                End If
+                            End If
+                        Next
+
+                        For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTVENT").Rows.Count - 1
+                            If oForm.DataSources.DataTables.Item("DTVENT").GetValue("Sel", i).ToString = "Y" Then
+                                If sTarifas = "" Then
+                                    sTarifas = oForm.DataSources.DataTables.Item("DTVENT").GetValue("Nombre", i).ToString.Trim
+                                Else
+                                    sTarifas &= ", " & oForm.DataSources.DataTables.Item("DTVENT").GetValue("Nombre", i).ToString.Trim
+                                End If
+                            End If
+                        Next
+
+                        If sTarifas = "" Then
+                            sMensaje = "No ha indicado una Tarifa a mostrar. Es obligatorio indicar una."
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox(sMensaje)
+                            Return False
+                        End If
+
+                        sATarifas = sTarifas.Split(CType(",", Char))
+#End Region
+
                         sMensaje = "Cargando datos..."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                         oForm.Freeze(True)
-                        sSQLGrid = "Select 'N' ""Sel."", T0.""ItemCode"" ""EUROCODE"", T0.""ItemName"" ""Descripción"",  T0.""ItmsGrpCod"" ""Grupo"", 
+                        sSQLGrid = "Select 'N' ""Sel."", T0.""ItemCode"" ""EUROCODE"", T0.""ItemName"" ""Descripción"",  TG.""ItmsGrpNam"" ""Familia"", 
 IFNULL(((T1.""Ventas_24Q""/12)*2)+(T1.""Ventas_24Q""/12) +((T1.""Ventas_24Q""/12)*((" & sMGS & "/15)+" & sTSUM & ")-(PDTE.""PDTE"")-(STOCK.""Stock"")),0) ""Pedir"",
-0.00 ""Order"", ifnull(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Prov.Pedido"", ifnull(T7.""CardName"",CAST('     ' AS VARCHAR(150))) ""Nombre"", 
-CAST('     ' AS VARCHAR(50)) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."", 0.00 ""Traslado"", CAST('     ' AS VARCHAR(50)) ""Alm.Origen"", 
+IFNULL(OSCN.""U_EXO_UC"",1) ""UC"",
+0.00 ""Order"", ifnull(T7.""Provee_III"",IFNull(T0.""CardCode"", CAST('     ' AS VARCHAR(50))))  ""Prov.Pedido"", ifnull(OCRD.""CardName"",CAST('     ' AS VARCHAR(150))) ""Nombre"", 
+IFNULL(OSCN.""Substitute"",CAST('     ' AS VARCHAR(50))) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."", 0.00 ""Traslado"", CAST('     ' AS VARCHAR(50)) ""Alm.Origen"", 
 CAST('     ' AS VARCHAR(50)) ""Alm.Destino"", IFNull(T0.""CardCode"", 'S_PROV._Principal') as ""Proveedor Principal"",
 CASE WHEN TX.""24Q"" > 3 then 'A'
 	 WHEN TX.""24Q"" <= 3 and TX.""24Q"">0 and TX.""8Q"" > 0 Then 'B' 
 	 WHEN TX.""24Q"" <= 3 and  TX.""A_8Q"" > 0 Then 'D'
 	 WHEN TX.""C_12Q"" > 0 and TX.""24Q"" = 0  Then 'E' 
 	 WHEN TX.""24Q"" = 0  Then 'F' 
-	 ELSE 'OJO' end  as ""Clasificación"",
-CASE WHEN TX.""C_12Q"" = 0 and TX.""24Q"" = 0 then 'S' else 'N' End As ""Nuevo"", T1.""Ventas_24Q"",
-T4.""24M_Q_AL0"", T4.""24M_Q_AL14"", T4.""24M_Q_AL16"", T4.""24M_Q_AL7"", T4.""24M_Q_AL8"",
-IFNULL(T5.""Stock_AL0"",0) ""Stock_Al0"", IFNULL(T5.""Stock_AL14"",0) ""Stock_AL14"", IFNULL(T5.""Stock_AL16"",0) ""Stock_AL16"", 
-IFNULL(T5.""Stock_AL7"",0) ""Stock_AL7"", IFNULL(T5.""Stock_AL8"",0) ""Stock_AL8"", IFNULL(T6.""Pdte_AL0"",0) ""Pdte_AL0"" , 
+	 ELSE 'OJO' end  as ""T"",
+CASE WHEN TX.""C_12Q"" = 0 and TX.""24Q"" = 0 then 'S' else 'N' End As ""N"", T1.""Ventas_24Q"" ""VA"", IFNULL(STOCK.""Stock"",0) ""STT"",
+T4.""24M_Q_AL0"" ""VM_AL0"", T4.""24M_Q_AL14"" ""VM_AL14"", T4.""24M_Q_AL16"" ""VM_AL16"", T4.""24M_Q_AL7"" ""VM_AL7"", T4.""24M_Q_AL8"" ""VM_AL8"",
+IFNULL(T5.""Stock_AL0"",0) ""STT_Al0"", IFNULL(T5.""Stock_AL14"",0) ""STT_AL14"", IFNULL(T5.""Stock_AL16"",0) ""STT_AL16"", 
+IFNULL(T5.""Stock_AL7"",0) ""STT_AL7"", IFNULL(T5.""Stock_AL8"",0) ""STT_AL8"", 
+IFNULL(PDTE.""PDTE"",0) ""Pdte"", IFNULL(T6.""Pdte_AL0"",0) ""Pdte_AL0"" , 
 IFNULL(T6.""Pdte_AL14"",0) ""Pdte_AL14"", IFNULL(T6.""Pdte_AL16"",0) ""Pdte_AL16"", IFNULL(T6.""Pdte_AL7"",0) ""Pdte_AL7"" , 
 IFNULL(T6.""Pdte_AL8"",0) ""Pdte_AL8"", IFNULL(T7.""Provee"",CAST('     ' AS VARCHAR(50))) ""Provee"", 
 IFNULL(T7.""Provee_II"" ,CAST('     ' AS VARCHAR(50))) ""Provee_II"", IFNULL(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Provee_III"",
-IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P"" , TAR1.""TC_AGC"",  TAR2.""TC_NORDGLASS"", TAR3.""TC_GLAVISTA"",
-TAR4.""TC_LUCAS"",  TAR5.""TC_PILK_UNID"", TAR6.""TC_PILK_CAJA"",TAR7.""TC_PILK_PLANTA"",  TAR8.""TC_RIO"", TAR9.""TC_SISECAM"",TAR10.""TC_FUYAO""
-From OITM T0 "
+IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P""  "
 
 #Region "Tarifas"
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_AGC""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_AGC'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR1 ON TAR1.""ItemCode""=T0.""ItemCode"" "
 
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_NORDGLASS""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_NORDGLASS'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR2 ON TAR2.""ItemCode""=T0.""ItemCode"" "
+                        iTarifa = 0
+                        For Each Tarifa In sATarifas
+                            iTarifa += 1
+                            sSQLGrid &= ", TAR" & iTarifa.ToString & ".""T-" & Tarifa.Trim & """ "
+                        Next
+#End Region
 
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_GLAVISTA""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_GLAVISTA'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR3 ON TAR3.""ItemCode""=T0.""ItemCode"" "
+                        sSQLGrid &= " FROM OITM T0 
+LEFT JOIN OITB TG ON TG.""ItmsGrpCod"" = T0.""ItmsGrpCod"" 
+LEFT JOIN OCRD ON T0.""CardCode""=OCRD.""CardCode"" "
+#Region "Tarifas"
 
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_LUCAS""
+                        iTarifa = 0
+                        For Each Tarifa In sATarifas
+                            iTarifa += 1
+                            sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""T-" & Tarifa.Trim & """
                                                     FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_LUCAS'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR4 ON TAR4.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_UNID""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_UNID'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR5 ON TAR5.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_CAJA""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_CAJA'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR6 ON TAR6.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_PILK_PLANTA""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_PILK_PLANTA'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR7 ON TAR7.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_RIO""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_RIO'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR8 ON TAR8.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_SISECAM""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_SISECAM'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR9 ON TAR9.""ItemCode""=T0.""ItemCode"" "
-
-                        sSQLGrid &= " LEFT JOIN (SELECT OPLN.""ListNum"" || ' - ' ||OPLN.""ListName""  ""Lista"", ITM1.""ItemCode"", ITM1.""Price"" ""TC_FUYAO""
-                                                    FROM ITM1 INNER JOIN OPLN ON ITM1.""PriceList""=OPLN.""ListNum""
-                                                    WHERE OPLN.""U_EXO_TARCOM""='Si' and OPLN.""ListName""='TC_FUYAO'
-                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR10 ON TAR10.""ItemCode""=T0.""ItemCode"" "
-                        'sSQL = "SELECT DISTINCT 0 ""Precio"", OPLN.""ListNum"", OPLN.""ListName"" FROM OPLN 
-                        '            WHERE OPLN.""U_EXO_TARCOM""='Si' "
-                        'dtTarifas = Nothing : dtTarifas = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-                        'For t = 0 To dtTarifas.Rows.Count - 1
-                        '    sSQLGrid &= ", " & dtTarifas.Rows(t).Item("ListNum").ToString & " ""Tarifa " & dtTarifas.Rows(t).Item("ListName").ToString & """, 0.00  ""Precio " & dtTarifas.Rows(t).Item("ListName").ToString & """ "
-                        'Next
+                                                    WHERE OPLN.""ListName""='" & Tarifa.Trim & "'
+                                                    Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR" & iTarifa.ToString & " ON TAR" & iTarifa.ToString & ".""ItemCode""=T0.""ItemCode"" "
+                        Next
 #End Region
                         sSQLGrid &= "
+LEFT JOIN OSCN ON OSCN.""ItemCode""=T0.""ItemCode"" and OSCN.""CardCode""= T0.""CardCode""
 LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum(X.""8Q"") as ""8Q"" ,SUM(X.""C_12Q"") as ""C_12Q"",SUM(X.""A_8Q"") as ""A_8Q"" 
 			FROM (Select T0.""ItemCode"" , T0.""WhsCode"", Coalesce(T1.""Ventas_Ult_Año"",0) as ""24Q"", Coalesce(T2.""Ventas_8Q"",0) as ""8Q"",
 			coalesce(T3.""Compras_Ult_SEM"",0) as ""C_12Q"" , Coalesce(T4.""Ventas_A_8Q"",0) as ""A_8Q""
@@ -688,6 +764,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         sSQLGrid &= " order by T0.""ItemCode"" "
                         oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQLGrid)
                         FormateaGridDOC(oForm)
+
 #Region "Rellenamos Tabla Temporal"
                         INICIO._dtDatos = New System.Data.DataTable
                         Dim dt As SAPbouiCOM.DataTable = Nothing
@@ -1143,7 +1220,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                 ElseIf sTitulo.Contains("PRECIO") Then
                     oColumnTxt.Editable = True
                     oColumnTxt.RightJustified = True
-                ElseIf sTitulo.Contains("VENTAS") Or sTitulo.Contains("24M_Q") Or sTitulo.Contains("STOCK") Or sTitulo.Contains("PDTE") Or sTitulo.Contains("TARIFA") Or sTitulo.Contains("PEDIR") Then
+                ElseIf sTitulo.Contains("VA") Or sTitulo.Contains("VM_") Or sTitulo.Contains("STT") Or sTitulo.Contains("PDTE") Or sTitulo.Contains("T-") Or sTitulo.Contains("PEDIR") Or sTitulo.Contains("UC") Then
                     oColumnTxt.RightJustified = True
                 ElseIf Left(sTitulo, 2) = "N " Then
                     oColumnTxt.RightJustified = True
@@ -1151,8 +1228,6 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                     oColumnTxt.Editable = True
                 End If
             Next
-
-
 
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
 
@@ -1213,6 +1288,8 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                     Exit Function
                 End If
             End Try
+
+
             sSQL = "SELECT 'N' as ""Sel"", 'A' ""Clas"" FROM DUMMY
                     UNION ALL
                     SELECT 'N' as ""Sel"", 'B' ""Clas"" FROM DUMMY 
@@ -1225,14 +1302,26 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             oForm.DataSources.DataTables.Item("DTCLAS").ExecuteQuery(sSQL)
             FormateaGridCLAS(oForm)
 
-            sSQL = "SELECT 'N' as ""Sel"", ""ItmsGrpCod"" ""Cod."", ""ItmsGrpNam"" ""Grupo"" FROM OITB WHERE ""U_EXO_GESNEC""='Si'"
+            sSQL = "SELECT 'N' as ""Sel"", ""ItmsGrpCod"" ""Cod."", ""ItmsGrpNam"" ""Familia"" FROM OITB WHERE ""U_EXO_GESNEC""='Si'"
             oForm.DataSources.DataTables.Item("DTGRU").ExecuteQuery(sSQL)
             FormateaGridGRU(oForm)
 
-            sSQL = "Select 'Y' as ""Sel"", ""WhsCode"" ""Cod."", ""WhsName"" ""Almacén"" FROM ""OWHS"" order by ""WhsCode"" "
+            sSQL = "Select 'N' as ""Sel"", ""WhsCode"" ""Cod."", ""WhsName"" ""Almacén"" FROM ""OWHS"" order by ""WhsCode"" "
             'Cargamos grid
             oForm.DataSources.DataTables.Item("DTALM").ExecuteQuery(sSQL)
             FormateaGridALM(oForm)
+
+#Region "Lista de precios de compras"
+            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='Si' "
+            oForm.DataSources.DataTables.Item("DTCOMP").ExecuteQuery(sSQL)
+            FormateaGridCOMP(oForm)
+#End Region
+#Region "Lista de precios de Ventas"
+            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='No' "
+            oForm.DataSources.DataTables.Item("DTVENT").ExecuteQuery(sSQL)
+            FormateaGridVENT(oForm)
+#End Region
+
             oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx = "7"
             oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = "0"
             oForm.Items.Item("btnGen").Enabled = False
@@ -1244,10 +1333,70 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             oForm.Visible = True
-
+            oForm.State = BoFormStateEnum.fs_Maximized
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
+    Private Sub FormateaGridVENT(ByRef oform As SAPbouiCOM.Form)
+        Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
+        Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
+        Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
+        Dim sSQL As String = ""
+        Try
+            oform.Freeze(True)
+            CType(oform.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+            oColumnChk = CType(CType(oform.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
+            oColumnChk.Editable = True
+            oColumnChk.Width = 30
+
+            For i = 1 To 2
+                CType(oform.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                oColumnTxt = CType(CType(oform.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                oColumnTxt.Editable = False
+            Next
+
+
+
+            CType(oform.Items.Item("grdVENT").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oform.Freeze(False)
+        End Try
+    End Sub
+    Private Sub FormateaGridCOMP(ByRef oform As SAPbouiCOM.Form)
+        Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
+        Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
+        Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
+        Dim sSQL As String = ""
+        Try
+            oform.Freeze(True)
+            CType(oform.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+            oColumnChk = CType(CType(oform.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
+            oColumnChk.Editable = True
+            oColumnChk.Width = 30
+
+            For i = 1 To 2
+                CType(oform.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                oColumnTxt = CType(CType(oform.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                oColumnTxt.Editable = False
+            Next
+
+
+
+            CType(oform.Items.Item("grdCOMP").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oform.Freeze(False)
+        End Try
+    End Sub
     Private Sub FormateaGridALM(ByRef oform As SAPbouiCOM.Form)
         Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
         Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing

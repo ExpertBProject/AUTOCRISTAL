@@ -128,7 +128,7 @@ Public Class EXO_IMPET
         Dim sCode As String = ""
         Dim sTable_Cab As String = ""
         Try
-            sTable_Cab = CType(oForm.Items.Item("8").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
+            sTable_Cab = CType(oForm.Items.Item("4").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
         Catch ex As Exception
             sTable_Cab = CType(oForm.Items.Item("11").Specific, SAPbouiCOM.EditText).DataBind.TableName.ToString
         End Try

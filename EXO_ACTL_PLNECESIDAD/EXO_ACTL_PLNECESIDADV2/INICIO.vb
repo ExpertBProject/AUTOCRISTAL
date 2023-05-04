@@ -4,14 +4,20 @@ Imports EXO_UIAPI.EXO_UIAPI
 Public Class INICIO
     Inherits EXO_UIAPI.EXO_DLLBase
 #Region "Variables Globales"
-    Public Shared _WidthALM As Integer = 328
+    Public Shared _WidthALM As Integer = 211
     Public Shared _HeightALM As Integer = 149
 
-    Public Shared _WidthGRU As Integer = 223
+    Public Shared _WidthGRU As Integer = 208
     Public Shared _HeightGRU As Integer = 131
 
-    Public Shared _WidthCLAS As Integer = 120
+    Public Shared _WidthCLAS As Integer = 110
     Public Shared _HeightCLAS As Integer = 131
+
+    Public Shared _WidthCOMP As Integer = 225
+    Public Shared _HeightCOMP As Integer = 131
+
+    Public Shared _WidthVENT As Integer = 225
+    Public Shared _HeightVENT As Integer = 131
 
     Public Shared _dtDatos As New System.Data.DataTable
 #End Region
@@ -33,6 +39,11 @@ Public Class INICIO
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OCRD.xml")
             objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OCRD", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.refDi.comunes.LoadBDFromXML(sXML)
+            res = objGlobal.SBOApp.GetLastBatchResults
+
+            sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OSCN.xml")
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OSCN", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
