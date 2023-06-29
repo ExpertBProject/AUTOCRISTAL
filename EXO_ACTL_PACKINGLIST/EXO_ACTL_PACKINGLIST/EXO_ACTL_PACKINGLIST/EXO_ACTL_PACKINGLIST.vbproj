@@ -122,6 +122,7 @@
     <Compile Include="EXO_OPDN.vb" />
     <Compile Include="EXO_PLIMP.vb" />
     <Compile Include="EXO_OPOR.vb" />
+    <Compile Include="EXO_UBIEXTERNAS.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -176,7 +177,9 @@
     <EmbeddedResource Include="XML_BD\UDO_EXO_PACKING.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UDFs_OPOR.xml" />
+    <EmbeddedResource Include="XML_BD\UDFs_OPOR.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="SAPbobsCOM">
@@ -200,6 +203,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SQLHANA\UBIDESTINO.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDO_EXO_UBIEXTERNAS.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_MENU\XML_MENU.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

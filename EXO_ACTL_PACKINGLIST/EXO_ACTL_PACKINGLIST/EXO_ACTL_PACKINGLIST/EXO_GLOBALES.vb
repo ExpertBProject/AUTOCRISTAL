@@ -346,185 +346,127 @@ Public Class EXO_GLOBALES
         End Try
     End Sub
 
-    Public Shared Sub Generar_EM(ByRef oCompany As SAPbobsCOM.Company, ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI)
+    Public Shared Sub Generar_PKList(ByRef oCompany As SAPbobsCOM.Company, ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI)
 #Region "Variables"
         Dim oDtLinFichero As System.Data.DataTable = New System.Data.DataTable
         Dim oDtLin As System.Data.DataTable = New System.Data.DataTable
-        Dim oOPDN As SAPbobsCOM.Documents = Nothing
-        Dim dfecha As Date = New Date(Now.Year, Now.Month, Now.Day)
-        Dim sSQL As String = "" : Dim sMensaje As String = "" : Dim sError As String = "" : Dim sComen As String = "" : Dim sEstado As String = ""
-        Dim sSerie As String = "" : Dim sDocEntry As String = "" : Dim sDocnum As String = ""
-        Dim oRsLote As SAPbobsCOM.Recordset = Nothing : Dim oRsArt As SAPbobsCOM.Recordset = Nothing
+        Dim sSQL As String = "" : Dim sMensaje As String = "" '
         Dim iTabla As Integer = 1
-        Dim dCantLotes As Double = 0
         Dim sDocNumPedido As String = ""
+        Dim sObjType As String = ""
+        Dim dStock As Double = 0 : Dim dStockExt As Double = 0
+        Dim dStockExt1 As Double = 0 : Dim dStockExt2 As Double = 0 : Dim dStockExt3 As Double = 0 : Dim dStockExt4 As Double = 0 : Dim dStockExt5 As Double = 0
+        Dim sUBIDEF As String = ""
 #End Region
 
         Try
-            oRsLote = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-            oRsArt = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-            'If oCompany.InTransaction = True Then
-            '    oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-            'End If
-            'oCompany.StartTransaction()
-            oOPDN = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oDrafts), SAPbobsCOM.Documents)
-            oOPDN.DocObjectCode = SAPbobsCOM.BoObjectTypes.oPurchaseDeliveryNotes
-            oOPDN.CardCode = EXO_GLOBALES._sIc
-            oOPDN.TaxDate = dfecha
-            oOPDN.DocDueDate = dfecha
-            oOPDN.NumAtCard = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""NumAtCard"" FROM ""OPOR"" WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido)
-            oOPDN.UserFields.Fields.Item("U_EXO_PACKING").Value = EXO_GLOBALES._sPedido
+
+#Region "Pasamos los datos del fichero a la tabla real"
             oDtLin.Clear()
-
             sSQL = "SELECT * FROM ""POR1"" where ""LineStatus""='O' and ""DocEntry""=" & EXO_GLOBALES._sPedido & " Order by ""LineNum"" "
-            oObjGlobal.SBOApp.StatusBar.SetText(sSQL, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-
             If oDtLin.Rows.Count > 0 Then
-                sDocNumPedido = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""DocNum"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido)
-                iTabla = 1
-                Dim bPlinea As Boolean = True
-                For iLin As Integer = 0 To oDtLin.Rows.Count - 1
-                    'buscamos en la tabla de ficheros
-                    'Sólo del pedido asignado
-                    oDtLinFichero.Clear()
-                    sSQL = "SELECT ""U_EXO_CODE"",sum(""U_EXO_CANT"") ""CANTIDAD"" FROM ""@EXO_TMPPACKINGL"" "
-                    sSQL &= " where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
-                    sSQL &= " GROUP BY ""U_EXO_CODE"" "
-                    oObjGlobal.SBOApp.StatusBar.SetText(sSQL, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                    oDtLinFichero = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-                    If oDtLinFichero.Rows.Count > 0 Then
-                        For iLinFich As Integer = 0 To oDtLinFichero.Rows.Count - 1
-                            dCantLotes = 0
-                            If bPlinea = False Then
-                                oOPDN.Lines.Add()
-                            Else
-                                bPlinea = False
-                            End If
-                            oOPDN.Lines.ItemCode = oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
-                            oOPDN.Lines.ItemDescription = oDtLin.Rows.Item(iLin).Item("Dscription").ToString
-                            Dim dCantFichero As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLinFichero.Rows.Item(iLinFich).Item("CANTIDAD").ToString)
-                            Dim dCant As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLin.Rows.Item(iLin).Item("Quantity").ToString)
-                            Dim sUnidad As String = oDtLin.Rows.Item(iLin).Item("UomCode").ToString.Trim
-                            'Dim sUnidadFichero As String = oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_TBULTO").ToString
-                            'oOPDN.Lines.UserFields.Fields.Item("U_EXO_TBULTO").Value = oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_TBULTO").ToString
-                            'oOPDN.Lines.UserFields.Fields.Item("U_EXO_LOT_ID").Value = oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_IDBULTO").ToString
-                            oOPDN.Lines.BaseEntry = CInt(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString)
-                            oOPDN.Lines.BaseType = 22
-                            oOPDN.Lines.BaseLine = CInt(oDtLin.Rows.Item(iLin).Item("LineNum").ToString)
-#Region "Lotes"
-                            'Incluimos los Lotes y solo del pedido y la línea
-                            sSQL = "SELECT ""U_EXO_CODE"",""U_EXO_LOTE"", sum(""U_EXO_CANT"") ""CANTIDAD"", ""U_EXO_FFAB"" FROM ""@EXO_TMPPACKINGL"" "
-                            sSQL &= " where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
-                            'sSQL &= " and ""U_EXO_TBULTO""='" & oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_TBULTO").ToString & "' "
-                            'sSQL &= " and ""U_EXO_IDBULTO""='" & oDtLinFichero.Rows.Item(iLinFich).Item("U_EXO_IDBULTO").ToString & "'"
-                            sSQL &= " GROUP BY ""U_EXO_CODE"",""U_EXO_LOTE"", ""U_EXO_FFAB"" "
-                            oRsLote.DoQuery(sSQL)
-                            For iLote = 1 To oRsLote.RecordCount
-                                'Creamos el lote de la línea del artículo
-                                oOPDN.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("U_EXO_LOTE").Value.ToString
-                                oOPDN.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLote.Fields.Item("CANTIDAD").Value.ToString)
-                                dCantLotes += oOPDN.Lines.BatchNumbers.Quantity
-                                oOPDN.Lines.BatchNumbers.ManufacturingDate = CDate(oRsLote.Fields.Item("U_EXO_FFAB").Value.ToString)
-                                sSQL = "SELECT IFNULL(OMRC.""FirmName"",'') FROM OCRD LEFT JOIN OMRC ON OCRD.""U_EXO_MARPRO""=OMRC.""FirmCode"" Where ""CardCode""='" & EXO_GLOBALES._sIc & "' "
-                                oObjGlobal.SBOApp.StatusBar.SetText(sSQL, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                                oOPDN.Lines.BatchNumbers.ManufacturerSerialNumber = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                oOPDN.Lines.BatchNumbers.Add()
-                                oRsLote.MoveNext()
-                            Next
-#End Region
+                sSQL = "SELECT ""ObjType"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
+                sObjType = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                'Insertamos la cabecera
+                sSQL = "DELETE FROM ""@EXO_PACKING"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "_" & sObjType & "' "
+                If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                    sSQL = "DELETE FROM ""@EXO_PACKINGL"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "_" & sObjType & "' "
+                    oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
+                End If
+                sSQL = "insert into ""@EXO_PACKING"" (""Code"",""Name"",""DocEntry"",""Object"",""U_EXO_OBJTYPE"") 
+                                values('" & EXO_GLOBALES._sPedido & "_" & sObjType & "','" & sDocNumPedido & "'," & EXO_GLOBALES._sPedido & ",'EXO_PACKING','" & sObjType & "')"
+                If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
+                    'Actualizamos el pedido con el Packing List
+                    sSQL = "UPDATE OPOR SET ""U_EXO_PACKING""='" & EXO_GLOBALES._sPedido & "' WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
+                    oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
 
-                            oOPDN.Lines.Quantity = dCantLotes
-                            ' oOPDN.Lines.InventoryQuantity = dCantLotes                          
-                        Next
-                    Else
-                        sMensaje = "No se encuentra la línea " & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & " con el artículo " & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
-                        sMensaje &= ". No se incluye en la Entrada de Mercancía."
-                        oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                    End If
-                Next
-                If oOPDN.Add() <> 0 Then
-                    sEstado = "Error"
-                    sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
-                    oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    For iLin As Integer = 0 To oDtLin.Rows.Count - 1
+                        sSQL = " SELECT ""OnHand"" FROM OITW Where ""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
+                                            and ""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
+                        dStock = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-                    sComen = sError : sDocEntry = "" : sSerie = "" : sDocnum = ""
-                    'Creo línea para visualizar y el usuario sepa del error
-                Else
-                    oCompany.GetNewObjectCode(sDocEntry)
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-                    sSQL = "SELECT S.""SeriesName"" FROM ""ODRF"" D INNER JOIN  ""NNM1"" S ON S.""Series""=D.""Series"" WHERE D.""DocEntry""=" & sDocEntry
-                    sSerie = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_TIPOUBI""='Ext1' and ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt1 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-                    sSQL = "SELECT ""DocNum"" FROM ""ODRF""  WHERE ""DocEntry""=" & sDocEntry
-                    sDocnum = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
-                    sEstado = "OK"
-                    sComen = "Se ha generado correctamente el borrador de la entrada de mercancía con Nº " & sDocnum
-#Region "Pasamos los datos del fichero a la tabla real"
-                    oDtLin.Clear()
-                    sSQL = "SELECT * FROM ""DRF1""  WHERE ""DocEntry""=" & sDocEntry
-                    oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-                    If oDtLin.Rows.Count > 0 Then
-                        'Insertamos la cabecera
-                        sSQL = "DELETE FROM ""@EXO_PACKING"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "' "
-                        If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
-                            sSQL = "DELETE FROM ""@EXO_PACKINGL"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "' "
-                            oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
-                        End If
-                        sSQL = "insert into ""@EXO_PACKING"" (""Code"",""Name"",""DocEntry"",""Object"") values('" & EXO_GLOBALES._sPedido & "','" & sDocNumPedido & "'," & EXO_GLOBALES._sPedido & ",'EXO_PACKING')"
-                        If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
-                            'Actualizamos el pedido con el Packing List
-                            sSQL = "UPDATE OPOR SET ""U_EXO_PACKING""='" & EXO_GLOBALES._sPedido & "' WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
-                            oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_TIPOUBI""='Ext2' and ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt2 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-                            For iLin As Integer = 0 To oDtLin.Rows.Count - 1
-                                sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""U_EXO_LINEA"",""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"", "
-                                sSQL &= " ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ALM"") "
-                                sSQL &= "SELECT '" & EXO_GLOBALES._sPedido & "', ""Code"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "', 'EXO_PACKING', '0', "
-                                sSQL &= " ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"",  ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"" "
-                                sSQL &= ", '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
-                                sSQL &= " FROM ""@EXO_TMPPACKINGL"" "
-                                sSQL &= " where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
-                                sSQL &= " Order by ""Code"" "
-                                oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
-                            Next
-                        End If
-                    Else
-                        oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - No se ha podido insertar en el pedido el Packing List del fichero.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                    End If
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_TIPOUBI""='Ext3' and ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt3 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_TIPOUBI""='Ext4' and ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt4 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-#End Region
-                    End If
-                'INSERT del registro creado
-                sSQL = "insert into ""@EXO_TMPPACKING"" values('" & iTabla.ToString & "','" & iTabla.ToString & "'," & iTabla.ToString & ",'N','',0,"
-                sSQL &= oObjGlobal.compañia.UserSignature.ToString & ",'','" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "',0,'',0,'','" & sEstado & "', "
-                sSQL &= "'" & sDocEntry & "', '" & sSerie & "', '" & sDocnum & "', '" & sComen & "', '" & oObjGlobal.compañia.UserName.ToString & "') "
-                oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
-                iTabla += 1
+                        sSQL = "Select Sum(""OnHandQty"") as ""StockExterno""  from OIBQ T1
+                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T1.""BinAbs"" 
+                                    Where  T11.""SL1Code""  In (SELECT ""U_EXO_ZONA"" 
+                                            							FROM ""@EXO_UBIEXTERNAS"" 
+                                            							WHERE ""U_EXO_TIPOUBI""='Ext5' and ""U_EXO_ALM"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' )
+                                    and T1.""WhsCode"" = '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
+                                    and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
+                        dStockExt5 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+
+                        sSQL = ""
+                        sUBIDEF = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""U_EXO_LINEA"",""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", 
+                                ""U_EXO_LOTE"", ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ALM"",""U_EXO_STOCK"",""U_EXO_STOCKDENTRO"", 
+                                ""U_EXO_EXT1"", ""U_EXO_EXT2"", ""EXo_EXT3"", ""U_EXO_EXT4"",""U_EXO_EXT5"",""U_EXO_UBIDEF"") 
+                                Select '" & EXO_GLOBALES._sPedido & "_" & sObjType & "', ""Code"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "', 'EXO_PACKING', '0', 
+                                ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"",  ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"", 
+                                '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dStock, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCK"" 
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStock - dStockExt, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCKDENTRO""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT1""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT2""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT3""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT4""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT5""  
+                                FROM ""@EXO_TMPPACKINGL"" 
+                                where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
+                                Order by ""Code"" "
+                        oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
+                    Next
+                End If
             Else
-                sMensaje = "No se encuentra las líneas del pedido interno Nº" & EXO_GLOBALES._sPedido & ". Se interrumpe el proceso."
-                oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                oObjGlobal.SBOApp.MessageBox(sMensaje)
+                oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - No se ha podido insertar en el pedido el Packing List del fichero.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
-            'If oCompany.InTransaction = True Then
-            '    oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-#Region "Pasamos los datos del fichero a la tabla real"
-            'oDtLin.Clear()
-            'sSQL = "SELECT * FROM ""DRF1""  WHERE ""DocEntry""=" & sDocEntry
-            'oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-            'For iLin As Integer = 0 To oDtLin.Rows.Count - 1
-            '    sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"", "
-            '    sSQL &= " ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_LINEA"") "
-            '    sSQL &= "SELECT '" & sDocEntry & "', ""Code"" , 'ODRF', '0', "
-            '    sSQL &= " ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"",  ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "' "
-            '    sSQL &= " FROM ""@EXO_TMPPACKINGL"" "
-            '    sSQL &= " where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
-            '    sSQL &= " Order by ""Code"" "
-            '    oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
-            'Next
+
+
 #End Region
-            'End If
+
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
         Catch ex As Exception
@@ -535,8 +477,6 @@ Public Class EXO_GLOBALES
             End If
 
             oDtLin.Clear() : oDtLinFichero.Clear()
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRsLote, Object))
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRsArt, Object))
         End Try
     End Sub
 

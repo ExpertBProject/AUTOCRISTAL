@@ -1,0 +1,8 @@
+﻿<Application>
+  <Menus>
+    <action type="add">
+      <Menu Checked="0" Enabled="1" FatherUID="49153" Image="" String="Ubicaciones Externas" Type="1" UniqueID="EXO-SMnUBIEXT"></Menu> <!--MENU UBICACIONES--> 
+      
+    </action>
+  </Menus>
+</Application>

@@ -267,8 +267,8 @@ Public Class EXO_PLIMP
             oForm.Freeze(True)
 
             EXO_GLOBALES.TratarFichero_TXT(sArchivo, sDelimitador, oForm, objGlobal.compañia, objGlobal.SBOApp, objGlobal)
-            objGlobal.SBOApp.StatusBar.SetText("Generando documento ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            EXO_GLOBALES.Generar_EM(objGlobal.compañia, objGlobal) 'Esto de momento nada
+            objGlobal.SBOApp.StatusBar.SetText("Generando documento Packing... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+            EXO_GLOBALES.Generar_PKList(objGlobal.compañia, objGlobal) 'Esto de momento nada
 #Region "Grid"
             'Ahora cargamos el Grid con los datos guardados
             objGlobal.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
