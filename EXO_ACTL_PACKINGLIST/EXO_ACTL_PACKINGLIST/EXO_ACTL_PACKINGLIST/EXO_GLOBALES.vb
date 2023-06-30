@@ -356,7 +356,7 @@ Public Class EXO_GLOBALES
         Dim sObjType As String = ""
         Dim dStock As Double = 0 : Dim dStockExt As Double = 0
         Dim dStockExt1 As Double = 0 : Dim dStockExt2 As Double = 0 : Dim dStockExt3 As Double = 0 : Dim dStockExt4 As Double = 0 : Dim dStockExt5 As Double = 0
-        Dim sUBIDEF As String = ""
+        Dim sUBIDEF As String = "" : Dim sTIPOHUECODEF As String = "" : Dim dCANTMAXDEF As Double = 0
 #End Region
 
         Try
@@ -440,11 +440,27 @@ Public Class EXO_GLOBALES
                                     and T1.""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'"
                         dStockExt5 = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
-                        sSQL = ""
+                        sSQL = "SELECT T1.""BinCode"" FROM OITW T0  
+                                INNER JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry"" 
+                                WHERE T0.""ItemCode"" ='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
+                                  and T0.""WhsCode"" ='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
                         sUBIDEF = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+                        sSQL = "SELECT T1.""Attr4Val"" FROM OITW T0  
+                                INNER JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry"" 
+                                WHERE T0.""ItemCode"" ='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
+                                  and T0.""WhsCode"" ='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
+                        sTIPOHUECODEF = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+                        sSQL = "SELECT T1.""MaxLevel"" FROM OITW T0  
+                                INNER JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry"" 
+                                WHERE T0.""ItemCode"" ='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
+                                  and T0.""WhsCode"" ='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
+                        dCANTMAXDEF = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+
                         sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""U_EXO_LINEA"",""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", 
                                 ""U_EXO_LOTE"", ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ALM"",""U_EXO_STOCK"",""U_EXO_STOCKDENTRO"", 
-                                ""U_EXO_EXT1"", ""U_EXO_EXT2"", ""EXo_EXT3"", ""U_EXO_EXT4"",""U_EXO_EXT5"",""U_EXO_UBIDEF"") 
+                                ""U_EXO_EXT1"", ""U_EXO_EXT2"", ""EXo_EXT3"", ""U_EXO_EXT4"",""U_EXO_EXT5"",""U_EXO_UBIDEF"", ""U_EXO_TIPOHUECODEF"",""U_EXO_CANTMAXDEF"") 
                                 Select '" & EXO_GLOBALES._sPedido & "_" & sObjType & "', ""Code"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "', 'EXO_PACKING', '0', 
                                 ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"",  ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"", 
                                 '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dStock, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCK"" 
@@ -453,8 +469,9 @@ Public Class EXO_GLOBALES
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT2""  
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT3""  
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT4""  
-                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT5""  
-                                FROM ""@EXO_TMPPACKINGL"" 
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT5""
+                                , '" & sUBIDEF & "', '" & sTIPOHUECODEF & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dCANTMAXDEF, EXO_GLOBALES.FuenteInformacion.Otros) & "
+                        FROM ""@EXO_TMPPACKINGL"" 
                                 where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
                                 Order by ""Code"" "
                         oObjGlobal.refDi.SQL.sqlUpdB1(sSQL)
