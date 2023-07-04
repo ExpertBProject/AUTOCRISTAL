@@ -133,7 +133,7 @@ Public Class EXO_PLIMP
             Select Case pVal.ItemUID
                 Case "btn_Fich"
 #Region "Coger y leer fichero"
-                    Limpiar_Grid(oForm)
+                    'Limpiar_Grid(oForm)
                     sTipoArchivo = "Ficheros CSV|*.csv|Texto|*.txt"
                     'Tenemos que controlar que es cliente o web
                     If objGlobal.SBOApp.ClientType = SAPbouiCOM.BoClientType.ct_Browser Then
@@ -173,6 +173,7 @@ Public Class EXO_PLIMP
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             oForm.Freeze(False)
+            oForm.Close()
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
@@ -270,15 +271,15 @@ Public Class EXO_PLIMP
             objGlobal.SBOApp.StatusBar.SetText("Generando documento Packing... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             EXO_GLOBALES.Generar_PKList(objGlobal.compañia, objGlobal) 'Esto de momento nada
 #Region "Grid"
-            'Ahora cargamos el Grid con los datos guardados
-            objGlobal.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel."", ""U_EXO_ESTADO"" ""Estado"", ""U_EXO_DOCENTRY"" ""Nº Int."",""U_EXO_SERIE"" ""Serie"", ""U_EXO_DOCNUM"" ""Nº Documento"", "
-            sSQL &= " ""U_EXO_COMENT"" as ""Descripción Estado"" "
-            sSQL &= " From ""@EXO_TMPPACKING"" "
-            sSQL &= " WHERE ""U_EXO_US""='" & objGlobal.compañia.UserName.ToString & "' "
-            'Cargamos grid
-            oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
-            FormateaGrid(oForm)
+            ''Ahora cargamos el Grid con los datos guardados
+            'objGlobal.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+            'sSQL = "SELECT 'Y' ""Sel."", ""U_EXO_ESTADO"" ""Estado"", ""U_EXO_DOCENTRY"" ""Nº Int."",""U_EXO_SERIE"" ""Serie"", ""U_EXO_DOCNUM"" ""Nº Documento"", "
+            'sSQL &= " ""U_EXO_COMENT"" as ""Descripción Estado"" "
+            'sSQL &= " From ""@EXO_TMPPACKING"" "
+            'sSQL &= " WHERE ""U_EXO_US""='" & objGlobal.compañia.UserName.ToString & "' "
+            ''Cargamos grid
+            'oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
+            'FormateaGrid(oForm)
 #End Region
             oForm.Freeze(False)
 

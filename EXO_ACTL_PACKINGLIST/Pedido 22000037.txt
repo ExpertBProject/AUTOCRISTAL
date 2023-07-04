@@ -1,0 +1,2 @@
+caTA;Cod. Art¡culo;Cantidad;Lote;F. Fabricaci¢n;Id. Bulto;Tipo Bulto
+;2427AGNH;35;LOTESAL15112022; ;1;C1
