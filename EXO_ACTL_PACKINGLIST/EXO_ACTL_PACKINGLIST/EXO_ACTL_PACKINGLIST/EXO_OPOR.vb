@@ -114,7 +114,7 @@ Public Class EXO_OPOR
 
             oForm.Visible = False
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            oItem = oForm.Items.Add("btnEM", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            oItem = oForm.Items.Add("btnPL", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
             oItem.Left = oForm.Items.Item("2").Left + oForm.Items.Item("2").Width + 5
             oItem.Width = oForm.Items.Item("2").Width + 100
             oItem.Top = oForm.Items.Item("2").Top
@@ -124,6 +124,19 @@ Public Class EXO_OPOR
             Dim oBtnAct As SAPbouiCOM.Button
             oBtnAct = CType(oItem.Specific, Button)
             oBtnAct.Caption = "Importar Packing List"
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+
+            oItem = oForm.Items.Add("btnEM", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            oItem.Left = oForm.Items.Item("btnPL").Left + oForm.Items.Item("btnPL").Width + 5
+            oItem.Width = oForm.Items.Item("2").Width + 100
+            oItem.Top = oForm.Items.Item("2").Top
+            oItem.Height = oForm.Items.Item("2").Height
+            oItem.Enabled = False
+            oItem.LinkTo = "2"
+            oBtnAct = CType(oItem.Specific, Button)
+            oBtnAct.Caption = "Entrada de Mercancía"
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
@@ -152,19 +165,44 @@ Public Class EXO_OPOR
         Dim sMensaje As String = ""
         Dim sEstado As String = ""
         Dim sCancelado As String = ""
+        Dim sDocEntry As String = ""
+        Dim sIC As String = ""
         EventHandler_ItemPressed_After = False
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-            'Comprobamos que exista el directorio y sino, lo creamos
+
+            sDocEntry = oForm.DataSources.DBDataSources.Item("OPOR").GetValue("DocEntry", 0).ToString.Trim
             sCancelado = oForm.DataSources.DBDataSources.Item("OPOR").GetValue("CANCELED", 0).ToString.Trim
             sEstado = oForm.DataSources.DBDataSources.Item("OPOR").GetValue("DocStatus", 0).ToString.Trim
+            sIC = oForm.DataSources.DBDataSources.Item("OPOR").GetValue("CardCode", 0).ToString.Trim
             Select Case pVal.ItemUID
-                Case "btnEM"
+                Case "btnPL"
                     If sEstado = "O" And sCancelado = "N" Then
                         'llamamos al Form para coger el fichero
                         If CargarFormImp(oForm) = False Then
                             Exit Function
+                        End If
+                    Else
+                        If sCancelado = "Y" Then
+                            sMensaje = "El pedido está cancelado, no se puede importar el Packing List."
+                        Else
+                            If sEstado = "C" Then
+                                sMensaje = "El pedido está cerrado, no se puede importar el Packing List."
+                            End If
+                        End If
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        objGlobal.SBOApp.MessageBox(sMensaje)
+                    End If
+                Case "btnEM"
+                    If sEstado = "O" And sCancelado = "N" Then
+                        Dim sPackingList As String = oForm.DataSources.DBDataSources.Item("OPOR").GetValue("U_EXO_PACKING", 0).ToString.Trim
+                        If sPackingList = "" Then
+                            sMensaje = "El pedido no tiene asignado un Packing List. No se puede generar la entrada de Mercancía desde esta opción."
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox(sMensaje)
+                        Else
+                            EXO_GLOBALES.Generar_EM(objGlobal.compañia, objGlobal, sPackingList, sDocEntry, sIC)
                         End If
                     Else
                         If sCancelado = "Y" Then

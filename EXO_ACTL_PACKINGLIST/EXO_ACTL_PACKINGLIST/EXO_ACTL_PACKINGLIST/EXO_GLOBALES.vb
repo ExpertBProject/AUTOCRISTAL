@@ -472,10 +472,10 @@ Public Class EXO_GLOBALES
                                 '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dStock, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCK"" 
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStock - dStockExt, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCKDENTRO""  
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT1""  
-                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT2""  
-                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT3""  
-                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT4""  
-                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt1, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT5""
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt2, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT2""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt3, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT3""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt4, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT4""  
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dStockExt5, EXO_GLOBALES.FuenteInformacion.Otros) & " ""EXT5""
                                 , '" & sUBIDEF & "', '" & sTIPOHUECODEF & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dCANTMAXDEF, EXO_GLOBALES.FuenteInformacion.Otros) & "
                         FROM ""@EXO_TMPPACKINGL"" 
                                 where ""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
@@ -639,6 +639,157 @@ Public Class EXO_GLOBALES
             'End If
 
             oDtLin.Clear()
+        End Try
+    End Sub
+
+    Public Shared Sub Generar_EM(ByRef oCompany As SAPbobsCOM.Company, ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal sPacking_list As String, ByVal sPedidoDocEntry As String, ByVal sCardCode As String)
+#Region "Variables"
+        Dim oDtLinPacking As System.Data.DataTable = New System.Data.DataTable
+        Dim oDtLin As System.Data.DataTable = New System.Data.DataTable
+        Dim oOPDN As SAPbobsCOM.Documents = Nothing
+        Dim dfecha As Date = New Date(Now.Year, Now.Month, Now.Day)
+        Dim sSQL As String = ""
+        Dim sMensaje As String = "" : Dim sError As String = "" : Dim sComen As String = "" : Dim sEstado As String = ""
+        Dim sDocEntry As String = "" : Dim sDocnum As String = ""
+        Dim oRsLote As SAPbobsCOM.Recordset = Nothing : Dim oRsLocalizacion As SAPbobsCOM.Recordset = Nothing
+        Dim dCantLotes As Double = 0 : Dim iLineaUbi As Integer = 0
+        Dim sDocNumPedido As String = ""
+#End Region
+
+        Try
+            oRsLote = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+            oRsLocalizacion = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+
+            oOPDN = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseDeliveryNotes), SAPbobsCOM.Documents)
+            oOPDN.DocObjectCode = SAPbobsCOM.BoObjectTypes.oPurchaseDeliveryNotes
+            oOPDN.CardCode = sCardCode
+            oOPDN.TaxDate = dfecha
+            oOPDN.DocDueDate = dfecha
+            oOPDN.NumAtCard = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""NumAtCard"" FROM ""OPOR"" WHERE ""DocEntry""=" & sPedidoDocEntry)
+            oOPDN.UserFields.Fields.Item("U_EXO_PACKING").Value = sPacking_list
+            oDtLin.Clear()
+
+            sSQL = "SELECT * FROM ""POR1"" where ""LineStatus""='O' and ""DocEntry""=" & sPedidoDocEntry & " Order by ""LineNum"" "
+            oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+            If oDtLin.Rows.Count > 0 Then
+                sDocNumPedido = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""DocNum"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido)
+                Dim bPlinea As Boolean = True
+                For iLin As Integer = 0 To oDtLin.Rows.Count - 1
+                    'buscamos en la tabla de ficheros
+                    'Sólo del pedido asignado
+                    oDtLinPacking.Clear()
+                    sSQL = "SELECT ""U_EXO_CODE"",sum(""U_EXO_CANT"") ""CANTIDAD"" FROM ""@EXO_PACKINGL"" "
+                    sSQL &= " where ""Code""='" & sPacking_list & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
+                    sSQL &= " GROUP BY ""U_EXO_CODE"" "
+                    oDtLinPacking = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                    If oDtLinPacking.Rows.Count > 0 Then
+                        For iLinFich As Integer = 0 To oDtLinPacking.Rows.Count - 1
+                            dCantLotes = 0
+                            If bPlinea = False Then
+                                oOPDN.Lines.Add()
+                            Else
+                                bPlinea = False
+                            End If
+                            oOPDN.Lines.ItemCode = oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
+                            oOPDN.Lines.ItemDescription = oDtLin.Rows.Item(iLin).Item("Dscription").ToString
+                            Dim dCantFichero As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLinPacking.Rows.Item(iLinFich).Item("CANTIDAD").ToString)
+                            Dim dCant As Double = EXO_GLOBALES.DblTextToNumber(oCompany, oDtLin.Rows.Item(iLin).Item("Quantity").ToString)
+                            Dim sUnidad As String = oDtLin.Rows.Item(iLin).Item("UomCode").ToString.Trim
+                            oOPDN.Lines.BaseEntry = CInt(oDtLin.Rows.Item(iLin).Item("DocEntry").ToString)
+                            oOPDN.Lines.BaseType = 22
+                            oOPDN.Lines.BaseLine = CInt(oDtLin.Rows.Item(iLin).Item("LineNum").ToString)
+#Region "Lotes"
+                            'Incluimos los Lotes y solo del pedido y la línea
+                            sSQL = "SELECT ""U_EXO_CODE"",""U_EXO_LOTE"", sum(""U_EXO_CANT"") ""CANTIDAD"", ""U_EXO_FFAB"" FROM ""@EXO_PACKINGL"" "
+                            sSQL &= " where ""Code""='" & sPacking_list & "' and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' "
+                            sSQL &= " GROUP BY ""U_EXO_CODE"",""U_EXO_LOTE"", ""U_EXO_FFAB"" "
+                            oRsLote.DoQuery(sSQL)
+                            For iLote = 0 To oRsLote.RecordCount - 1
+                                'Creamos el lote de la línea del artículo
+                                If iLote <> 0 Then
+                                    oOPDN.Lines.BatchNumbers.Add()
+                                End If
+                                oOPDN.Lines.BatchNumbers.BatchNumber = oRsLote.Fields.Item("U_EXO_LOTE").Value.ToString
+                                oOPDN.Lines.BatchNumbers.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLote.Fields.Item("CANTIDAD").Value.ToString)
+                                dCantLotes += oOPDN.Lines.BatchNumbers.Quantity
+                                oOPDN.Lines.BatchNumbers.ManufacturingDate = CDate(oRsLote.Fields.Item("U_EXO_FFAB").Value.ToString)
+                                sSQL = "SELECT IFNULL(OMRC.""FirmName"",'') FROM OCRD LEFT JOIN OMRC ON OCRD.""U_EXO_MARPRO""=OMRC.""FirmCode"" Where ""CardCode""='" & sCardCode & "' "
+                                'oObjGlobal.SBOApp.StatusBar.SetText(sSQL, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                oOPDN.Lines.BatchNumbers.ManufacturerSerialNumber = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+
+#Region "Localizacion"
+                                sSQL = "SELECT ""U_EXO_CODE"",""U_EXO_LOTE"", sum(""U_EXO_CANT"") ""CANTIDAD"", ""U_EXO_FFAB"",""U_EXO_UBIRECEP""
+                                        FROM ""@EXO_PACKINGL"" 
+                                         WHERE ""Code""='" & sPacking_list & "' and IFNULL(""U_EXO_UBIRECEP"",'')<>'' 
+                                         and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'
+                                         and ""U_EXO_LOTE""='" & oRsLote.Fields.Item("U_EXO_LOTE").Value.ToString & "'  
+                                        GROUP BY ""U_EXO_CODE"",""U_EXO_LOTE"", ""U_EXO_FFAB"",""U_EXO_UBIRECEP"" "
+                                oRsLocalizacion.DoQuery(sSQL)
+
+                                For iLoc = 0 To oRsLocalizacion.RecordCount - 1
+                                    sSQL = "Select IFNULL(""AbsEntry"",0) from OBIN where ""BinCode"" = '" & oRsLocalizacion.Fields.Item("U_EXO_UBIRECEP").Value.ToString.Trim & "'"
+                                    Dim iAbsEntry As Integer = CInt(oObjGlobal.refDi.SQL.sqlStringB1(sSQL))
+                                    If iAbsEntry <> 0 Then
+                                        If iLoc <> 0 Then
+                                            oOPDN.Lines.BinAllocations.Add()
+                                        End If
+                                        oOPDN.Lines.BinAllocations.BinAbsEntry = iAbsEntry
+                                        oOPDN.Lines.BinAllocations.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLocalizacion.Fields.Item("CANTIDAD").Value.ToString)
+                                        oOPDN.Lines.BinAllocations.BaseLineNumber = oOPDN.Lines.LineNum
+                                        oOPDN.Lines.BinAllocations.SerialAndBatchNumbersBaseLine = iLote
+                                    Else
+                                        sMensaje = "No se encuentra La ubicación receptora: " & oRsLocalizacion.Fields.Item("U_EXO_UBIRECEP").Value.ToString.Trim
+                                        sMensaje &= ". No se incluye en la Entrada de Mercancía."
+                                        oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                    End If
+                                    oRsLocalizacion.MoveNext()
+                                Next
+#End Region
+                                oRsLote.MoveNext()
+                            Next
+#End Region
+
+                            oOPDN.Lines.Quantity = dCantLotes
+                            ' oOPDN.Lines.InventoryQuantity = dCantLotes  
+                        Next
+                    Else
+                        sMensaje = "No se encuentra la línea " & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & " con el artículo " & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString
+                        sMensaje &= ". No se incluye en la Entrada de Mercancía."
+                        oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    End If
+                Next
+                If oOPDN.Add() <> 0 Then
+                    sEstado = "Error"
+                    sError = oCompany.GetLastErrorCode.ToString & " / " & oCompany.GetLastErrorDescription.Replace("'", "")
+                    oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                Else
+                    oCompany.GetNewObjectCode(sDocEntry)
+
+                    sSQL = "SELECT ""DocNum"" FROM ""OPDN""  WHERE ""DocEntry""=" & sDocEntry
+                    sDocnum = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    sMensaje = "Se ha generado correctamente la entrada de mercancía con Nº " & sDocnum
+                    oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                    oObjGlobal.SBOApp.MessageBox(sMensaje)
+
+
+                    If oObjGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
+                        oObjGlobal.SBOApp.ActivateMenuItem("1304")
+                    End If
+
+                End If
+            Else
+                sMensaje = "No se encuentra las líneas del pedido interno Nº" & sPedidoDocEntry & ". Se interrumpe el proceso."
+                oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                oObjGlobal.SBOApp.MessageBox(sMensaje)
+            End If
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            oDtLin.Clear() : oDtLinPacking.Clear()
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRsLote, Object))
         End Try
     End Sub
 #End Region
