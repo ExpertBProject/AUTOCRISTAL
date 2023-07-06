@@ -375,16 +375,16 @@ Public Class EXO_GLOBALES
                 sSQL = "SELECT ""DocNum"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
                 sDocNumPedido = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                 'Insertamos la cabecera
-                sSQL = "DELETE FROM ""@EXO_PACKING"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "_" & sObjType & "' "
+                sSQL = "DELETE FROM ""@EXO_PACKING"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & sObjType & "' "
                 If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
-                    sSQL = "DELETE FROM ""@EXO_PACKINGL"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & "_" & sObjType & "' "
+                    sSQL = "DELETE FROM ""@EXO_PACKINGL"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & sObjType & "' "
                     oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
                 End If
                 sSQL = "insert into ""@EXO_PACKING"" (""Code"",""Name"",""DocEntry"",""Object"",""U_EXO_OBJTYPE"") 
-                                values('" & EXO_GLOBALES._sPedido & "_" & sObjType & "','" & sDocNumPedido & "'," & EXO_GLOBALES._sPedido & ",'EXO_PACKING','" & sObjType & "')"
+                                values('" & EXO_GLOBALES._sPedido & sObjType & "','" & sDocNumPedido & "'," & EXO_GLOBALES._sPedido & sObjType & ",'EXO_PACKING','" & sObjType & "')"
                 If oObjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
                     'Actualizamos el pedido con el Packing List
-                    sSQL = "UPDATE OPOR SET ""U_EXO_PACKING""='" & EXO_GLOBALES._sPedido & "_" & sObjType & "' WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
+                    sSQL = "UPDATE OPOR SET ""U_EXO_PACKING""='" & EXO_GLOBALES._sPedido & sObjType & "' WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
                     oObjGlobal.refDi.SQL.executeNonQuery(sSQL)
 
                     For iLin As Integer = 0 To oDtLin.Rows.Count - 1
@@ -467,7 +467,7 @@ Public Class EXO_GLOBALES
                         sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""U_EXO_LINEA"",""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", 
                                 ""U_EXO_LOTE"", ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ALM"",""U_EXO_STOCK"",""U_EXO_STOCKDENTRO"", 
                                 ""U_EXO_EXT1"", ""U_EXO_EXT2"", ""U_EXO_EXT3"", ""U_EXO_EXT4"",""U_EXO_EXT5"",""U_EXO_UBIDEF"", ""U_EXO_TIPOHUECODEF"",""U_EXO_CANTMAXDEF"") 
-                                Select '" & EXO_GLOBALES._sPedido & "_" & sObjType & "', ""Code"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "', 'EXO_PACKING', '0', 
+                                Select '" & EXO_GLOBALES._sPedido & sObjType & "', ""Code"", '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "', 'EXO_PACKING', '0', 
                                 ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", ""U_EXO_LOTE"",  ""U_EXO_FFAB"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"", 
                                 '" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dStock, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCK"" 
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dStock - dStockExt, EXO_GLOBALES.FuenteInformacion.Otros) & " ""STOCKDENTRO""  

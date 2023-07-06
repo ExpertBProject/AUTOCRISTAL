@@ -118,6 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EXO_GLOBALES.vb" />
+    <Compile Include="EXO_OWTQ.vb" />
     <Compile Include="EXO_OCRD.vb" />
     <Compile Include="EXO_OPDN.vb" />
     <Compile Include="EXO_PLIMP.vb" />
