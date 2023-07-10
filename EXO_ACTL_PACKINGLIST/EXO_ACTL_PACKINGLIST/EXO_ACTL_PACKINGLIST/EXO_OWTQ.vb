@@ -330,7 +330,7 @@ Public Class EXO_OWTQ
 #Region "Localizacion"
                                 sSQL = "SELECT ""U_EXO_CODE"",""U_EXO_LOTE"", sum(""U_EXO_CANT"") ""CANTIDAD"", ""U_EXO_FFAB"",""U_EXO_UBIORI""
                                         FROM ""@EXO_PACKINGL"" 
-                                         WHERE ""Code""='" & sPacking_list & "' and IFNULL(""U_EXO_UBIRECEP"",'')<>'' 
+                                         WHERE ""Code""='" & sPacking_list & "'  
                                          and IFNULL(""U_EXO_UBIORI"",'')<>''
                                          and ""U_EXO_CODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "'
                                          and ""U_EXO_LOTE""='" & oRsLote.Fields.Item("U_EXO_LOTE").Value.ToString & "'  
@@ -366,6 +366,14 @@ Public Class EXO_OWTQ
                                         GROUP BY ""U_EXO_CODE"",""U_EXO_LOTE"", ""U_EXO_FFAB"",""U_EXO_UBIRECEP"" "
                                     oRsLocalizacionDest.DoQuery(sSQL)
 
+                                    Dim dCantDestino As Double = 0
+                                    If oRsLocalizacionDest.RecordCount = 0 Then
+                                        dCantDestino = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLocalizacion.Fields.Item("CANTIDAD").Value.ToString)
+                                        sSQL = "SELECT TOP 1 ""BinCode"" ""U_EXO_UBIRECEP"" From OBIN WHERE""ReceiveBin""='Y' and ""WhsCode""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'"
+                                        oRsLocalizacionDest.DoQuery(sSQL)
+                                    Else
+                                        dCantDestino = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLocalizacionDest.Fields.Item("CANTIDAD").Value.ToString)
+                                    End If
                                     For iLocDest = 0 To oRsLocalizacionDest.RecordCount - 1
                                         sSQL = "Select IFNULL(""AbsEntry"",0) from OBIN where ""BinCode"" = '" & oRsLocalizacionDest.Fields.Item("U_EXO_UBIRECEP").Value.ToString.Trim & "'"
                                         iAbsEntry = CInt(oObjGlobal.refDi.SQL.sqlStringB1(sSQL))
@@ -374,7 +382,7 @@ Public Class EXO_OWTQ
 
                                             oOWTR.Lines.BinAllocations.BinAbsEntry = iAbsEntry
                                             oOWTR.Lines.BinAllocations.BinActionType = SAPbobsCOM.BinActionTypeEnum.batToWarehouse
-                                            oOWTR.Lines.BinAllocations.Quantity = EXO_GLOBALES.DblTextToNumber(oCompany, oRsLocalizacionDest.Fields.Item("CANTIDAD").Value.ToString)
+                                            oOWTR.Lines.BinAllocations.Quantity = dCantDestino
                                             ' oOWTR.Lines.BinAllocations.BaseLineNumber = oOWTR.Lines.LineNum
                                             oOWTR.Lines.BinAllocations.SerialAndBatchNumbersBaseLine = iLote
                                         Else
