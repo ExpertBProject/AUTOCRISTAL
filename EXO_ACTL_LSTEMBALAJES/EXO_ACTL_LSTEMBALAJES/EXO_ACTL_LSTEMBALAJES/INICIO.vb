@@ -19,28 +19,28 @@ Public Class INICIO
         If objGlobal.refDi.comunes.esAdministrador Then
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_LSTEMB.xml")
-            objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_LSTEMB", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_LSTEMB", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_ENVTRANS.xml")
-            objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_ENVTRANS", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDO_EXO_ENVTRANS", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
             objGlobal.SBOApp.StatusBar.SetText("Validando: " & res, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_IGE1.xml")
-            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_IGE1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_IGE1", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_GP.xml")
-            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_GP", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_GP", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
             sXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_OPKL.xml")
-            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OPKL", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Validando: UDFs_OPKL", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             objGlobal.refDi.comunes.LoadBDFromXML(sXML)
             res = objGlobal.SBOApp.GetLastBatchResults
 
