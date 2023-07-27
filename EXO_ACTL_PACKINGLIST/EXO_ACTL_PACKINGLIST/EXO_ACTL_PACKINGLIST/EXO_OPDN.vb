@@ -154,7 +154,7 @@ Public Class EXO_OPDN
             oItem.LinkTo = "2"
             Dim oBtnAct As SAPbouiCOM.Button
             oBtnAct = CType(oItem.Specific, Button)
-            oBtnAct.Caption = "Gen. Lista de Embalaje"
+            oBtnAct.Caption = "Orden de Reubicación"
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)

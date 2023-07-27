@@ -136,7 +136,7 @@ Public Class Procesos
                     oORDR.Lines.WarehouseCode = sAlmacen
                     'sSQL = "Select T1.""PrcCode""   from """ & oCompany.CompanyDB & """.""OWHS"" T0 Left Join """ & oCompany.CompanyDB & """.""OPRC"" t1 ON T1.""U_EXO_DELEGA"" = T0.""U_EXO_SUCURSAL""
                     ' where  T0.""WhsCode"" ='" & sAlmacen & "' "
-                    Dim sCoste As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS"" T0 Left Join """ & oCompany.CompanyDB & """.""OPRC"" t1 ", "T1.""PrcCode""", "T0.""WhsCode"" ='" & sAlmacen & "' ", oLog)
+                    Dim sCoste As String = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""OWHS"" T0 Left Join """ & oCompany.CompanyDB & """.""OPRC"" t1 ON T1.""U_EXO_DELEGA"" = T0.""U_EXO_SUCURSAL"" ", "T1.""PrcCode""", "T0.""WhsCode"" ='" & sAlmacen & "' ", oLog)
                     oORDR.Lines.CostingCode = sCoste
 
                     Try
