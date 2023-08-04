@@ -817,11 +817,11 @@ Public Class EXO_PARRILLA
             oCRReport.SetParameterValue("DocEntry", sDocEntry)
             oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
             'oCRReport.SetParameterValue("Schema@", sBBDD)
-
-
-            oCRReport.DataSourceConnections(0).SetLogonProperties(oLogonProps)
-            oCRReport.DataSourceConnections(0).SetConnection(sServer, sBBDD, False)
-            oObjGlobal.SBOApp.StatusBar.SetText("Connection String: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+            For i = 0 To oCRReport.DataSourceConnections.Count - 1
+                oCRReport.DataSourceConnections(i).SetLogonProperties(oLogonProps)
+                oCRReport.DataSourceConnections(i).SetConnection(sServer, sBBDD, False)
+                oObjGlobal.SBOApp.StatusBar.SetText("Connection " & i.ToString & " String: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
+            Next
 
             For Each oSubReport As ReportDocument In oCRReport.Subreports
                 For Each oConnection As IConnectionInfo In oSubReport.DataSourceConnections
