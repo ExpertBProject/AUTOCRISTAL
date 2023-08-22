@@ -2,7 +2,7 @@
   <Menus>
     <action type="add">
       <Menu Checked="0" Enabled="1" FatherUID="3328" Image="" String="" Type="3" UniqueID="EXO-MnPAR1"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="2048" Image="" String="Parrilla de control general " Type="1" UniqueID="EXO-MnPARC"></Menu>
+      <Menu Checked="0" Enabled="1" FatherUID="3328" Image="" String="Parrilla de control general " Type="1" UniqueID="EXO-MnPARC"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="3328" Image="" String="" Type="3" UniqueID="EXO-MnPAR2"></Menu>
     </action>
   </Menus>

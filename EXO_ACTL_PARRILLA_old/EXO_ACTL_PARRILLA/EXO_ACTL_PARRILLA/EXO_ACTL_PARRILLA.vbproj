@@ -38,7 +38,7 @@
     <OptionExplicit>On</OptionExplicit>
   </PropertyGroup>
   <PropertyGroup>
-    <OptionCompare>Text</OptionCompare>
+    <OptionCompare>Binary</OptionCompare>
   </PropertyGroup>
   <PropertyGroup>
     <OptionStrict>Off</OptionStrict>
@@ -236,15 +236,11 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FORMS\EXO_PSTOCK.srf" />
-    <EmbeddedResource Include="FORMS\EXO_PSTOCKCOMP.srf" />
-    <EmbeddedResource Include="FORMS\EXO_BTOS.srf" />
     <Content Include="SQLHANA\VEXO_TRASLADOS.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
-
 copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

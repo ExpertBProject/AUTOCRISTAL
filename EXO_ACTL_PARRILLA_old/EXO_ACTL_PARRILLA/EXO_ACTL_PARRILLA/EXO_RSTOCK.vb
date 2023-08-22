@@ -112,25 +112,16 @@ Public Class EXO_RSTOCK
             End If
 
             oColumnTxt = CType(CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item(1), SAPbouiCOM.EditTextColumn)
-            Dim grid = CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid)
-            sTipo = grid.DataTable.GetValue("TIPO", pVal.Row).ToString
-            Dim nroInt = grid.DataTable.GetValue("Nº INTERNO", grid.GetDataTableRowIndex(pVal.Row)).ToString
-            Select Case pVal.ColUID
-                Case "Documento"
-                    Select Case sTipo
-                        Case "17" 'Albaranes de ventas
-                            objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_Order, "", nroInt)
-                        Case "1250000001" 'Sol de traslado
-                            objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInt)
-                        Case "234000032" 'Devolución de proveedor
-                            objGlobal.SBOApp.OpenForm("234000032", "", nroInt)
-                    End Select
-                Case "ARTÍCULO"
-                    CType(CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item("ARTÍCULO"), SAPbouiCOM.EditTextColumn).LinkedObjectType = "4"
-
+            sTipo = CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).DataTable.GetValue("TIPO", pVal.Row).ToString
+            Select Case sTipo
+                Case "17" 'Pedidos de ventas
+                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_Order.ToString
+                Case "234000032" ' Sol de devolución de proveedor
+                    oColumnTxt.LinkedObjectType = "234000032"
+                Case "1250000001" ' Sol de traslado
+                    oColumnTxt.LinkedObjectType = BoLinkedObject.lf_StockTransfersRequest.ToString
             End Select
 
-            Return True
 
             EventHandler_MATRIX_LINK_PRESSED = True
 
