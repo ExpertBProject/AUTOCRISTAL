@@ -468,7 +468,7 @@ Public Class EXO_PARRILLA
 
         Try
             'Rellenar grid
-            If oFormParrilla.DataSources.DataTables.Item("DTSCOM").Rows.Count > 0 Then
+            If oFormParrilla.DataSources.DataTables.Item("DTE").Rows.Count > 0 Then
                 oFP = CType(objGlobal.SBOApp.CreateObject(SAPbouiCOM.BoCreatableObjectType.cot_FormCreationParams), SAPbouiCOM.FormCreationParams)
                 oFP.XmlData = objGlobal.leerEmbebido(Me.GetType(), "EXO_BTOS.srf")
 
@@ -486,30 +486,37 @@ Public Class EXO_PARRILLA
                     End If
                 End Try
 
-                dt = Nothing : dt = oFormParrilla.DataSources.DataTables.Item("DTSCOM")
+                dt = Nothing : dt = oFormParrilla.DataSources.DataTables.Item("DTE")
                 dtDatos = New System.Data.DataTable
-                Dim responseDataSel = ComprobarDOCSELLIB(oFormParrilla, "DTSCOM", dtDatos, dt)
+                Dim responseDataSel = ComprobarDOCENT(oFormParrilla, "DTE", dtDatos, dt)
 
                 sSQL = "SELECT
 	                        X4.""DocEntry"" AS ""Interno Pedido"",
 	                        X4.""DocNum"" AS ""Nº Pedido"",
 	                        X0.""DocEntry"" AS ""Interno Entrada"",
 	                        X0.""DocNum"" AS ""Nº Entrada"",
-	                        X5.""DocEntry"" AS ""Interno Emb"",
-	                        X5.""DocNum"" AS ""Nº Embalaje"",
-	                        X2.""U_EXO_IDBULTO"" AS ""Id Bulto"",
+	                        0 AS ""Interno Emb"",
+	                        IFNULL(T.""Code"",'') AS ""Nº Embalaje"",
+	                        IFNULL(T.""U_EXO_IDBULTO"",'') AS ""Id Bulto"",
 	                        X1.""ItemCode"" AS ""Articulo"",
-	                        (X1.""Quantity""-X2.""U_EXO_CANT"") AS ""Cant. Pdte"",
-	                        X2.""U_EXO_CANT"" AS ""Cant. Rec."",
-	                        X1.""Quantity"" AS ""Cant. Reubic""
-                        FROM ODLN X0
-                        JOIN DLN1 X1 ON X0.""DocEntry"" = X1.""DocEntry""
-                        JOIN ""@EXO_LSTEMBL"" X2 ON X1.""DocEntry"" = X2.""U_EXO_DOCENTRY"" AND X1.""LineNum"" = X2.""U_EXO_LINNUM"" AND X1.""ItemCode"" = X2.""U_EXO_ITEMCODE""
-                        JOIN ""@EXO_LSTEMB"" X5 ON X2.""DocEntry"" = X5.""DocEntry"" 
-                        LEFT JOIN RDR1 X3 ON X1.""BaseEntry"" = X3.""DocEntry"" AND X1.""BaseLine"" = X3.""LineNum"" AND X1.""BaseType"" = X3.""ObjType""
-                        LEFT JOIN ORDR X4 ON X3.""DocEntry"" = X4.""DocEntry""
-                        WHERE
-	                        X0.""DocEntry"" IN  "
+	                        IFNULL(T.""U_EXO_CANT"",0) AS ""Cant."",
+	                        IFNULL(T.""Cant_REUBICADA"",0) AS ""Cant. Reubic."",
+	                        IFNULL(T.""Pendiente_REUBICAR"",0) AS ""Cant. Pdte.""
+                        FROM OPDN X0
+                        LEFT JOIN PDN1 X1 ON X0.""DocEntry"" = X1.""DocEntry""
+                        LEFT JOIN POR1 X3 ON X1.""BaseEntry"" = X3.""DocEntry"" AND X1.""BaseLine"" = X3.""LineNum"" AND X1.""BaseType"" = X3.""ObjType""
+                        LEFT JOIN OPOR X4 ON X3.""DocEntry"" = X4.""DocEntry""
+                        LEFT JOIN (Select T0.""Code"", T1.""U_EXO_IDBULTO"", T1.""U_EXO_CODE"", T1.""U_EXO_CANT"", X.""Cant_REUBICADA"" ,  T1.""U_EXO_CANT"" - X.""Cant_REUBICADA"" as ""Pendiente_REUBICAR"" 
+                                    From ""@EXO_PACKING"" T0
+                                    Left JOIN ""@EXO_PACKINGL"" T1 On T0.""Code"" = T1.""Code""
+                                    LEFT JOIN (select  T0.""U_EXO_PACKING"", T1.""ItemCode"", T1.""U_EXO_LOT_ID"", SUM(T1.""Quantity"") as ""Cant_REUBICADA""  
+                                                    from OWTR               T0
+                                                    LEFT JOIN WTR1 T1 ON T0.""DocEntry"" = T1.""DocEntry"" 
+                                                    where T1.""U_EXO_LOT_ID"" is not null 
+                                                    GROUP by  T0.""U_EXO_PACKING"", T1.""ItemCode"", T1.""U_EXO_LOT_ID""
+                                                ) X ON X.""U_EXO_PACKING"" = T0.""Code"" and X.""ItemCode"" = T1.""U_EXO_CODE"" and X.""U_EXO_LOT_ID"" = T1.""U_EXO_IDBULTO""
+                                )T ON T.""U_EXO_CODE""= X1.""ItemCode""
+                        WHERE X4.""DocEntry"" IN  "
 
                 If responseDataSel.Rows.Count > 0 Then
                     sSQL &= "("
@@ -913,10 +920,11 @@ Public Class EXO_PARRILLA
             oForm.Items.Item("btImpD").Top = oForm.Items.Item("btCCEXPC").Top + 50
             oForm.Items.Item("btIMPE").Top = oForm.Items.Item("btImpD").Top + 50
             oForm.Items.Item("btnPndCm").Top = oForm.Items.Item("btIMPE").Top - 25
-            oForm.Items.Item("btnBtos").Top = oForm.Items.Item("btImpD").Top - 25
+
 
             oForm.Items.Item("grdE").Height = 140
             oForm.Items.Item("Item_18").Top = oForm.Items.Item("grdE").Top - 15
+            oForm.Items.Item("btnBtos").Top = oForm.Items.Item("grdE").Top + 10
             EventHandler_FORM_RESIZE_After = True
         Catch ex As Exception
             Throw ex
@@ -968,7 +976,7 @@ Public Class EXO_PARRILLA
                     Dim sExpe As String = CType(CType(oForm.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item("CLASE EXP."), SAPbouiCOM.ComboBoxColumn).GetSelectedValue(pVal.Row).Value.ToString
                     'Buscamos la agencia
                     sSQL = "SELECT ""U_EXO_AGE"" FROM OSHP WHERE ""TrnspCode""='" & sExpe & "' "
-                        Dim sAGE As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    Dim sAGE As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                     If sAGE = "" Then
                         sAGE = "-1"
                     End If
@@ -986,7 +994,7 @@ Public Class EXO_PARRILLA
                     Dim grid = CType(oForm.Items.Item(pVal.ItemUID).Specific, SAPbouiCOM.Grid)
                     objGlobal.SBOApp.StatusBar.SetText("Cambiando clase de expedición... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
-                    CambiarClaseExpedicionCombo(oForm, Grid.DataTable.UniqueID, objGlobal, Grid.GetDataTableRowIndex(pVal.Row))
+                    CambiarClaseExpedicionCombo(oForm, grid.DataTable.UniqueID, objGlobal, grid.GetDataTableRowIndex(pVal.Row))
 
                     objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                     objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log del sistema para ver las operaciones realizadas.")
@@ -1078,7 +1086,7 @@ Public Class EXO_PARRILLA
                     End If
                 Case "grdE"
                     oColumnTxt = CType(CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(2), SAPbouiCOM.EditTextColumn)
-                    sTipo = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("T. ENTRADA", Grid.GetDataTableRowIndex(pVal.Row)).ToString
+                    sTipo = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("T. ENTRADA", grid.GetDataTableRowIndex(pVal.Row)).ToString
                     Dim nroInt = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("Nº INTERNO", grid.GetDataTableRowIndex(pVal.Row)).ToString
 
                     If (pVal.ColUID = "Nº DOCUMENTO") Then
@@ -2242,6 +2250,7 @@ Public Class EXO_PARRILLA
                     Select Case sTIPODOC
 
                         Case "PEDVTA" ' Pedido de venta
+#Region "Pedido Venta"
                             oPickLists = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPickLists), SAPbobsCOM.PickLists)
                             oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
                             Dim oItems = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oItems), SAPbobsCOM.Items)
@@ -2254,24 +2263,28 @@ Public Class EXO_PARRILLA
                                 For J = 0 To oDocument_Lines.Count - 1
                                     oDocument_Lines.SetCurrentLine(J)
                                     Dim sarticulo As String = oDocument_Lines.ItemCode
-                                    sSQL = "SELECT ""OnHand"" FROM OITW Where ""ItemCode""='" & sarticulo & "' and ""WhsCode""='" & sAlm & "'"
-                                    Dim dStock As Double = oobjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
-                                    If dStock > 0 And oDocument_Lines.LineStatus <> SAPbobsCOM.BoStatus.bost_Close Then
-                                        'If dStock >= oDocument_Lines.Quantity And oDocument_Lines.LineStatus <> SAPbobsCOM.BoStatus.bost_Close Then
-                                        oDocument_Lines.SetCurrentLine(J)
-                                        oItems.GetByKey(oDocuments.Lines.ItemCode)
-                                        If (oItems.InventoryItem = SAPbobsCOM.BoYesNoEnum.tNO) Then
-                                            Continue For
-                                        End If
-                                        oPickLists.Lines.BaseObjectType = "17"
-                                        oPickLists.Lines.OrderEntry = oDocuments.DocEntry
-                                        oPickLists.Lines.OrderRowID = oDocument_Lines.LineNum
-                                        oPickLists.Lines.ReleasedQuantity = If(dStock >= oDocument_Lines.Quantity, oDocument_Lines.Quantity, dStock)
-                                        oPickLists.Lines.Add()
+                                    If oDocument_Lines.WarehouseCode = sAlm Then
+                                        sSQL = "SELECT ""OnHand"" FROM OITW Where ""ItemCode""='" & sarticulo & "' and ""WhsCode""='" & sAlm & "'"
+                                        Dim dStock As Double = oobjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+                                        If dStock > 0 And oDocument_Lines.LineStatus <> SAPbobsCOM.BoStatus.bost_Close Then
+                                            'If dStock >= oDocument_Lines.Quantity And oDocument_Lines.LineStatus <> SAPbobsCOM.BoStatus.bost_Close Then
+                                            oDocument_Lines.SetCurrentLine(J)
+                                            oItems.GetByKey(oDocuments.Lines.ItemCode)
+                                            If (oItems.InventoryItem = SAPbobsCOM.BoYesNoEnum.tNO) Then
+                                                Continue For
+                                            End If
+                                            oPickLists.Lines.BaseObjectType = "17"
+                                            oPickLists.Lines.OrderEntry = oDocuments.DocEntry
+                                            oPickLists.Lines.OrderRowID = oDocument_Lines.LineNum
+                                            oPickLists.Lines.ReleasedQuantity = If(dStock >= oDocument_Lines.Quantity, oDocument_Lines.Quantity, dStock)
+                                            oPickLists.Lines.Add()
 
-                                        existsOneLine = True
+                                            existsOneLine = True
+                                        Else
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Liberar Picking del pedido Nº: " & sDocNum & ". Artículo " & sarticulo & " en Stock " & dStock.ToString & " y en pedido " & oDocument_Lines.Quantity.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                        End If
                                     Else
-                                        oobjGlobal.SBOApp.StatusBar.SetText("Liberar Picking del pedido Nº: " & sDocNum & ". Artículo " & sarticulo & " en Stock " & dStock.ToString & " y en pedido " & oDocument_Lines.Quantity.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                        oobjGlobal.SBOApp.StatusBar.SetText("Liberar Picking del pedido Nº: " & sDocNum & ". Línea " & oDocument_Lines.LineNum & " - Artículo " & sarticulo & " con almacén " & oDocument_Lines.WarehouseCode & " no se tiene en cuenta.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                     End If
                                 Next
 
@@ -2304,8 +2317,9 @@ Public Class EXO_PARRILLA
                             Else
                                 oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el pedido para liberar Picking con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                             End If
-
+#End Region
                         Case "SOLTRA" ' Sol. de Traslado
+#Region "Sol. Traslado"
                             oPickLists = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPickLists), SAPbobsCOM.PickLists)
                             oDocStockTransfer = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
                             If oDocStockTransfer.GetByKey(sDocEntry) = True Then
@@ -2313,12 +2327,17 @@ Public Class EXO_PARRILLA
                                 oPickLists = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPickLists), SAPbobsCOM.PickLists)
 
                                 For J = 0 To oDocStockTransfer_Lines.Count - 1
-                                    oDocStockTransfer_Lines.SetCurrentLine(J)
-                                    oPickLists.Lines.BaseObjectType = "1250000001"
-                                    oPickLists.Lines.OrderEntry = oDocStockTransfer.DocEntry
-                                    oPickLists.Lines.OrderRowID = J
-                                    oPickLists.Lines.ReleasedQuantity = oDocStockTransfer_Lines.RemainingOpenQuantity
-                                    oPickLists.Lines.Add()
+                                    If oDocStockTransfer_Lines.WarehouseCode = sAlm Then
+                                        oDocStockTransfer_Lines.SetCurrentLine(J)
+                                        oPickLists.Lines.BaseObjectType = "1250000001"
+                                        oPickLists.Lines.OrderEntry = oDocStockTransfer.DocEntry
+                                        oPickLists.Lines.OrderRowID = J
+                                        oPickLists.Lines.ReleasedQuantity = oDocStockTransfer_Lines.RemainingOpenQuantity
+                                        oPickLists.Lines.Add()
+                                    Else
+                                        oobjGlobal.SBOApp.StatusBar.SetText("Liberar Picking de la Sol. de Traslado Nº: " & sDocNum & ". Línea " & oDocStockTransfer_Lines.LineNum & " - Artículo " & oDocStockTransfer_Lines.ItemCode & " con almacén " & oDocStockTransfer_Lines.WarehouseCode & " no se tiene en cuenta.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                    End If
+
                                 Next
 
                                 If oPickLists.Add() <> 0 Then
@@ -2347,14 +2366,17 @@ Public Class EXO_PARRILLA
                             Else
                                 oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra la Sol. de Traslado para liberar Picking con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                             End If
-
+#End Region
                         Case "SDPROV" ' Sol. de dev. de Proveedor
+#Region "Sol. Dev. Proveedor"
                             sSQL = "UPDATE OPRR SET ""U_EXO_STATUSP""='L' WHERE ""DocEntry""=" & sDocEntry
                             If oobjGlobal.refDi.SQL.executeNonQuery(sSQL) = True Then
                                 oobjGlobal.SBOApp.StatusBar.SetText("Picking Liberado Sol. de dev. de Proveedor con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                             Else
                                 oobjGlobal.SBOApp.StatusBar.SetText("Error en Picking Liberado Sol. de dev. de Proveedor con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                             End If
+#End Region
+
                     End Select
                 End If
             Next
@@ -2548,6 +2570,39 @@ Public Class EXO_PARRILLA
                 ComprobarDOCSELLIB = dtDatosNoSelected
             Else
                 ComprobarDOCSELLIB = dtDatos
+            End If
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Function
+    Private Function ComprobarDOCENT(ByRef oForm As SAPbouiCOM.Form, ByVal sTABLA As String, ByRef dtDatos As System.Data.DataTable, ByRef dt As SAPbouiCOM.DataTable) As System.Data.DataTable
+
+        Try
+            Dim dtDatosNoSelected As System.Data.DataTable = New System.Data.DataTable
+            Dim cantSel = 0
+            For iCol As Integer = 0 To dt.Columns.Count - 1
+                dtDatos.Columns.Add(dt.Columns.Item(iCol).Name)
+                dtDatosNoSelected.Columns.Add(dt.Columns.Item(iCol).Name)
+            Next
+
+            For i As Integer = 0 To oForm.DataSources.DataTables.Item(sTABLA).Rows.Count - 1
+
+
+                Dim oRow As DataRow = dtDatosNoSelected.NewRow
+                For iCol As Integer = 0 To dt.Columns.Count - 1
+                    oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(i).Value
+                Next
+                dtDatosNoSelected.Rows.Add(oRow)
+
+            Next
+
+            If (cantSel = 0) Then
+                ComprobarDOCENT = dtDatosNoSelected
+            Else
+                ComprobarDOCENT = dtDatos
             End If
 
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -3093,7 +3148,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='ALBVTA' LEFT JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" INNER JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N' ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " WHERE  T0.""CANCELED"" = 'N' AND T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -3120,7 +3175,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""U_EXO_CLASEE"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='SOLTRA' LEFT JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY""  INNER JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N') ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
                     sSQL &= " WHERE  T0.""U_EXO_TIPO"" = 'ITC' AND T0.""CANCELED"" = 'N' AND T0.""U_EXO_STATUSP""='C' and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -3148,7 +3203,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='DPROV' LEFT JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY""  INNER JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N') ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " WHERE T0.""CANCELED"" = 'N' AND T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -3178,7 +3233,8 @@ Public Class EXO_PARRILLA
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='ALBVTA' LEFT JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" "
+                    sSQL &= " INNER JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N') ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " WHERE T0.""CANCELED"" = 'N' AND T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -3208,8 +3264,8 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""U_EXO_CLASEE"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='SOLTRA' "
-                    sSQL &= " LEFT JOIN ( Select ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" On E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" "
+                    sSQL &= " INNER JOIN ( Select ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N') ""HeadPack"" On E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
                     sSQL &= " WHERE T0.""CANCELED"" = 'N' AND T0.""U_EXO_TIPO"" = 'ITC' AND T0.""U_EXO_STATUSP""='C' and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
@@ -3240,7 +3296,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN OSHP  AG ON AG.""TrnspCode""=T0.""TrnspCode"" "
-                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY"" and TL.""LineNum""=E.""U_EXO_LINNUM"" and E.""U_EXO_ORIGEN""='DPROV' LEFT JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
+                    sSQL &= " LEFT JOIN ""@EXO_LSTEMBL"" E ON TL.""DocEntry""=E.""U_EXO_DOCENTRY""  INNER JOIN ( SELECT ""DocEntry"", ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""Canceled""='N' ) ""HeadPack"" ON E.""DocEntry"" = ""HeadPack"".""DocEntry"" "
                     sSQL &= " WHERE T0.""CANCELED"" = 'N' AND T0.""U_EXO_STATUSP""='C' and (T0.""U_EXO_ESTPAC""='Pendiente' or T0.""U_EXO_ESTPAC""='En curso') and (IFNULL(""HeadPack"".""Status"",'') = 'O' OR IFNULL(""HeadPack"".""Status"",'') = '') "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -3307,8 +3363,11 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN PDN1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
                     sSQL &= " Left JOIN OPDN T4 On T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
-                    sSQL &= " WHERE ((/*TL.""LineStatus""='O' and*/ T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
+                    sSQL &= " LEFT JOIN WTQ1 T5 ON T5.""BaseEntry""=T3.""DocEntry"" and T5.""BaseType""=T4.""ObjType"" "
+                    sSQL &= " LEFT JOIN OWTQ T6 ON T5.""DocEntry""=T6.""DocEntry"" AND T6.""CANCELED"" = 'N' "
+                    sSQL &= " WHERE (((TL.""LineStatus""='O' or (TL.""LineStatus""='C' and IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') <> '')) and T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
                     sSQL &= " ) "
+                    sSQL &= " and IFNULL(T4.""DocStatus"",'O')='O' and IFNULL(T6.""DocStatus"",'O')='O' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
@@ -3404,9 +3463,12 @@ Public Class EXO_PARRILLA
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
                     sSQL &= " LEFT JOIN OUBR T2 ON T1.""U_EXO_DELE""=T2.""Code"" "
                     sSQL &= " LEFT JOIN PDN1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
-                    sSQL &= " Left JOIN OPDN T4 ON T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
-                    sSQL &= " WHERE ((/*TL.""LineStatus""='O' and*/ T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
+                    sSQL &= " Left JOIN OPDN T4 On T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
+                    sSQL &= " LEFT JOIN WTQ1 T5 ON T5.""BaseEntry""=T3.""DocEntry"" and T5.""BaseType""=T4.""ObjType"" "
+                    sSQL &= " LEFT JOIN OWTQ T6 ON T5.""DocEntry""=T6.""DocEntry"" AND T6.""CANCELED"" = 'N' "
+                    sSQL &= " WHERE (((TL.""LineStatus""='O' or (TL.""LineStatus""='C' and IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') <> '')) and T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
                     sSQL &= " ) "
+                    sSQL &= " and IFNULL(T4.""DocStatus"",'O')='O' and IFNULL(T6.""DocStatus"",'O')='O' "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
                     End If
@@ -3518,8 +3580,8 @@ Public Class EXO_PARRILLA
             oform.Freeze(True)
 
             Dim grid = CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid)
-            For i = 0 To Grid.Columns.Count - 1
-                Grid.Columns.Item(i).TitleObject.Sortable = True
+            For i = 0 To grid.Columns.Count - 1
+                grid.Columns.Item(i).TitleObject.Sortable = True
             Next
 
             For i = 0 To 12
@@ -3700,8 +3762,8 @@ Public Class EXO_PARRILLA
             oColumnChk.Editable = True
             oColumnChk.Width = 30
 
-            For i = 0 To Grid.Columns.Count - 1
-                Grid.Columns.Item(i).TitleObject.Sortable = True
+            For i = 0 To grid.Columns.Count - 1
+                grid.Columns.Item(i).TitleObject.Sortable = True
             Next
 
             For i = 0 To 13
@@ -3806,7 +3868,7 @@ Public Class EXO_PARRILLA
             oColumnChk.Width = 30
 
             For i = 0 To grid.Columns.Count - 1
-                grid.Columns.Item(i).TitleObject.Sortable = true
+                grid.Columns.Item(i).TitleObject.Sortable = True
             Next
 
             For i = 0 To 11
@@ -4005,10 +4067,15 @@ Public Class EXO_PARRILLA
             For i = 0 To grid.Columns.Count - 1
                 CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item(i).Editable = False
             Next
+            If grid.Columns.Count > 1 Then
+                grid.Columns.Item("Interno Pedido").Visible = False
+                grid.Columns.Item("Interno Entrada").Visible = False
+                grid.Columns.Item("Interno Emb").Visible = False
+                grid.Columns.Item("Cant.").RightJustified = True
+                grid.Columns.Item("Cant. Reubic.").RightJustified = True
+                grid.Columns.Item("Cant. Pdte.").RightJustified = True
+            End If
 
-            grid.Columns.Item("Interno Pedido").Visible = False
-            grid.Columns.Item("Interno Entrada").Visible = False
-            grid.Columns.Item("Interno Emb").Visible = False
             CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
 
         Catch exCOM As System.Runtime.InteropServices.COMException
