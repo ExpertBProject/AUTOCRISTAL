@@ -2327,7 +2327,7 @@ Public Class EXO_PARRILLA
                                 oPickLists = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPickLists), SAPbobsCOM.PickLists)
 
                                 For J = 0 To oDocStockTransfer_Lines.Count - 1
-                                    If oDocStockTransfer_Lines.WarehouseCode = sAlm Then
+                                    If oDocStockTransfer_Lines.FromWarehouseCode = sAlm Then
                                         oDocStockTransfer_Lines.SetCurrentLine(J)
                                         oPickLists.Lines.BaseObjectType = "1250000001"
                                         oPickLists.Lines.OrderEntry = oDocStockTransfer.DocEntry
