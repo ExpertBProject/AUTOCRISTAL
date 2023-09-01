@@ -2589,14 +2589,21 @@ Public Class EXO_PARRILLA
             Next
 
             For i As Integer = 0 To oForm.DataSources.DataTables.Item(sTABLA).Rows.Count - 1
-
-
-                Dim oRow As DataRow = dtDatosNoSelected.NewRow
-                For iCol As Integer = 0 To dt.Columns.Count - 1
-                    oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(i).Value
-                Next
-                dtDatosNoSelected.Rows.Add(oRow)
-
+                If oForm.DataSources.DataTables.Item(sTABLA).GetValue("Sel", i).ToString = "Y" Then
+                    'Añadimos los registros
+                    Dim oRow As DataRow = dtDatos.NewRow
+                    For iCol As Integer = 0 To dt.Columns.Count - 1
+                        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(i).Value
+                    Next
+                    dtDatos.Rows.Add(oRow)
+                    cantSel += cantSel + 1
+                Else
+                    Dim oRow As DataRow = dtDatosNoSelected.NewRow
+                    For iCol As Integer = 0 To dt.Columns.Count - 1
+                        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(i).Value
+                    Next
+                    dtDatosNoSelected.Rows.Add(oRow)
+                End If
             Next
 
             If (cantSel = 0) Then
@@ -3353,7 +3360,7 @@ Public Class EXO_PARRILLA
                 Case "-"
                     sSQL = "SELECT CAST('' as nVARCHAR(50)) ""T. ENTRADA"", CAST('' as nVARCHAR(50)) ""DELEGACIÓN"", CAST('' as nVARCHAR(50)) ""FECHA CREACION"", CAST('' as nVARCHAR(50)) ""FECHA ENTREGA"", CAST('' as nVARCHAR(50)) ""Nº INTERNO"", CAST('' as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST('' as nVARCHAR(50)) ""CÓDIGO"",  CAST('' as nVARCHAR(150))	""EMPRESA"", CAST('' as nVARCHAR(50)) ""ESTADO"", CAST('' as nVARCHAR(50)) ""DOC. ENTRADA"", "
-                    sSQL &= " CAST('' as nVARCHAR(50)) ""ID DOC. ENTRADA"", CAST('' AS NVARCHAR(50)) ""USR. REUBICACION"""
+                    sSQL &= " CAST('' as nVARCHAR(50)) ""ID DOC. ENTRADA"", CAST('' AS NVARCHAR(50)) ""USR. REUBICACION"" , 'N' ""Sel"" "
                     sSQL &= "FROM DUMMY "
                 Case "TODOS"
 #Region "Todos"
@@ -3361,7 +3368,9 @@ Public Class EXO_PARRILLA
                     sSQL &= " SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T4.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"","
+                    sSQL &= " T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"",  "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= " FROM OPOR T0 "
                     sSQL &= " LEFT JOIN POR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
@@ -3393,7 +3402,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "SELECT DISTINCT CAST('STR' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"", "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= "FROM OWTQ T0 "
                     sSQL &= " LEFT JOIN WTQ1 TL On TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 On T0.""CardCode""=T1.""CardCode"" "
@@ -3402,8 +3412,8 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN ""EXO_SITUACION"" S On S.""DocEntry""=T0.""DocEntry"" And S.""ObjType""=T0.""ObjType"" "
                     sSQL &= " LEFT JOIN ""EXO_A"" A On A.""CardCode""=T0.""CardCode"" And A.""WhsCode""=TL.""WhsCode"" "
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
-                    sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
+                    sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" And T0.""ObjType""=T3.""BaseType"" "
+                    sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" And T4.""CANCELED"" = 'N' "
                     sSQL &= " WHERE T0.""U_EXO_TIPO"" = 'ITC' and (T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "' )"
                     sSQL &= " And IFNULL(T4.""DocStatus"",'O')<>'C' "
                     sSQL &= " And (((TL.""LineStatus""='O' and T0.""U_EXO_TIPO""='ITC') OR (TL.""LineStatus""='C' and IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'')<>'')) ) "
@@ -3427,7 +3437,8 @@ Public Class EXO_PARRILLA
                     sSQL &= "SELECT DISTINCT CAST('SDE' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"",  "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= "FROM ORRR T0 "
                     sSQL &= " LEFT JOIN RRR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
@@ -3463,7 +3474,8 @@ Public Class EXO_PARRILLA
                     sSQL = "SELECT DISTINCT CAST('PED' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T4.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"",  "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= " FROM OPOR T0 "
                     sSQL &= " LEFT JOIN POR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " INNER JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
@@ -3498,7 +3510,8 @@ Public Class EXO_PARRILLA
                     sSQL = "SELECT DISTINCT CAST('STR' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"",  "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= "FROM OWTQ T0 "
                     sSQL &= " LEFT JOIN WTQ1 TL On TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 On T0.""CardCode""=T1.""CardCode"" "
@@ -3536,7 +3549,8 @@ Public Class EXO_PARRILLA
                     sSQL = "SELECT DISTINCT CAST('SDE' as nVARCHAR(50)) ""T. ENTRADA"", CAST(IFNULL(T2.""Name"",' ') as nVARCHAR(50)) ""DELEGACIÓN"", T0.""DocDate"" AS ""FECHA CREACION"", T0.""DocDueDate"" AS ""FECHA ENTREGA"", CAST(T0.""DocEntry"" as nVARCHAR(50)) ""Nº INTERNO"", CAST(T0.""DocNum"" as nVARCHAR(50)) ""Nº DOCUMENTO"", "
                     sSQL &= " CAST(T0.""CardCode"" as nVARCHAR(50)) ""CÓDIGO"",  CAST(T0.""CardName"" as nVARCHAR(150))	""EMPRESA"", "
                     sSQL &= " CAST((CASE WHEN T0.""U_EXO_ESTPAC""='Completado' THEN 'Completado' WHEN T0.""DocStatus""='O' THEN 'Pendiente' WHEN T0.""DocStatus""='C' THEN 'Recibido' ELSE 'En curso' END ) as nVARCHAR(50)) ""ESTADO"", "
-                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion""  "
+                    sSQL &= " CAST(IFNULL(CAST(T4.""DocNum"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""DOC. ENTRADA"",  CAST(IFNULL(CAST(T4.""DocEntry"" as NVARCHAR(50)),'') as nVARCHAR(50)) ""ID DOC. ENTRADA"", T4.""U_EXO_PACKING"" AS ""Packing"", (SELECT Distinct STRING_AGG(IFNULL(""USER_CODE"",''),'-') FROM (SELECT X1.""USER_CODE"" from ""@EXO_PACKINGL"" X0 Left join OUSR X1 ON X1.""USERID"" = X0.""U_EXO_CODUSU"" Where X0.""Code"" = T4.""U_EXO_PACKING"" Group by X1.""USER_CODE"") Y0) AS ""Usuario Reubicacion"",  "
+                    sSQL &= " 'N' ""Sel"" "
                     sSQL &= "FROM ORRR T0 "
                     sSQL &= " LEFT JOIN RRR1 TL ON TL.""DocEntry""=T0.""DocEntry"" "
                     sSQL &= " LEFT JOIN OCRD T1 ON T0.""CardCode""=T1.""CardCode"" "
@@ -3592,7 +3606,7 @@ Public Class EXO_PARRILLA
                 grid.Columns.Item(i).TitleObject.Sortable = True
             Next
 
-            For i = 0 To 12
+            For i = 0 To 13
                 Select Case i
                     Case 0
                         CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
@@ -3629,6 +3643,11 @@ Public Class EXO_PARRILLA
                         CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False
+                    Case 13
+                        CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
+                        oColumnChk = CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.CheckBoxColumn)
+                        oColumnChk.Editable = True
+                        oColumnChk.Width = 30
                     Case Else
                         CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
@@ -3731,7 +3750,7 @@ Public Class EXO_PARRILLA
                         oColumnCb = CType(CType(oform.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
                         oColumnCb.ValidValues.Add("PE", "Pendiente de expedición")
                         oColumnCb.ValidValues.Add("EE", "En Expedición")
-                        oColumnCb.ValidValues.Add("EC", "Expedición cerrada")
+                        oColumnCb.ValidValues.Add("EC", "Expedición completa")
                         oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
                         oColumnCb.Editable = False
                     Case Else
