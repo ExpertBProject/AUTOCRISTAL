@@ -1093,17 +1093,24 @@ Public Class EXO_PARRILLA
                         Select Case sTipo
                             Case "PED" 'Albaranes de ventas
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_PurchaseOrder, "", nroInt)
-                            Case "SDE" 'Sol de traslado
+                            Case "STR" 'Sol de traslado
+                                objGlobal.SBOApp.OpenForm("1250000001", "", nroInt)
+                            Case "SDE" 'Sol de Devolución de cliente
                                 objGlobal.SBOApp.OpenForm("234000031", "", nroInt)
-                            Case "STR" 'Devolución de proveedor
-                                objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfers, "", nroInt)
                         End Select
-                        Return False
+                        'Return False
                     ElseIf (pVal.ColUID = "DOC. ENTRADA") Then
                         Dim nroIntDevol = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("ID DOC. ENTRADA", grid.GetDataTableRowIndex(pVal.Row)).ToString
-                        objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "", nroIntDevol)
-
-                        Return False
+                        'objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "", nroIntDevol)
+                        Select Case sTipo
+                            Case "PED" 'Albaranes de ventas
+                                objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "", nroIntDevol)
+                            Case "STR" 'Sol de traslado
+                                objGlobal.SBOApp.OpenForm("67", "", nroInt)
+                            Case "SDE" 'Sol de Devolución de cliente
+                                objGlobal.SBOApp.OpenForm("16", "", nroInt)
+                        End Select
+                        'Return False
                     Else
                         Return True
                     End If
@@ -4099,7 +4106,7 @@ Public Class EXO_PARRILLA
                 grid.Columns.Item("Interno Entrada").Visible = False
                 grid.Columns.Item("Interno Emb").Visible = False
                 grid.Columns.Item("Cant.").RightJustified = True
-                grid.Columns.Item("Cant. Reubic.").RightJustified = True
+                grid.Columns.Item("Cant. Recibida.").RightJustified = True
                 grid.Columns.Item("Cant. Pdte.").RightJustified = True
             End If
 
