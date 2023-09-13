@@ -493,9 +493,8 @@ Public Class EXO_PARRILLA
                     Dim responseDataSel = ComprobarDOCENT(oFormParrilla, "DTE", dtDatos, dt, "PED")
                     sSQL = "SELECT * FROM ("
 #Region "Pedidos"
-                    If responseDataSel.Rows.Count > 0 Then
-                        sSQL &= "(SELECT
-	                        X4.""DocEntry"" AS ""Interno Pedido"", X4.""DocNum"" AS ""Nº Pedido"",	                       
+                    sSQL &= "(SELECT 'Pedido' ""Tipo"",
+	                        X4.""DocEntry"" AS ""Nº Interno"", X4.""DocNum"" AS ""Nº Documento"",	                       
 	                        X0.""DocEntry"" AS ""Interno Entrada"", X0.""DocNum"" AS ""Nº Entrada"",
 	                         0 AS ""Interno Emb"",
 	                        IFNULL(T0.""Code"", 'Sin PackingList') AS ""Nº Embalaje"",   IFNULL(T1.""U_EXO_IDBULTO"",'Sin Bulto') AS ""Id Bulto"",
@@ -516,6 +515,8 @@ Public Class EXO_PARRILLA
                                            GROUP by  T0.""U_EXO_PACKING"", T1.""ItemCode"", T1.""U_EXO_LOT_ID"") T
                                   ON  T.""U_EXO_PACKING"" = T0.""Code"" and  T.""ItemCode"" = T1.""U_EXO_CODE"" AND T.""U_EXO_LOT_ID"" = T1.""U_EXO_IDBULTO""  
                         WHERE X4.""DocEntry"" IN   "
+                    If responseDataSel.Rows.Count > 0 Then
+
 
                         sSQL &= "("
                         Dim bComa As Boolean = False
@@ -536,13 +537,10 @@ Public Class EXO_PARRILLA
                     dt = Nothing : dt = oFormParrilla.DataSources.DataTables.Item("DTE")
                     dtDatos = New System.Data.DataTable
                     Dim responseDataSel2 = ComprobarDOCENT(oFormParrilla, "DTE", dtDatos, dt, "SDE")
-                    If responseDataSel2.Rows.Count > 0 Then
-                        If responseDataSel.Rows.Count > 0 Then
-                            sSQL &= " UNION ALL "
-                        End If
 
-                        sSQL &= "(SELECT
-	                        X4.""DocEntry"" AS ""Interno Pedido"", X4.""DocNum"" AS ""Nº Pedido"",	                       
+                    sSQL &= "UNION ALL
+                            (SELECT 'Sol. Devolución' ""Tipo"",
+	                        X4.""DocEntry"" AS ""Nº Interno"", X4.""DocNum"" AS ""Nº Documento"",	                       
 	                        X0.""DocEntry"" AS ""Interno Entrada"", X0.""DocNum"" AS ""Nº Entrada"",
 	                         0 AS ""Interno Emb"",
 	                        IFNULL(T0.""Code"", 'Sin PackingList') AS ""Nº Embalaje"",   IFNULL(T1.""U_EXO_IDBULTO"",'Sin Bulto') AS ""Id Bulto"",
@@ -564,34 +562,29 @@ Public Class EXO_PARRILLA
                                   ON  T.""U_EXO_PACKING"" = T0.""Code"" and  T.""ItemCode"" = T1.""U_EXO_CODE"" AND T.""U_EXO_LOT_ID"" = T1.""U_EXO_IDBULTO""  
                         WHERE X4.""DocEntry"" IN   "
 
-                        If responseDataSel2.Rows.Count > 0 Then
-                            sSQL &= "("
-                            Dim bComa As Boolean = False
-                            For Each MiDataRow As DataRow In responseDataSel.Rows
-                                If bComa = True Then
-                                    sSQL &= ", "
-                                Else
-                                    bComa = True
-                                End If
-                                sSQL &= "'" & MiDataRow("Nº INTERNO").ToString & "' "
-                            Next
-                            sSQL &= ") ORDER BY 1, 2) "
-                        Else
-                            sSQL &= " (-1) )"
-                        End If
+                    If responseDataSel2.Rows.Count > 0 Then
+                        sSQL &= "("
+                        Dim bComa As Boolean = False
+                        For Each MiDataRow As DataRow In responseDataSel2.Rows
+                            If bComa = True Then
+                                sSQL &= ", "
+                            Else
+                                bComa = True
+                            End If
+                            sSQL &= "'" & MiDataRow("Nº INTERNO").ToString & "' "
+                        Next
+                        sSQL &= ") ORDER BY 1, 2) "
+                    Else
+                        sSQL &= " (-1) )"
                     End If
 #End Region
 #Region "Solicitud"
                     dt = Nothing : dt = oFormParrilla.DataSources.DataTables.Item("DTE")
                     dtDatos = New System.Data.DataTable
                     Dim responseDataSel3 = ComprobarDOCENT(oFormParrilla, "DTE", dtDatos, dt, "STR")
-                    If responseDataSel3.Rows.Count > 0 Then
-                        If responseDataSel.Rows.Count > 0 Or responseDataSel2.Rows.Count > 0 Then
-                            sSQL &= " UNION ALL "
-                        End If
-
-                        sSQL &= "(SELECT
-	                        X4.""DocEntry"" AS ""Interno Pedido"", X4.""DocNum"" AS ""Nº Pedido"",	                       
+                    sSQL &= " UNION ALL
+                            (SELECT 'Sol. Traslado' ""Tipo"",
+	                        X4.""DocEntry"" AS ""Nº Interno"", X4.""DocNum"" AS ""Nº Documento"",	                       
 	                        X0.""DocEntry"" AS ""Interno Entrada"", X0.""DocNum"" AS ""Nº Entrada"",
 	                         0 AS ""Interno Emb"",
 	                        IFNULL(T0.""Code"", 'Sin PackingList') AS ""Nº Embalaje"",   IFNULL(T1.""U_EXO_IDBULTO"",'Sin Bulto') AS ""Id Bulto"",
@@ -601,7 +594,7 @@ Public Class EXO_PARRILLA
 	                        CASE WHEN (X1.""DocEntry"" is null) THEN 0 ELSE  (IFNULL(T1.""U_EXO_CANT"",0) - IFNULL(T.""Cant_REUBICADA"" ,0) ) END AS ""Pdte. Reubicar""                  
                         FROM OWTQ X4
                         LEFT JOIN WTQ1 X3 ON X4.""DocEntry"" = X3.""DocEntry"" 
-	                    LEFT JOIN ""@EXO_PACKING""  T0 On T0.""U_EXO_OBJTYPE""='125000001' and T0.""Code"" = X4.""U_EXO_PACKING""
+	                    LEFT JOIN ""@EXO_PACKING""  T0 On T0.""U_EXO_OBJTYPE""='1250000001' and T0.""Code"" = X4.""U_EXO_PACKING""
 	                    Left Join ""@EXO_PACKINGL"" T1 On T0.""Code"" = T1.""Code"" And T1.""U_EXO_LINEA"" = X3.""LineNum"" 
 	                    left JOIN OWTR X0 ON X0.""U_EXO_PACKING"" = T0.""Code"" and X0.""CANCELED"" = 'N'      
                         LEFT JOIN WTR1 X1 ON X1.""DocEntry"" = X0.""DocEntry"" AND X1.""BaseLine"" = X3.""LineNum"" AND X1.""BaseType"" = X3.""ObjType""
@@ -613,22 +606,23 @@ Public Class EXO_PARRILLA
                                   ON  T.""U_EXO_PACKING"" = T0.""Code"" and  T.""ItemCode"" = T1.""U_EXO_CODE"" AND T.""U_EXO_LOT_ID"" = T1.""U_EXO_IDBULTO""  
                         WHERE X4.""DocEntry"" IN   "
 
-                        If responseDataSel3.Rows.Count > 0 Then
-                            sSQL &= "("
-                            Dim bComa As Boolean = False
-                            For Each MiDataRow As DataRow In responseDataSel.Rows
-                                If bComa = True Then
-                                    sSQL &= ", "
-                                Else
-                                    bComa = True
-                                End If
-                                sSQL &= "'" & MiDataRow("Nº INTERNO").ToString & "' "
-                            Next
-                            sSQL &= ") ORDER BY 1, 2) "
-                        Else
-                            sSQL &= " (-1) ) "
-                        End If
+
+                    If responseDataSel3.Rows.Count > 0 Then
+                        sSQL &= "("
+                        Dim bComa As Boolean = False
+                        For Each MiDataRow As DataRow In responseDataSel3.Rows
+                            If bComa = True Then
+                                sSQL &= ", "
+                            Else
+                                bComa = True
+                            End If
+                            sSQL &= "'" & MiDataRow("Nº INTERNO").ToString & "' "
+                        Next
+                        sSQL &= ") ORDER BY 1, 2) "
+                    Else
+                        sSQL &= " (-1) ) "
                     End If
+
 #End Region
 
 
@@ -4209,7 +4203,13 @@ Public Class EXO_PARRILLA
                 CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item(i).Editable = False
             Next
             If grid.Columns.Count > 1 Then
-                grid.Columns.Item("Interno Pedido").Visible = False
+                grid.Columns.Item("Nº Interno").Visible = False
+
+                CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item(2).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                oColumnTxt = CType(CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item(2), SAPbouiCOM.EditTextColumn)
+                oColumnTxt.LinkedObjectType = "22"
+                oColumnTxt.Editable = False
+
                 grid.Columns.Item("Interno Entrada").Visible = False
                 grid.Columns.Item("Interno Emb").Visible = False
                 grid.Columns.Item("Pdte. Recibir").RightJustified = True
