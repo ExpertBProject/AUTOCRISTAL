@@ -61,7 +61,9 @@ Public Class EXO_PNEC
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
 
                                 Case SAPbouiCOM.BoEventTypes.et_MATRIX_LINK_PRESSED
-
+                                    If EventHandler_MATRIX_LINK_PRESSED(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_DOUBLE_CLICK
 
                             End Select
@@ -108,6 +110,35 @@ Public Class EXO_PNEC
         Catch ex As Exception
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
+        End Try
+    End Function
+    Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
+
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
+        Dim sTipo As String = ""
+        EventHandler_MATRIX_LINK_PRESSED = False
+
+        Try
+            oForm = Me.objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+
+            Select Case pVal.ItemUID
+                Case "grd_DOC"
+                    Dim gridData = CType(oForm.Items.Item("grd_DOC").Specific, Grid)
+                    If pVal.Row = 0 Then
+                        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
+                    Else
+                        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "112"
+                    End If
+            End Select
+
+            EventHandler_MATRIX_LINK_PRESSED = True
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
     Private Function EventHandler_FORM_RESIZE_After(ByVal pVal As ItemEvent) As Boolean
@@ -1033,7 +1064,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             Dim columns() As String = {"AL0", "AL7", "AL8", "AL14", "AL16"}
             Dim gridData = CType(oForm.Items.Item("grd_DOC").Specific, Grid)
             Dim qwewq = gridData.DataTable
-            Dim tupleResult = New List(Of Tuple(Of Integer, String))
+            Dim tupleResult = New List(Of Tuple(Of Integer, String, String))
             Dim dtResp = oForm.DataSources.DataTables.Item("DT_Res")
             dtResp.Rows.Clear()
 
@@ -1115,7 +1146,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
                     End If
 
-                    tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                    tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, objGlobal.compañia.GetNewObjectKey()))
                 Next
 
 #End Region
@@ -1206,14 +1237,16 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
                     Dim responseTrasl = solTras.Add()
                     Dim msgRespTras = String.Empty
-
+                    Dim sDocEntry As String = ""
                     If (responseTrasl = 0) Then
-                        msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                        sDocEntry = objGlobal.compañia.GetNewObjectKey()
+                        msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {sDocEntry}"
                     Else
+                        sDocEntry = ""
                         msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
                     End If
 
-                    tupleResult.Add(New Tuple(Of Integer, String)(responseTrasl, msgRespTras))
+                    tupleResult.Add(New Tuple(Of Integer, String, String)(responseTrasl, msgRespTras, sDocEntry))
                 Next
 
 #End Region
@@ -1323,13 +1356,15 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
                             Dim responsePedComp = solPedComp.Add()
                             Dim msgResp = String.Empty
+                            Dim sDocEntry As String = ""
                             If (responsePedComp = 0) Then
-                                msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                                msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
                             Else
                                 msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                                sDocEntry = ""
                             End If
 
-                            tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                            tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, sDocEntry))
                         Next
                     Next
 #End Region
@@ -1347,7 +1382,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         End If
                         solPedComp.RequriedDate = docDatePedHead
                         solPedComp.CardCode = prov
-
+                        Dim bprimeralinea As Boolean = True
                         For x As Integer = 0 To rowsGrouped(i).Count - 1
                             Dim fechaPrev = CType(rowsGrouped(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
                             Dim itemCode = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
@@ -1363,6 +1398,11 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                 DateTime.ParseExact(fechaPrev, "yyyyMMdd", CultureInfo.InvariantCulture)
                             End If
 
+                            If bprimeralinea Then
+                                bprimeralinea = False
+                            Else
+                                solPedComp.Lines.Add()
+                            End If
                             solPedComp.Lines.ItemCode = itemCode
                             solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
                             solPedComp.Lines.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
@@ -1376,13 +1416,16 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
                         Dim responsePedComp = solPedComp.Add()
                         Dim msgResp = String.Empty
+                        Dim sDocEntry As String = ""
                         If (responsePedComp = 0) Then
-                            msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                            sDocEntry = objGlobal.compañia.GetNewObjectKey()
+                            msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
                         Else
                             msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                            sDocEntry = ""
                         End If
 
-                        tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                        tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, sDocEntry))
                     Next
 #End Region
                     If (shouldCreateTransfer = 1) Then
@@ -1447,11 +1490,11 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                         If (isValueMoreThanZero) Then
                                             Dim line = New MembersTransferRequest
                                             line.ItemCode = itemCode
-                                            line.FromWarehouseCode = columns(j)
-                                            line.WarehouseCode = whsDef
-                                            line.Quantity = qty
+                                        line.FromWarehouseCode = whsDef
+                                        line.WarehouseCode = columns(j)
+                                        line.Quantity = qty
 
-                                            If (Not trasDict.ContainsKey(columns(j) & "-" & whsDef)) Then
+                                        If (Not trasDict.ContainsKey(columns(j) & "-" & whsDef)) Then
                                                 Dim lst = New List(Of MembersTransferRequest)
                                                 lst.Add(line)
                                                 trasDict.Add(columns(j) & "-" & whsDef, lst)
@@ -1483,14 +1526,16 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
                             Dim responseTrasl = solTras.Add()
                             Dim msgRespTras = String.Empty
-
+                            Dim sDocEntry As String = ""
                             If (responseTrasl = 0) Then
-                                msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                                sDocEntry = objGlobal.compañia.GetNewObjectKey()
+                                msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {sDocEntry}"
                             Else
+                                sDocEntry = ""
                                 msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
                             End If
 
-                            tupleResult.Add(New Tuple(Of Integer, String)(responseTrasl, msgRespTras))
+                            tupleResult.Add(New Tuple(Of Integer, String, String)(responseTrasl, msgRespTras, sDocEntry))
                         Next
 
 #End Region
@@ -1504,6 +1549,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                 dtResp.Rows.Add()
                 dtResp.SetValue(0, i, tupleResult(i).Item1.ToString)
                 dtResp.SetValue(1, i, tupleResult(i).Item2.ToString)
+                dtResp.SetValue(2, i, tupleResult(i).Item3.ToString)
             Next
 
             For i As Integer = 0 To gridData.Columns.Count - 1
@@ -1512,6 +1558,9 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
             gridData.Columns.Item(0).TitleObject.Caption = "Codigo de Respuesta"
             gridData.Columns.Item(1).TitleObject.Caption = "Mensaje"
+            gridData.Columns.Item(2).TitleObject.Caption = "Documento"
+            CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
+
             oForm.Items.Item("btnGen").Enabled = False
             Return 0
         Finally
@@ -1520,7 +1569,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
     End Function
     Private Function GetPrice(ByVal cardCode As String, ByVal itemCode As String, ByVal amount As Single, ByVal refDate As Date) As Double
         Try
-            Dim errResult As String
+            Dim errResult As String = ""
             Dim vObj = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoBridge), SAPbobsCOM.SBObob)
             Dim rs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
             rs = vObj.GetItemPrice(cardCode, itemCode, amount, refDate)
