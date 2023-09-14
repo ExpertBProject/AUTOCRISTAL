@@ -4,20 +4,20 @@ Imports EXO_UIAPI.EXO_UIAPI
 Public Class INICIO
     Inherits EXO_UIAPI.EXO_DLLBase
 #Region "Variables Globales"
-    Public Shared _WidthALM As Integer = 251
+    Public Shared _WidthALM As Integer = 211
     Public Shared _HeightALM As Integer = 149
 
-    Public Shared _WidthGRU As Integer = 248
-    Public Shared _HeightGRU As Integer = 149
+    Public Shared _WidthGRU As Integer = 208
+    Public Shared _HeightGRU As Integer = 131
 
     Public Shared _WidthCLAS As Integer = 110
-    Public Shared _HeightCLAS As Integer = 149
+    Public Shared _HeightCLAS As Integer = 131
 
-    Public Shared _WidthCOMP As Integer = 265
-    Public Shared _HeightCOMP As Integer = 149
+    Public Shared _WidthCOMP As Integer = 225
+    Public Shared _HeightCOMP As Integer = 131
 
-    Public Shared _WidthVENT As Integer = 295
-    Public Shared _HeightVENT As Integer = 149
+    Public Shared _WidthVENT As Integer = 225
+    Public Shared _HeightVENT As Integer = 131
 
     Public Shared _dtDatos As New System.Data.DataTable
 #End Region
@@ -29,6 +29,7 @@ Public Class INICIO
         End If
         cargamenu()
     End Sub
+
     Private Sub cargaDatos()
         Dim sXML As String = ""
         Dim res As String = ""
@@ -127,6 +128,7 @@ Public Class INICIO
             End If
         End If
     End Sub
+
     Private Sub cargamenu()
         Dim Path As String = ""
         Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
@@ -171,6 +173,7 @@ Public Class INICIO
             Clase = Nothing
         End Try
     End Function
+
     Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim Clase As Object = Nothing
         Try

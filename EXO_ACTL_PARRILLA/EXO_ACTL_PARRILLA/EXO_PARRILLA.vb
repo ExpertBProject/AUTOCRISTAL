@@ -1137,10 +1137,13 @@ Public Class EXO_PARRILLA
                         Select Case objType
                             Case "17" 'Albaranes de ventas
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_Order, "", nroInter)
+                                Return False
                             Case "1250000001" 'Sol de traslado
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInter)
+                                Return False
                             Case "234000032" 'Devolución de proveedor
                                 objGlobal.SBOApp.OpenForm("234000032", "", nroInter)
+                                Return False
                         End Select
                     ElseIf (pVal.ColUID = "Picking" Or pVal.ColUID = "CÓDIGO") Then
                         Return True
@@ -1155,10 +1158,13 @@ Public Class EXO_PARRILLA
                         Select Case sTipo
                             Case "PEDVTA" 'Albaranes de ventas
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_Order, "", nroInter)
+                                Return False
                             Case "SOLTRA" 'Sol de traslado
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInter)
+                                Return False
                             Case "SDPROV" 'Devolución de proveedor
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReturns, "", nroInter)
+                                Return False
                         End Select
                     ElseIf (pVal.ColUID = "Picking") Then
                         Return True
@@ -1173,10 +1179,13 @@ Public Class EXO_PARRILLA
                         Select Case sTipo
                             Case "ALBVTA" 'Albaranes de ventas
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_DeliveryNotes, "", nroInt)
+                                Return False
                             Case "SDPROV" 'Sol de traslado
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReturns, "", nroInt)
+                                Return False
                             Case "SOLTRA" 'Devolución de proveedor
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInt)
+                                Return False
                         End Select
                         Return False
                     Else
@@ -1191,22 +1200,29 @@ Public Class EXO_PARRILLA
                         Select Case sTipo
                             Case "PED" 'Albaranes de ventas
                                 objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_PurchaseOrder, "", nroInt)
+                                Return False
                             Case "STR" 'Sol de traslado
                                 objGlobal.SBOApp.OpenForm("1250000001", "", nroInt)
+                                Return False
                             Case "SDE" 'Sol de Devolución de cliente
                                 objGlobal.SBOApp.OpenForm("234000031", "", nroInt)
+                                Return False
                         End Select
                         'Return False
                     ElseIf (pVal.ColUID = "DOC. ENTRADA") Then
                         Dim nroIntDevol = CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).DataTable.GetValue("ID DOC. ENTRADA", grid.GetDataTableRowIndex(pVal.Row)).ToString
                         'objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "", nroIntDevol)
                         Select Case sTipo
-                            Case "PED" 'Albaranes de ventas
-                                objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "", nroIntDevol)
+                            Case "PED" '
+                                objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_GoodsReceiptPO, "17", nroIntDevol)
+                                Return False
                             Case "STR" 'Sol de traslado
-                                objGlobal.SBOApp.OpenForm("67", "", nroInt)
+                                'CType(CType(oForm.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("DOC. ENTRADA"), SAPbouiCOM.EditTextColumn).LinkedObjectType = "67"
+                                objGlobal.SBOApp.OpenForm("67", "", nroIntDevol)
+                                Return False
                             Case "SDE" 'Sol de Devolución de cliente
-                                objGlobal.SBOApp.OpenForm("16", "", nroInt)
+                                objGlobal.SBOApp.OpenForm("16", "", nroIntDevol)
+                                Return False
                         End Select
                         'Return False
                     Else
@@ -1219,10 +1235,13 @@ Public Class EXO_PARRILLA
                     Select Case tipo
                         Case "17" 'Albaranes de ventas
                             objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_Order, "", nroInt)
+                            Return False
                         Case "1250000001" 'Sol de traslado
                             objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInt)
+                            Return False
                         Case "234000032" 'Devolución de proveedor
                             objGlobal.SBOApp.OpenForm("234000032", "", nroInt)
+                            Return False
                     End Select
 
                     Return False
@@ -3520,7 +3539,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN ""EXO_SITUACION"" S On S.""DocEntry""=T0.""DocEntry"" And S.""ObjType""=T0.""ObjType"" "
                     sSQL &= " LEFT JOIN ""EXO_A"" A On A.""CardCode""=T0.""CardCode"" And A.""WhsCode""=TL.""WhsCode"" "
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" And T0.""ObjType""=T3.""BaseType"" "
+                    sSQL &= " LEFT JOIN WTR1 T3 ON TL.""DocEntry""=T3.""BaseEntry"" And T0.""ObjType""=T3.""BaseType""  And TL.""LineNum""=T3.""BaseLine"" "
                     sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" And T4.""CANCELED"" = 'N' "
                     sSQL &= " WHERE T0.""U_EXO_TIPO"" = 'ITC' and (T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "' )"
                     sSQL &= " And IFNULL(T4.""DocStatus"",'O')<>'C' "
@@ -3628,7 +3647,7 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN ""EXO_SITUACION"" S On S.""DocEntry""=T0.""DocEntry"" And S.""ObjType""=T0.""ObjType"" "
                     sSQL &= " LEFT JOIN ""EXO_A"" A On A.""CardCode""=T0.""CardCode"" And A.""WhsCode""=TL.""WhsCode"" "
                     sSQL &= " LEFT JOIN OTER TT On T1.""Territory""=TT.""territryID"" "
-                    sSQL &= " LEFT JOIN WTR1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
+                    sSQL &= " LEFT JOIN WTR1 T3 ON TL.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" And TL.""LineNum""=T3.""BaseLine"" "
                     sSQL &= " Left JOIN OWTR T4 ON T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
                     sSQL &= " WHERE T0.""U_EXO_TIPO"" = 'ITC' and (T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "' )"
                     sSQL &= " And IFNULL(T4.""DocStatus"",'O')<>'C' "
@@ -3765,8 +3784,8 @@ Public Class EXO_PARRILLA
 
             CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("Nº INTERNO").Visible = False
             CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("ID DOC. ENTRADA").Visible = False
-            CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("DOC. ENTRADA"), SAPbouiCOM.EditTextColumn).LinkedObjectType = 20
-            CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("Nº DOCUMENTO"), SAPbouiCOM.EditTextColumn).LinkedObjectType = 17
+            CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("DOC. ENTRADA"), SAPbouiCOM.EditTextColumn).LinkedObjectType = "20"
+            CType(CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("Nº DOCUMENTO"), SAPbouiCOM.EditTextColumn).LinkedObjectType = "17"
             CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).Columns.Item("Packing").TitleObject.Caption = "Packing list"
             CType(oform.Items.Item("grdE").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
 

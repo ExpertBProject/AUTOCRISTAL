@@ -1,7 +1,11 @@
-﻿Imports SAPbouiCOM
+﻿Imports System.Globalization
+Imports System.Runtime.CompilerServices
+Imports SAPbouiCOM
 
 Public Class EXO_PNEC
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
+    Private Shared qtyWhs As Integer
+    Private Shared qtyOrder As Double
 
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
         Me.objGlobal = objG
@@ -53,7 +57,7 @@ Public Class EXO_PNEC
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
 
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
-
+                                    Return EventHandler_VALIDATE_Before(infoEvento)
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
 
                                 Case SAPbouiCOM.BoEventTypes.et_MATRIX_LINK_PRESSED
@@ -151,6 +155,32 @@ Public Class EXO_PNEC
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
+    Private Function EventHandler_VALIDATE_Before(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        EventHandler_VALIDATE_Before = True
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            If pVal.ItemUID = "grd_DOC" Then
+                If pVal.ColUID.ToUpper = "ORDER" Or pVal.ColUID.ToUpper = "AL0" Or pVal.ColUID.ToUpper = "AL7" Or pVal.ColUID.ToUpper = "AL8" Or pVal.ColUID.ToUpper = "AL14" Or pVal.ColUID.ToUpper = "AL16" Then
+                    Dim order = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item(pVal.ColUID).Cells.Item(pVal.Row).Value, Double)
+                    Dim uc = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(pVal.Row).Value, Double)
+
+                    If (order <> 0) Then
+                        If (order Mod uc <> 0) Then
+                            objGlobal.SBOApp.SetStatusBarMessage("El numero ingresado no es multiplo de la UC")
+                            Return False
+                        End If
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            oForm.Freeze(False)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            oForm.Freeze(False)
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
     Private Function EventHandler_VALIDATE_After(ByVal pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
@@ -161,6 +191,7 @@ Public Class EXO_PNEC
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             oForm.Freeze(True)
             If pVal.ItemUID = "grd_DOC" Then
+                Dim gridOrder = CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid)
                 Dim dCant As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(pVal.Row).Value.ToString)
                 Dim sArt As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("EUROCODE").Cells.Item(pVal.Row).Value.ToString
                 Dim sProv As String = oForm.DataSources.UserDataSources.Item("UDPROV").Value
@@ -168,19 +199,26 @@ Public Class EXO_PNEC
                 Dim sCatalogo As String = ""
 
                 If pVal.ColUID = "Prov.Pedido" And pVal.ItemChanged = True Then
-                    If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString = "" Then
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(pVal.Row).Value = 1
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = ""
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(pVal.Row).Value = ""
+                    If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString = "" Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = 1
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = ""
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = ""
+                    End If
+
+                    If (pVal.ItemChanged) Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Sel.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = "Y"
+                        CalculateGridCheckValues(oForm, pVal.Row)
                     End If
                 End If
                 If pVal.ColUID.ToUpper = "ORDER" And pVal.ItemChanged = True Then
+
+                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("OrigOrder").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value
                     If dCant = 0 Then
                         sProv = ""
                     Else
                         If sProv.Trim = "" Then
-                            sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
-                            sProvD = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value.ToString
+                            sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
+                            sProvD = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
                         End If
                     End If
 
@@ -204,10 +242,10 @@ Public Class EXO_PNEC
                         oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(pVal.Row).Value = Nothing
                     End If
 #End Region
-                    If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString = "" Then
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(pVal.Row).Value = sCatalogo
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value = sProv
-                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = sProvD
+                    If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString = "" Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = sCatalogo
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = sProv
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = sProvD
                         CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
                     End If
                     Dim sALM As String = "" : Dim bVarios As Boolean = False
@@ -230,9 +268,35 @@ Public Class EXO_PNEC
                     If bVarios = True Then
                         sALM = ""
                     End If
-                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value = sALM.Replace("'", "")
+
+                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = sALM.Replace("'", "")
+
+                    If (pVal.ItemChanged) Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Sel.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = "Y"
+                        CalculateGridCheckValues(oForm, pVal.Row)
+                    End If
+                ElseIf pVal.ColUID = "AL0" Or pVal.ColUID = "AL7" Or pVal.ColUID = "AL8" Or pVal.ColUID = "AL14" Or pVal.ColUID = "AL16" Then
+                    Dim alOrder = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("OrigOrder").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+                    Dim al0 = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL0").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+                    Dim al7 = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL7").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+                    Dim al8 = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL8").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+                    Dim al14 = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL14").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+                    Dim al16 = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL16").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value, Integer)
+
+                    If (qtyWhs = 1) Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = If((alOrder - (al0 + al7 + al8 + al14 + al16)) < 0, 1, (alOrder - (al0 + al7 + al8 + al14 + al16)))
+                    Else
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("OrigOrder").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = al0 + al7 + al8 + al14 + al16
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = al0 + al7 + al8 + al14 + al16
+                    End If
+
+                    If (pVal.ItemChanged) Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Sel.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = "Y"
+                        CalculateGridCheckValues(oForm, pVal.Row)
+                    End If
+
                 ElseIf pVal.ColUID = "Prov.Pedido" Then
-                    sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
+                    sProv = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
                     If sProv <> "" Then
                         'buscamos el catálogo
                         sSQL = "SELECT ""Substitute"" FROM OSCN WHERE ""CardCode""='" & sProv & "' and ""ItemCode""='" & sArt & "'"
@@ -243,24 +307,29 @@ Public Class EXO_PNEC
                             Dim dTR As Double = objGlobal.refDi.SQL.sqlNumericaB1(sSQL)
                             Dim dFechaPrevista As Date = New Date(Now.Year, Now.Month, Now.Day)
                             dFechaPrevista = dFechaPrevista.AddDays(dTR)
-                            If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(pVal.Row).Value Is Nothing Then
-                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(pVal.Row).Value = dFechaPrevista
+                            If oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value Is Nothing Then
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = dFechaPrevista
                             End If
                         Else
-                            oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(pVal.Row).Value = Nothing
+                            oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Fecha Prev.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = Nothing
                         End If
 #End Region
                     Else
                         sCatalogo = ""
                     End If
-                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(pVal.Row).Value = sCatalogo
+                    oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nº Catálogo").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = sCatalogo
+
+                    If (pVal.ItemChanged) Then
+                        oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Sel.").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value = "Y"
+                        CalculateGridCheckValues(oForm, pVal.Row)
+                    End If
                 End If
                 If pVal.ColUID = "Order" Or pVal.ColUID = "Prov.Pedido" Or pVal.ColUID = "Traslado" Or pVal.ColUID = "Alm.Origen" Or pVal.ColUID = "Alm.Destino" Then
-                    Dim dCantOrder As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(pVal.Row).Value.ToString)
-                    Dim dCantTraslado As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Traslado").Cells.Item(pVal.Row).Value.ToString)
-                    Dim sProveedor As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value.ToString
-                    Dim AlmOrigen As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Origen").Cells.Item(pVal.Row).Value.ToString
-                    Dim AlmDestino As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(pVal.Row).Value.ToString
+                    Dim dCantOrder As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString)
+                    Dim dCantTraslado As Double = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Traslado").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString)
+                    Dim sProveedor As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
+                    Dim AlmOrigen As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Origen").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
+                    Dim AlmDestino As String = oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Alm.Destino").Cells.Item(gridOrder.GetDataTableRowIndex(pVal.Row)).Value.ToString
                     Dim blueBackColor As Integer = RGB(52, 135, 255) 'Convert.ToInt32("c002", 16)
 
                     If dCantOrder > 0 Then
@@ -408,6 +477,7 @@ Public Class EXO_PNEC
                 Return True
             End If
 
+            Dim grid = CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid)
             oCFLEvento = CType(pVal, IChooseFromListEvent)
 
             oDataTable = oCFLEvento.SelectedObjects
@@ -440,12 +510,12 @@ Public Class EXO_PNEC
                                 oForm.DataSources.UserDataSources.Item("UDPROVD").ValueEx = oDataTable.GetValue("CardName", 0).ToString
                                 oForm.DataSources.UserDataSources.Item("UDPROV").ValueEx = oDataTable.GetValue("CardCode", 0).ToString
                                 'Buscamos el tiempo de suministro
-                                ssql = "Select ""U_EXO_TSUM"" FROM OCRD WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "' "
+                                sSQL = "Select ""U_EXO_TSUM"" FROM OCRD WHERE ""CardCode""='" & oDataTable.GetValue("CardCode", 0).ToString & "' "
                                 oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                             ElseIf pVal.ItemUID = "grd_DOC" And pVal.ColUID.Trim = "Prov.Pedido" Then
-                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardName", 0).ToString
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Nombre").Cells.Item(grid.GetDataTableRowIndex(pVal.Row)).Value = oDataTable.GetValue("CardName", 0).ToString.Substring(0, 5)
                                 CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
-                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(pVal.Row).Value = oDataTable.GetValue("CardCode", 0).ToString
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Prov.Pedido").Cells.Item(grid.GetDataTableRowIndex(pVal.Row)).Value = oDataTable.GetValue("CardCode", 0).ToString
 
                                 'Debemos buscar la Unidad de compra
                                 Dim sUnidadCompra As Double = 1
@@ -455,7 +525,17 @@ Public Class EXO_PNEC
                                 If sUnidadCompra = 0 Then
                                     sUnidadCompra = 1
                                 End If
-                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(pVal.Row).Value = sUnidadCompra
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("UC").Cells.Item(grid.GetDataTableRowIndex(pVal.Row)).Value = sUnidadCompra.ToString
+
+                                Dim alPed = CType(oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Pedir").Cells.Item(grid.GetDataTableRowIndex(pVal.Row)).Value, Double)
+
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("Order").Cells.Item(pVal.Row).Value = (Math.Round(alPed / sUnidadCompra) * sUnidadCompra).ToString
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("OrigOrder").Cells.Item(pVal.Row).Value = (Math.Round(alPed / sUnidadCompra) * sUnidadCompra).ToString
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL0").Cells.Item(pVal.Row).Value = 0
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL7").Cells.Item(pVal.Row).Value = 0
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL8").Cells.Item(pVal.Row).Value = 0
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL14").Cells.Item(pVal.Row).Value = 0
+                                oForm.DataSources.DataTables.Item("DT_DOC").Columns.Item("AL16").Cells.Item(pVal.Row).Value = 0
 
                             End If
                         Catch ex As Exception
@@ -532,6 +612,7 @@ Public Class EXO_PNEC
 
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
             sArtD = oForm.DataSources.UserDataSources.Item("UDARTD").ValueEx.ToString
             sArtH = oForm.DataSources.UserDataSources.Item("UDARTH").ValueEx.ToString
 
@@ -567,25 +648,12 @@ Public Class EXO_PNEC
             Select Case pVal.ItemUID
                 Case "grd_DOC"
                     If pVal.ColUID = "Sel." Then
-                        ' Filtra_Sel(objGlobal, oForm, pVal,"")
-                        'objGlobal.SBOApp.StatusBar.SetText("(EXO) - Filtrando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                        'Dim dt As SAPbouiCOM.DataTable = Nothing
-                        'dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
-
-                        'If dt.Columns.Item(0).Cells.Item(pVal.Row).Value.ToString = "Y" Then
-                        '    Dim oRow As DataRow = INICIO._dtDatos.NewRow
-                        '    For iCol As Integer = 0 To 12
-                        '        oRow.Item(dt.Columns.Item(iCol).Name) = dt.Columns.Item(iCol).Cells.Item(pVal.Row).Value
-                        '    Next
-                        '    oRow.Item("ROW") = pVal.Row
-                        '    INICIO._dtDatos.Rows.Add(oRow)
-                        'Else
-                        '    INICIO._dtDatos.Rows.Remove(INICIO._dtDatos.Rows.Find(New Object() {pVal.Row}))
-                        'End If
+                        CalculateGridCheckValues(oForm, pVal.Row)
                     End If
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
 #Region "Comprobar si ha elegido un almacen"
+                        qtyWhs = 0
                         sAlmacenes = ""
                         For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM").Rows.Count - 1
                             If oForm.DataSources.DataTables.Item("DTALM").GetValue("Sel", i).ToString = "Y" Then
@@ -594,7 +662,7 @@ Public Class EXO_PNEC
                                 Else
                                     sAlmacenes &= ", '" & oForm.DataSources.DataTables.Item("DTALM").GetValue("Cod.", i).ToString & "' "
                                 End If
-
+                                qtyWhs = qtyWhs + 1
                             End If
                         Next
                         If sAlmacenes = "" Then
@@ -639,30 +707,150 @@ Public Class EXO_PNEC
                         sATarifas = sTarifas.Split(CType(",", Char))
 #End Region
 
+                        qtyOrder = 0
+                        Dim almDef = oForm.DataSources.UserDataSources.Item("UDALM").Value
                         sMensaje = "Cargando datos..."
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                         oForm.Freeze(True)
-                        sSQLGrid = "Select 'N' ""Sel."", T0.""ItemCode"" ""EUROCODE"", T0.""ItemName"" ""Descripción"",  TG.""ItmsGrpNam"" ""Familia"", 
-IFNULL(((T1.""Ventas_24Q""/12)*2)+(T1.""Ventas_24Q""/12) +((T1.""Ventas_24Q""/12)*((" & sMGS & "/15)+" & sTSUM & ")-(PDTE.""PDTE"")-(STOCK.""Stock"")),0) ""Pedir"",
-IFNULL(OSCN.""U_EXO_UC"",1) ""UC"",
-0.00 ""Order"", ifnull(T7.""Provee_III"",IFNull(T0.""CardCode"", CAST('     ' AS VARCHAR(50))))  ""Prov.Pedido"", ifnull(OCRD.""CardName"",CAST('     ' AS VARCHAR(150))) ""Nombre"", 
-IFNULL(OSCN.""Substitute"",CAST('     ' AS VARCHAR(50))) ""Nº Catálogo"",  CAST('     ' AS DATE) ""Fecha Prev."", 0.00 ""Traslado"", CAST('     ' AS VARCHAR(50)) ""Alm.Origen"", 
-CAST('     ' AS VARCHAR(50)) ""Alm.Destino"", IFNull(T0.""CardCode"", 'S_PROV._Principal') as ""Proveedor Principal"",
-CASE WHEN TX.""24Q"" > 3 then 'A'
-	 WHEN TX.""24Q"" <= 3 and TX.""24Q"">0 and TX.""8Q"" > 0 Then 'B' 
-	 WHEN TX.""24Q"" <= 3 and  TX.""A_8Q"" > 0 Then 'D'
-	 WHEN TX.""C_12Q"" > 0 and TX.""24Q"" = 0  Then 'E' 
-	 WHEN TX.""24Q"" = 0  Then 'F' 
-	 ELSE 'OJO' end  as ""T"",
-CASE WHEN TX.""C_12Q"" = 0 and TX.""24Q"" = 0 then 'S' else 'N' End As ""N"", T1.""Ventas_24Q"" ""VA"", IFNULL(STOCK.""Stock"",0) ""STT"",
-T4.""24M_Q_AL0"" ""VM_AL0"", T4.""24M_Q_AL14"" ""VM_AL14"", T4.""24M_Q_AL16"" ""VM_AL16"", T4.""24M_Q_AL7"" ""VM_AL7"", T4.""24M_Q_AL8"" ""VM_AL8"",
-IFNULL(T5.""Stock_AL0"",0) ""STT_Al0"", IFNULL(T5.""Stock_AL14"",0) ""STT_AL14"", IFNULL(T5.""Stock_AL16"",0) ""STT_AL16"", 
-IFNULL(T5.""Stock_AL7"",0) ""STT_AL7"", IFNULL(T5.""Stock_AL8"",0) ""STT_AL8"", 
-IFNULL(PDTE.""PDTE"",0) ""Pdte"", IFNULL(T6.""Pdte_AL0"",0) ""Pdte_AL0"" , 
-IFNULL(T6.""Pdte_AL14"",0) ""Pdte_AL14"", IFNULL(T6.""Pdte_AL16"",0) ""Pdte_AL16"", IFNULL(T6.""Pdte_AL7"",0) ""Pdte_AL7"" , 
-IFNULL(T6.""Pdte_AL8"",0) ""Pdte_AL8"", IFNULL(T7.""Provee"",CAST('     ' AS VARCHAR(50))) ""Provee"", 
-IFNULL(T7.""Provee_II"" ,CAST('     ' AS VARCHAR(50))) ""Provee_II"", IFNULL(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Provee_III"",
-IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P""  "
+
+                        sSQLGrid = "Select 
+                                        'N' ""Sel."", 
+                                        T0.""ItemCode"" ""EUROCODE"", 
+                                        T0.""ItemName"" ""Descripción"",  
+                                        CASE WHEN TX.""24Q"" > 3 then 'A'
+	                                         WHEN TX.""24Q"" <= 3 and TX.""24Q"">0 and TX.""8Q"" > 0 Then 'B' 
+	                                         WHEN TX.""24Q"" <= 3 and  TX.""A_8Q"" > 0 Then 'D'
+	                                         WHEN TX.""C_12Q"" > 0 and TX.""24Q"" = 0  Then 'E' 
+	                                         WHEN TX.""24Q"" = 0  Then 'F' 
+	                                         ELSE 'OJO' end  as ""T"",
+                                        CASE WHEN TX.""C_12Q"" = 0 and TX.""24Q"" = 0 then 'S' else 'N' End As ""N"", 
+                                        SUBSTRING(TG.""ItmsGrpNam"",0,4) " & If(qtyWhs = 1, " ""Familia""", " ""Grupo""") & ", 
+                                        CAST(T1.""Ventas_24Q"" AS INTEGER) AS ""VA"","
+
+
+                        Dim stockTT As String = "0"
+                        If (sAlmacenes.Contains("AL0")) Then
+                            stockTT &= "+0+CAST(IFNULL(T5.""Stock_AL0"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL14")) Then
+                            stockTT &= "+0+CAST(IFNULL(T5.""Stock_AL14"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL16")) Then
+                            stockTT &= "+0+CAST(IFNULL(T5.""Stock_AL16"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL7")) Then
+                            stockTT &= "+0+CAST(IFNULL(T5.""Stock_AL7"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL8")) Then
+                            stockTT &= "+0+CAST(IFNULL(T5.""Stock_AL8"",0) AS INTEGER)"
+                        End If
+                        stockTT &= "+0 ""ST"", "
+
+                        sSQLGrid &= stockTT
+                        sSQLGrid &= "   CAST(IFNULL(T5.""Stock_AL0"",0) AS INTEGER) ""S_A0"", 
+                                        CAST(IFNULL(T5.""Stock_AL14"",0) AS INTEGER) ""S_A14"", 
+                                        CAST(IFNULL(T5.""Stock_AL16"",0) AS INTEGER) ""S_A16"", 
+                                        CAST(IFNULL(T5.""Stock_AL7"",0) AS INTEGER) ""S_A7"", 
+                                        CAST(IFNULL(T5.""Stock_AL8"",0) AS INTEGER) ""S_A8"","
+
+                        Dim stockpdte As String = "0"
+                        If (sAlmacenes.Contains("AL0")) Then
+                            stockpdte &= "+0+CAST(IFNULL(T6.""Pdte_AL0"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL14")) Then
+                            stockpdte &= "+0+CAST(IFNULL(T6.""Pdte_AL14"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL16")) Then
+                            stockpdte &= "+0+CAST(IFNULL(T6.""Pdte_AL16"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL7")) Then
+                            stockpdte &= "+0+CAST(IFNULL(T6.""Pdte_AL7"",0) AS INTEGER)"
+                        End If
+                        If (sAlmacenes.Contains("AL8")) Then
+                            stockpdte &= "+0+CAST(IFNULL(T6.""Pdte_AL8"",0) AS INTEGER)"
+                        End If
+                        stockpdte &= "+0 ""PT"", "
+
+                        sSQLGrid &= stockpdte
+                        sSQLGrid &= "   CAST(IFNULL(T6.""Pdte_AL0"",0) AS INTEGER) ""P_A0"" , 
+                                        CAST(IFNULL(T6.""Pdte_AL14"",0) AS INTEGER) ""P_A14"", 
+                                        CAST(IFNULL(T6.""Pdte_AL16"",0) AS INTEGER) ""P_A16"", 
+                                        CAST(IFNULL(T6.""Pdte_AL7"",0) AS INTEGER) ""P_A7"" , 
+                                        CAST(IFNULL(T6.""Pdte_AL8"",0) AS INTEGER) ""P_A8"", 
+                                        T4.""24M_Q_AL0"" ""VM_A0"", 
+                                        T4.""24M_Q_AL14"" ""VM_A14"", 
+                                        T4.""24M_Q_AL16"" ""VM_A16"", 
+                                        T4.""24M_Q_AL7"" ""VM_A7"", 
+                                        T4.""24M_Q_AL8"" ""VM_A8"", 
+                                        ( (CASE WHEN "
+
+                        Dim pedirStr As String = "(0"
+                        If (sAlmacenes.Contains("AL0")) Then
+                            pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        End If
+                        If (sAlmacenes.Contains("AL7")) Then
+                            pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        End If
+                        If (sAlmacenes.Contains("AL8")) Then
+                            pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        End If
+                        If (sAlmacenes.Contains("AL14")) Then
+                            pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        End If
+                        If (sAlmacenes.Contains("AL16")) Then
+                            pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        End If
+
+                        sSQLGrid &= pedirStr
+                        sSQLGrid &= " +0) < 0 THEN 0 ELSE " & pedirStr & "+0)  END) ) ""Pedir"",
+                                      CAST(IFNULL(OSCN.""U_EXO_UC"", 1) AS INTEGER) ""UC"","
+                        sSQLGrid &= "CAST((CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) AS INTEGER) ""OrigOrder"","
+                        sSQLGrid &= "CAST((CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) AS INTEGER) ""Order"","
+
+                        Dim queryAl = String.Empty
+                        If (sAlmacenes.Contains("AL0") And qtyWhs > 1) Then
+                            queryAl &= "CAST( ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1) AS INTEGER) ""AL0"","
+                        Else
+                            queryAl &= "0 ""AL0"","
+                        End If
+
+                        If (sAlmacenes.Contains("AL7") And qtyWhs > 1) Then
+                            queryAl &= "CAST(ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1) AS INTEGER) ""AL7"","
+                        Else
+                            queryAl &= "0 ""AL7"","
+                        End If
+
+                        If (sAlmacenes.Contains("AL8") And qtyWhs > 1) Then
+                            queryAl &= "CAST(ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1) AS INTEGER) ""AL8"", "
+                        Else
+                            queryAl &= "0 ""AL8"","
+                        End If
+
+                        If (sAlmacenes.Contains("AL14") And qtyWhs > 1) Then
+                            queryAl &= "CAST(ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1) AS INTEGER) ""AL14"","
+                        Else
+                            queryAl &= "0 ""AL14"","
+                        End If
+
+                        If (sAlmacenes.Contains("AL16") And qtyWhs > 1) Then
+                            queryAl &= "CAST(ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1) AS INTEGER) ""AL16"","
+                        Else
+                            queryAl &= "0 ""AL16"","
+                        End If
+
+                        sSQLGrid &= queryAl
+                        sSQLGrid &= "(CASE WHEN '" & sProveedorPR & "' = '' THEN IFNULL(T0.""CardCode"", CAST('     ' AS VARCHAR(50))) ELSE '" & sProveedorPR & "' END)  ""Prov.Pedido"",
+                                        SUBSTRING(IFNULL(OCRD.""CardFName"",CAST('     ' AS VARCHAR(150))),0,5) ""Nombre"",
+                                        IFNULL(OSCN.""Substitute"",CAST('     ' AS VARCHAR(50))) ""Nº Catálogo"",  
+                                        CAST('     ' AS DATE) ""Fecha Prev."", 
+                                        IFNull(T0.""CardCode"", 'S_PROV._Principal') as ""Proveedor Principal"",
+                                        IFNULL(T7.""Provee"", CAST('     ' AS VARCHAR(50))) ""Provee"", 
+                                        IFNULL(T7.""Provee_II"" ,CAST('     ' AS VARCHAR(50))) ""Provee_II"", 
+                                        IFNULL(T7.""Provee_III"",CAST('     ' AS VARCHAR(50))) ""Provee_III"",
+                                        IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P"",
+                                        0.00 ""Traslado"",
+                                        CAST('     ' AS VARCHAR(50)) ""Alm.Origen"", 
+                                        CAST('     ' AS VARCHAR(50)) ""Alm.Destino"""
 
 #Region "Tarifas"
 
@@ -673,9 +861,12 @@ IFNULL(T7.""Mejor_P"",CAST('     ' AS VARCHAR(50)))  ""Mejor_P""  "
                         Next
 #End Region
 
+#Region "Origen Tablas"
                         sSQLGrid &= " FROM OITM T0 
 LEFT JOIN OITB TG ON TG.""ItmsGrpCod"" = T0.""ItmsGrpCod"" 
 LEFT JOIN OCRD ON T0.""CardCode""=OCRD.""CardCode"" "
+#End Region
+
 #Region "Tarifas"
 
                         iTarifa = 0
@@ -687,6 +878,8 @@ LEFT JOIN OCRD ON T0.""CardCode""=OCRD.""CardCode"" "
                                                     Order by ITM1.""ItemCode"", OPLN.""ListNum"") TAR" & iTarifa.ToString & " ON TAR" & iTarifa.ToString & ".""ItemCode""=T0.""ItemCode"" "
                         Next
 #End Region
+
+#Region "Relacion Tablas y Condiciones"
                         sSQLGrid &= "
 LEFT JOIN OSCN ON OSCN.""ItemCode""=T0.""ItemCode"" and OSCN.""CardCode""= T0.""CardCode""
 LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum(X.""8Q"") as ""8Q"" ,SUM(X.""C_12Q"") as ""C_12Q"",SUM(X.""A_8Q"") as ""A_8Q"" 
@@ -740,6 +933,11 @@ Left Join(Select T0.""ItemCode"",Case WHen T0.""QryGroup1"" = 'Y' then 'STOCK' E
 			GROUP BY  T0.""ItemCode"" , T0.""QryGroup1"" , T0.""CardCode"", 	TY.""CardName"" ,  TY.""CardCode"" , TY.""Price""	
 		   )  T7 ON T7.""ItemCode"" = T0.""ItemCode""
 WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
+
+                        If (oForm.DataSources.UserDataSources.Item("UD_Excl").Value = "Y") Then
+                            sSQLGrid &= "and (CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) > 0 "
+                        End If
+
                         If sProveedorPR <> "" Then
                             sSQLGrid &= " and IFNull(T0.""CardCode"", 'S_PROV._Principal') ='" & sProveedorPR & "' "
                         End If
@@ -761,16 +959,21 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 	 WHEN TX.""24Q"" = 0  Then 'F' 
 	 ELSE 'OJO' end) in (" & sCLAS & ") "
                         End If
+#End Region
+
+                        'sQuery &= sSQLGrid & " ) X0 order by X0.""EUROCODE"""
                         sSQLGrid &= " order by T0.""ItemCode"" "
                         oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQLGrid)
-                        FormateaGridDOC(oForm)
+                        FormateaGridDOC(oForm, sAlmacenes, If(qtyWhs = 1, False, True))
+
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item("Sel.").Editable = True
 
 #Region "Rellenamos Tabla Temporal"
                         INICIO._dtDatos = New System.Data.DataTable
                         Dim dt As SAPbouiCOM.DataTable = Nothing
                         dt = Nothing : dt = oForm.DataSources.DataTables.Item("DT_DOC")
                         'Añadimos Columnas                       
-                        For iCol As Integer = 0 To 12
+                        For iCol As Integer = 0 To dt.Columns.Count - 1
                             INICIO._dtDatos.Columns.Add(dt.Columns.Item(iCol).Name)
                         Next
                         INICIO._dtDatos.Columns.Add("ROW")
@@ -780,255 +983,17 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 #End Region
 
                         sMensaje = "Fin de la carga de datos."
+                        oForm.Items.Item("btnGen").Enabled = True
                         objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     End If
                 Case "btnGen"
-                    oRs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
                     If objGlobal.SBOApp.MessageBox("¿Esta seguro de generar los documentos según su parametrización?", 1, "Sí", "No") = 1 Then
-                        If oForm.DataSources.DataTables.Item("DT_DOC").Rows.Count > 0 Then
-                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Documentos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                            oForm.Freeze(True)
-#Region "Solicitud de pedido"
-#Region "Filtro y Orden"
-                            Dim dtSolPedido As New System.Data.DataTable
-
-                            expression = "Order>0 and Prov.Pedido<>'' and Alm.Destino<>'' "
-                            'sortOrder = "Prov.Pedido, Alm.Destino ASC"
-
-                            Try
-                                dtSolPedido = INICIO._dtDatos.Select(expression).CopyToDataTable()
-                                sortOrder = "Prov.Pedido, Alm.Destino ASC"
-                                dtSolPedido.DefaultView.Sort = sortOrder
-                                dtSolPedido = dtSolPedido.DefaultView.ToTable()
-
-                            Catch ex As Exception
-
-                            End Try
-
-#End Region
-                            Dim sProvPedido As String = ""
-                            If dtSolPedido.Rows.Count > 0 Then
-                                Dim bPlinea As Boolean = True
-                                If objGlobal.compañia.InTransaction = True Then
-                                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-                                End If
-                                objGlobal.compañia.StartTransaction()
-                                bEsPrimera = True
-                                For Each MiDataRow As DataRow In dtSolPedido.Rows
-                                    If sProvPedido <> MiDataRow("Prov.Pedido").ToString Or sAlmacenDestino <> MiDataRow("Alm.Destino").ToString Then
-                                        If bEsPrimera = False Then
-                                            If oOPQT.Add() <> 0 Then
-                                                sError = objGlobal.compañia.GetLastErrorCode.ToString & " / " & objGlobal.compañia.GetLastErrorDescription.Replace("'", "")
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                            Else
-                                                objGlobal.compañia.GetNewObjectCode(sDocEntry)
-                                                sSQL = "SELECT ""DocNum"" FROM OPQT WHERE ""DocEntry""=" & sDocEntry
-                                                oRs.DoQuery(sSQL)
-
-                                                If oRs.RecordCount > 0 Then
-                                                    sDocNum = oRs.Fields.Item("DocNum").Value.ToString
-                                                Else
-                                                    sDocNum = ""
-                                                End If
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha generado la Sol. de pedido Nº " & sDocNum & " para el proveedor " & sProvPedido, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                                            End If
-                                        End If
-                                        bEsPrimera = False : bPlinea = True
-                                        sProvPedido = MiDataRow("Prov.Pedido").ToString : sAlmacenDestino = MiDataRow("Alm.Destino").ToString
-                                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Sol. de Pedido para el Proveedor " & sProvPedido & " y almacén destino " & sAlmacenDestino, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                        oOPQT = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
-#Region "Búsqueda de la serie"
-
-                                        sIndicator = Now.Year.ToString("0000") & "-" & Now.Month.ToString("00")
-                                        sSQL = "SELECT ""Indicator"" FROM OFPR WHERE ""Code""='" & sIndicator & "' "
-                                        sIndicator = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        sSQL = "SELECT ""U_EXO_SUCURSAL"" FROM ""OWHS"" WHERE ""WhsCode""='" & sAlmacenDestino & "' "
-                                        sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""Indicator""='" & sIndicator & "' and ""Remark""='" & sSucursal & "' and ""ObjectCode""='540000006' "
-                                        sSerie = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        If sSerie = "" Then
-                                            If objGlobal.SBOApp.MessageBox("No encuentra la serie del almacén " & sAlmacenDestino & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
-                                                sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='540000006' "
-                                                sSerie = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                                oOPQT.Series = CType(sSerie, Integer)
-                                            Else
-                                                sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & sAlmacenDestino
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                                objGlobal.SBOApp.MessageBox(sMensaje)
-                                                Return False
-                                            End If
-                                        Else
-                                            oOPQT.Series = CType(sSerie, Integer)
-                                        End If
-#End Region
-                                        oOPQT.CardCode = sProvPedido
-                                        sFecha = MiDataRow("Fecha Prev.").ToString : dFecha = CDate(sFecha)
-                                        oOPQT.RequriedDate = dFecha
-                                        oOPQT.Comments = "Documento creado desde planificador de necesidades"
-                                    End If
-                                    If bPlinea = False Then
-                                        oOPQT.Lines.Add()
-                                    Else
-                                        bPlinea = False
-                                    End If
-                                    If MiDataRow("Nº Catálogo").ToString.Trim <> "" Then
-                                        oOPQT.Lines.SupplierCatNum = MiDataRow("Nº Catálogo").ToString
-                                    Else
-                                        oOPQT.Lines.ItemCode = MiDataRow("EUROCODE").ToString
-                                    End If
-                                    oOPQT.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Order").ToString)
-                                    oOPQT.Lines.RequiredQuantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Order").ToString)
-                                    sFecha = MiDataRow("Fecha Prev.").ToString : dFecha = CDate(sFecha)
-                                    oOPQT.Lines.RequiredDate = dFecha
-                                    oOPQT.Lines.WarehouseCode = sAlmacenDestino
-                                Next
-                                If oOPQT.Add() <> 0 Then
-                                    sError = objGlobal.compañia.GetLastErrorCode.ToString & " / " & objGlobal.compañia.GetLastErrorDescription.Replace("'", "")
-                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                Else
-                                    objGlobal.compañia.GetNewObjectCode(sDocEntry)
-                                    sSQL = "SELECT ""DocNum"" FROM OPQT WHERE ""DocEntry""=" & sDocEntry
-                                    oRs.DoQuery(sSQL)
-
-                                    If oRs.RecordCount > 0 Then
-                                        sDocNum = oRs.Fields.Item("DocNum").Value.ToString
-                                    Else
-                                        sDocNum = ""
-                                    End If
-                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha generado la Sol. de pedido Nº " & sDocNum & " para el proveedor " & sProvPedido, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                                End If
-                                If objGlobal.compañia.InTransaction = True Then
-                                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-                                End If
-                            Else
-                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - No existen datos para generar Solicitud de pedido.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                            End If
-
-
-#End Region
-#Region "Solicitud de traslado"
-#Region "Filtro y Orden"
-                            Dim dtSolTraslado As New System.Data.DataTable
-
-                            expression = "Traslado>0 and Alm.Origen<>'' and Alm.Destino<>'' "
-
-
-                            Try
-                                dtSolTraslado = INICIO._dtDatos.Select(expression).CopyToDataTable()
-                                sortOrder = "Alm.Origen, Alm.Destino ASC"
-                                dtSolTraslado.DefaultView.Sort = sortOrder
-                                dtSolTraslado = dtSolTraslado.DefaultView.ToTable()
-                            Catch ex As Exception
-
-                            End Try
-#End Region
-                            Dim sAlmOrigen As String = "" : Dim sAlmDestino As String = ""
-                            If dtSolTraslado.Rows.Count > 0 Then
-                                Dim bPlinea As Boolean = True
-                                If objGlobal.compañia.InTransaction = True Then
-                                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-                                End If
-                                objGlobal.compañia.StartTransaction()
-                                bEsPrimera = True
-                                For Each MiDataRow As DataRow In dtSolTraslado.Rows
-                                    If sAlmOrigen <> MiDataRow("Alm.origen").ToString Or sAlmDestino <> MiDataRow("Alm.Destino").ToString Then
-                                        If bEsPrimera = False Then
-                                            If oOWTQ.Add() <> 0 Then
-                                                sError = objGlobal.compañia.GetLastErrorCode.ToString & " / " & objGlobal.compañia.GetLastErrorDescription.Replace("'", "")
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                            Else
-                                                objGlobal.compañia.GetNewObjectCode(sDocEntry)
-                                                sSQL = "SELECT ""DocNum"" FROM OWTQ WHERE ""DocEntry""=" & sDocEntry
-                                                oRs.DoQuery(sSQL)
-
-                                                If oRs.RecordCount > 0 Then
-                                                    sDocNum = oRs.Fields.Item("DocNum").Value.ToString
-                                                Else
-                                                    sDocNum = ""
-                                                End If
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha generado la Sol. de Traslado Nº " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                                            End If
-                                        End If
-                                        bEsPrimera = False : bPlinea = True
-                                        sAlmOrigen = MiDataRow("Alm.Origen").ToString : sAlmDestino = MiDataRow("Alm.Destino").ToString
-                                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Sol. de Traslado del almacén de origen " & sAlmOrigen & " y almacén destino " & sAlmDestino, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                        oOWTQ = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
-#Region "Búsqueda de la serie"
-                                        sIndicator = Now.Year.ToString("0000") & "-" & Now.Month.ToString("00")
-                                        sSQL = "SELECT ""Indicator"" FROM OFPR WHERE ""Code""='" & sIndicator & "' "
-                                        sIndicator = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        sSQL = "SELECT ""U_EXO_SUCURSAL"" FROM ""OWHS"" WHERE ""WhsCode""='" & sAlmOrigen & "' "
-                                        sSucursal = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""Indicator""='" & sIndicator & "' and ""Remark""='" & sSucursal & "' and ""ObjectCode""='1250000001' "
-                                        sSerie = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        If sSerie = "" Then
-                                            If objGlobal.SBOApp.MessageBox("No encuentra la serie del almacén " & sAlmOrigen & "¿Continuamos con la serie primaria?", 1, "Sí", "No") = 1 Then
-                                                sSQL = "SELECT ""Series"" FROM ""NNM1"" WHERE ""SeriesName""='Primario' and ""ObjectCode""='1250000001' "
-                                                sSerie = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                                oOWTQ.Series = CType(sSerie, Integer)
-                                            Else
-                                                sMensaje = "El usuario ha cancelado el proceso al no encontrar la serie correspondiente al almacén " & sAlmOrigen
-                                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                                objGlobal.SBOApp.MessageBox(sMensaje)
-                                                Return False
-                                            End If
-                                        Else
-                                            oOWTQ.Series = CType(sSerie, Integer)
-                                        End If
-#End Region
-                                        oOWTQ.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
-                                        oOWTQ.DocDate = New Date(Now.Year, Now.Month, Now.Day)
-                                        oOWTQ.TaxDate = New Date(Now.Year, Now.Month, Now.Day)
-                                        oOWTQ.DueDate = New Date(Now.Year, Now.Month, Now.Day)
-                                        oOWTQ.FromWarehouse = sAlmOrigen
-                                        oOWTQ.ToWarehouse = sAlmDestino
-                                        oOWTQ.UserFields.Fields.Item("U_EXO_TIPO").Value = "ITC"
-                                        oOWTQ.UserFields.Fields.Item("U_EXO_STATUSP").Value = "P"
-                                        oOWTQ.Comments = "Documento creado desde planificador de necesidades"
-                                    End If
-                                    If bPlinea = False Then
-                                        oOWTQ.Lines.Add()
-                                    Else
-                                        bPlinea = False
-                                    End If
-                                    oOWTQ.Lines.ItemCode = MiDataRow("EUROCODE").ToString
-                                    oOWTQ.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Traslado").ToString)
-                                Next
-                                If oOWTQ.Add() <> 0 Then
-                                    sError = objGlobal.compañia.GetLastErrorCode.ToString & " / " & objGlobal.compañia.GetLastErrorDescription.Replace("'", "")
-                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                Else
-                                    objGlobal.compañia.GetNewObjectCode(sDocEntry)
-                                    sSQL = "SELECT ""DocNum"" FROM OWTQ WHERE ""DocEntry""=" & sDocEntry
-                                    oRs.DoQuery(sSQL)
-
-                                    If oRs.RecordCount > 0 Then
-                                        sDocNum = oRs.Fields.Item("DocNum").Value.ToString
-                                    Else
-                                        sDocNum = ""
-                                    End If
-                                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha generado la Sol. de traslado Nº " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                                End If
-                                If objGlobal.compañia.InTransaction = True Then
-                                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-                                End If
-                            Else
-                                objGlobal.SBOApp.StatusBar.SetText("(EXO) - No existen datos para generar Solicitud de traslado.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                            End If
-#End Region
-                            sMensaje = "Fin del proceso."
-                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                            objGlobal.SBOApp.MessageBox(sMensaje)
-                        Else
-                            sMensaje = "No existen registros para generar documentos."
-                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                            objGlobal.SBOApp.MessageBox(sMensaje)
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Documentos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        If (CreateDocuments(oForm) <> 0) Then
+                            Return True
                         End If
 
-                    Else
-                        sMensaje = "El usuario ha cancelado la generación de documentos."
-                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                        objGlobal.SBOApp.MessageBox(sMensaje)
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     End If
 
             End Select
@@ -1048,6 +1013,533 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oOPQT, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oOWTQ, Object))
         End Try
+    End Function
+    Private Sub CalculateGridCheckValues(ByRef oForm As Form, ByVal row As Integer)
+        Dim gridOrder = CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid)
+        Dim dt = oForm.DataSources.DataTables.Item("DT_DOC")
+        Dim valueSel = dt.Columns.Item("Sel.").Cells.Item(gridOrder.GetDataTableRowIndex(row)).Value
+        If (valueSel.Equals("Y")) Then
+            qtyOrder += dt.Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(row)).Value.ToString().DoubleParseAdvanced
+        Else
+            qtyOrder -= dt.Columns.Item("Order").Cells.Item(gridOrder.GetDataTableRowIndex(row)).Value.ToString().DoubleParseAdvanced
+        End If
+
+        CType(CType(oForm.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Order"), EditTextColumn).ColumnSetting.SumValue = qtyOrder.ToString
+
+    End Sub
+    Private Function CreateDocuments(ByRef oForm As Form) As Integer
+        Try
+            oForm.Freeze(True)
+            Dim columns() As String = {"AL0", "AL7", "AL8", "AL14", "AL16"}
+            Dim gridData = CType(oForm.Items.Item("grd_DOC").Specific, Grid)
+            Dim qwewq = gridData.DataTable
+            Dim tupleResult = New List(Of Tuple(Of Integer, String))
+            Dim dtResp = oForm.DataSources.DataTables.Item("DT_Res")
+            dtResp.Rows.Clear()
+
+            Dim whsObject = XDocument.Parse(oForm.DataSources.DataTables.Item("DTALM").SerializeAsXML(BoDataTableXmlSelect.dxs_DataOnly))
+            Dim whsSelected = whsObject.
+                Descendants("Cell").
+                Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode.NextNode, XElement).Value.ToString.Equals("Y")).
+                Select(Function(attr) attr.Parent)
+
+            If (whsSelected.Count = 0) Then
+                objGlobal.SBOApp.SetStatusBarMessage("No hay linea de almacen seleccionada")
+                Return -1
+            End If
+
+            Dim dataObject = XDocument.Parse(oForm.DataSources.DataTables.Item("DT_DOC").SerializeAsXML(BoDataTableXmlSelect.dxs_DataOnly))
+            Dim rowsSelected = dataObject.
+                Descendants("Cell").
+                Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode.NextNode, XElement).Value.ToString.Equals("Y")).
+                Select(Function(attr) attr.Parent).
+                ToList()
+
+            If (rowsSelected.Count = 0) Then
+                objGlobal.SBOApp.SetStatusBarMessage("No hay lineas seleccionadas")
+                Return -1
+            End If
+
+            Dim rowsGrouped = rowsSelected.
+                              GroupBy(Function(v) New With {
+                                                                Key CType(v.Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Prov.Pedido")).First().LastNode, XElement).Value}).
+                              ToList()
+
+            If (whsSelected.Count = 1) Then
+                'Proceso Simple 
+#Region "Creacion de solicitud de Compra"
+                For i As Integer = 0 To rowsGrouped.Count - 1
+                    Dim prov = rowsGrouped(i).Key.Value
+                    Dim solPedComp = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
+
+                    Dim fechaPrevHead = CType(rowsGrouped(i).ToList()(0).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                    Dim docDatePedHead As Date = Date.Now
+                    If (Not fechaPrevHead.Equals("00000000")) Then
+                        docDatePedHead = DateTime.ParseExact(fechaPrevHead, "yyyyMMdd", CultureInfo.InvariantCulture)
+                    End If
+                    solPedComp.RequriedDate = docDatePedHead
+                    solPedComp.CardCode = prov
+
+                    For x As Integer = 0 To rowsGrouped(i).Count - 1
+                        Dim fechaPrev = CType(rowsGrouped(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                        Dim itemCode = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
+                        Dim order = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Order")).First().LastNode, XElement).Value
+                        Dim al0 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL0")).First().LastNode, XElement).Value
+                        Dim al7 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL7")).First().LastNode, XElement).Value
+                        Dim al8 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL8")).First().LastNode, XElement).Value
+                        Dim al14 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL14")).First().LastNode, XElement).Value
+                        Dim al16 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL16")).First().LastNode, XElement).Value
+
+                        Dim docDatePed As DateTime = DateTime.Now
+                        If (Not fechaPrev.Equals("00000000")) Then
+                            DateTime.ParseExact(fechaPrev, "yyyyMMdd", CultureInfo.InvariantCulture)
+                        End If
+
+                        solPedComp.Lines.ItemCode = itemCode
+                        solPedComp.Lines.RequiredDate = docDatePed
+                        solPedComp.Lines.ShipDate = docDatePed
+                        solPedComp.Lines.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
+                        solPedComp.Lines.UnitPrice = solPedComp.Lines.Price
+                        solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
+                        solPedComp.Lines.Quantity = order.DoubleParseAdvanced
+                        solPedComp.Lines.RequiredQuantity = solPedComp.Lines.Quantity
+                        solPedComp.Lines.CostingCode = GetCostCenter(solPedComp.Lines.WarehouseCode)
+                        solPedComp.Lines.Add()
+                    Next
+
+                    Dim responsePedComp = solPedComp.Add()
+                    Dim msgResp = String.Empty
+                    If (responsePedComp = 0) Then
+                        msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                    Else
+                        msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                    End If
+
+                    tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                Next
+
+#End Region
+#Region "Creacion de Traslado"
+
+                Dim trasDict = New Dictionary(Of String, List(Of MembersTransferRequest))
+                For i As Integer = 0 To rowsSelected.Count - 1
+
+                    Dim fechaPrev = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                    Dim itemCode = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
+                    Dim order = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Order")).First().LastNode, XElement).Value
+                    Dim al0 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL0")).First().LastNode, XElement).Value
+                    Dim al7 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL7")).First().LastNode, XElement).Value
+                    Dim al8 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL8")).First().LastNode, XElement).Value
+                    Dim al14 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL14")).First().LastNode, XElement).Value
+                    Dim al16 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL16")).First().LastNode, XElement).Value
+                    Dim quantity As Double = 0.0
+                    Dim whsSel = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
+
+                    For j As Integer = 0 To columns.Count - 1
+                        If (gridData.Columns.Item(columns(j)).Editable = True) Then
+                            Dim isValueMoreThanZero As Boolean = False
+                            Dim qtyToTake As Double = 0.0
+                            Select Case columns(j)
+                                Case "AL0"
+                                    If (Double.Parse(al0) > 0) Then
+                                        isValueMoreThanZero = True
+                                        qtyToTake = al0.DoubleParseAdvanced
+                                    End If
+                                Case "AL7"
+                                    If (Double.Parse(al7) > 0) Then
+                                        isValueMoreThanZero = True
+                                        qtyToTake = al7.DoubleParseAdvanced
+                                    End If
+                                Case "AL8"
+                                    If (Double.Parse(al8) > 0) Then
+                                        isValueMoreThanZero = True
+                                        qtyToTake = al8.DoubleParseAdvanced
+                                    End If
+                                Case "AL14"
+                                    If (Double.Parse(al14) > 0) Then
+                                        isValueMoreThanZero = True
+                                        qtyToTake = al14.DoubleParseAdvanced
+                                    End If
+                                Case "AL16"
+                                    If (Double.Parse(al16) > 0) Then
+                                        isValueMoreThanZero = True
+                                        qtyToTake = al16.DoubleParseAdvanced
+                                    End If
+                            End Select
+
+                            If (isValueMoreThanZero) Then
+                                Dim line = New MembersTransferRequest
+                                line.ItemCode = itemCode
+                                line.FromWarehouseCode = columns(j)
+                                line.WarehouseCode = whsSel
+                                line.Quantity = qtyToTake
+
+                                If (Not trasDict.ContainsKey(columns(j) & "-" & whsSel)) Then
+                                    Dim lst = New List(Of MembersTransferRequest)
+                                    lst.Add(line)
+                                    trasDict.Add(columns(j) & "-" & whsSel, lst)
+                                Else
+                                    trasDict(columns(j) & "-" & whsSel).Add(line)
+                                End If
+                            End If
+
+                        End If
+                    Next
+                Next
+
+                For i As Integer = 0 To trasDict.Count - 1
+                    Dim keyVal = trasDict.ElementAt(i).Key
+                    Dim linesTransfer = trasDict(keyVal)
+                    Dim solTras = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oStockTransferDraft), SAPbobsCOM.StockTransfer)
+                    solTras.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
+                    solTras.UserFields.Fields.Item("U_EXO_TIPO").Value = "ITC"
+                    solTras.FromWarehouse = linesTransfer(0).FromWarehouseCode
+                    solTras.ToWarehouse = linesTransfer(0).WarehouseCode
+
+                    For j As Integer = 0 To trasDict(keyVal).Count - 1
+                        solTras.Lines.ItemCode = linesTransfer(j).ItemCode
+                        solTras.Lines.FromWarehouseCode = linesTransfer(j).FromWarehouseCode
+                        solTras.Lines.WarehouseCode = linesTransfer(j).WarehouseCode
+                        solTras.Lines.Quantity = linesTransfer(j).Quantity
+                        solTras.Lines.Add()
+                    Next
+
+                    Dim responseTrasl = solTras.Add()
+                    Dim msgRespTras = String.Empty
+
+                    If (responseTrasl = 0) Then
+                        msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                    Else
+                        msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
+                    End If
+
+                    tupleResult.Add(New Tuple(Of Integer, String)(responseTrasl, msgRespTras))
+                Next
+
+#End Region
+
+            ElseIf (whsSelected.Count > 1) Then
+                Dim whsDef = oForm.DataSources.UserDataSources.Item("UDALM").Value.Trim
+                If (String.IsNullOrEmpty(whsDef)) Then
+                    'Proceso Multiple No Agrupado
+#Region "Creacion de solicitud de Compra"
+                    For i As Integer = 0 To rowsGrouped.Count - 1
+                        Dim prov = rowsGrouped(i).Key.Value
+                        Dim dicPed = New Dictionary(Of String, List(Of MembersPurchaseRequest))
+                        For x As Integer = 0 To rowsGrouped(i).Count - 1
+
+                            Dim fechaPrev = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                            Dim itemCode = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
+                            Dim order = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Order")).First().LastNode, XElement).Value
+                            Dim al0 = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL0")).First().LastNode, XElement).Value
+                            Dim al7 = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL7")).First().LastNode, XElement).Value
+                            Dim al8 = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL8")).First().LastNode, XElement).Value
+                            Dim al14 = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL14")).First().LastNode, XElement).Value
+                            Dim al16 = CType(rowsGrouped(i).ToList()(x).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL16")).First().LastNode, XElement).Value
+
+                            Dim docDatePed As Date = Date.Now
+                            If (Not fechaPrev.Equals("00000000")) Then
+                                docDatePed = DateTime.ParseExact(fechaPrev, "yyyyMMdd", CultureInfo.InvariantCulture)
+                            End If
+
+                            For j As Integer = 0 To columns.Count - 1
+                                If (gridData.Columns.Item(columns(j)).Editable = True) Then
+                                    Dim isValueMoreThanZero As Boolean = False
+                                    Dim qtyToTake As Double = 0.0
+                                    Select Case columns(j)
+                                        Case "AL0"
+                                            If (Double.Parse(al0) > 0) Then
+                                                isValueMoreThanZero = True
+                                                qtyToTake = al0.DoubleParseAdvanced
+                                            End If
+                                        Case "AL7"
+                                            If (Double.Parse(al7) > 0) Then
+                                                isValueMoreThanZero = True
+                                                qtyToTake = al7.DoubleParseAdvanced
+                                            End If
+                                        Case "AL8"
+                                            If (Double.Parse(al8) > 0) Then
+                                                isValueMoreThanZero = True
+                                                qtyToTake = al8.DoubleParseAdvanced
+                                            End If
+                                        Case "AL14"
+                                            If (Double.Parse(al14) > 0) Then
+                                                isValueMoreThanZero = True
+                                                qtyToTake = al14.DoubleParseAdvanced
+                                            End If
+                                        Case "AL16"
+                                            If (Double.Parse(al16) > 0) Then
+                                                isValueMoreThanZero = True
+                                                qtyToTake = al16.DoubleParseAdvanced
+                                            End If
+                                    End Select
+
+                                    If (isValueMoreThanZero) Then
+                                        Dim line As MembersPurchaseRequest = New MembersPurchaseRequest
+                                        line.ItemCode = itemCode
+                                        line.WarehouseCode = columns(j)
+                                        line.Quantity = qtyToTake
+                                        line.RequiredDate = docDatePed
+                                        line.ShipDate = docDatePed
+                                        line.RequiredQuantity = line.Quantity
+                                        line.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
+                                        line.UnitPrice = line.Price
+                                        line.CostingCode = GetCostCenter(line.WarehouseCode)
+
+                                        If (Not dicPed.ContainsKey(columns(j))) Then
+                                            Dim list = New List(Of MembersPurchaseRequest)
+                                            list.Add(line)
+
+                                            dicPed.Add(columns(j), list)
+                                        Else
+                                            dicPed(columns(j)).Add(line)
+                                        End If
+
+                                    End If
+                                End If
+                            Next
+                        Next
+
+                        For x As Integer = 0 To dicPed.Count - 1
+                            Dim key = dicPed.ElementAt(x).Key
+                            Dim linesPed = dicPed(key)
+                            Dim solPedComp = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
+                            Dim maxDateLinq = From p In dicPed(key) Group p By p.RequiredDate Into g = Group Select MaxDate = g.Max(Function(p) p.RequiredDate)
+                            solPedComp.CardCode = prov
+                            solPedComp.RequriedDate = If(maxDateLinq.Count > 0, maxDateLinq.First(), Date.Now)
+
+                            For line As Integer = 0 To linesPed.Count - 1
+                                solPedComp.Lines.ItemCode = linesPed(line).ItemCode
+                                solPedComp.Lines.WarehouseCode = linesPed(line).WarehouseCode
+                                solPedComp.Lines.Price = linesPed(line).Price
+                                solPedComp.Lines.UnitPrice = linesPed(line).UnitPrice
+                                solPedComp.Lines.Quantity = linesPed(line).Quantity
+                                solPedComp.Lines.RequiredQuantity = linesPed(line).RequiredQuantity
+                                solPedComp.Lines.CostingCode = linesPed(line).CostingCode
+                                solPedComp.Lines.RequiredDate = linesPed(line).RequiredDate
+                                solPedComp.Lines.ShipDate = linesPed(line).ShipDate
+                                solPedComp.Lines.Add()
+                            Next
+
+                            Dim responsePedComp = solPedComp.Add()
+                            Dim msgResp = String.Empty
+                            If (responsePedComp = 0) Then
+                                msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                            Else
+                                msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                            End If
+
+                            tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                        Next
+                    Next
+#End Region
+                Else
+                    'Proceso Multiple Agrupado
+                    Dim shouldCreateTransfer = objGlobal.SBOApp.MessageBox("Desea crear los traslados para los pedidos seleccionados?", 1, "Si", "No")
+#Region "Creacion de solicitud de Compra"
+                    For i As Integer = 0 To rowsGrouped.Count - 1
+                        Dim prov = rowsGrouped(i).Key.Value
+                        Dim solPedComp = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
+                        Dim fechaPrevHead = CType(rowsGrouped(i).ToList()(0).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                        Dim docDatePedHead As Date = Date.Now
+                        If (Not fechaPrevHead.Equals("00000000")) Then
+                            docDatePedHead = DateTime.ParseExact(fechaPrevHead, "yyyyMMdd", CultureInfo.InvariantCulture)
+                        End If
+                        solPedComp.RequriedDate = docDatePedHead
+                        solPedComp.CardCode = prov
+
+                        For x As Integer = 0 To rowsGrouped(i).Count - 1
+                            Dim fechaPrev = CType(rowsGrouped(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                            Dim itemCode = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
+                            Dim order = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Order")).First().LastNode, XElement).Value
+                            Dim al0 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL0")).First().LastNode, XElement).Value
+                            Dim al7 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL7")).First().LastNode, XElement).Value
+                            Dim al8 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL8")).First().LastNode, XElement).Value
+                            Dim al14 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL14")).First().LastNode, XElement).Value
+                            Dim al16 = CType(CType(rowsGrouped(i).ToList()(x), XElement).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL16")).First().LastNode, XElement).Value
+
+                            Dim docDatePed As DateTime = DateTime.Now
+                            If (Not fechaPrev.Equals("00000000")) Then
+                                DateTime.ParseExact(fechaPrev, "yyyyMMdd", CultureInfo.InvariantCulture)
+                            End If
+
+                            solPedComp.Lines.ItemCode = itemCode
+                            solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
+                            solPedComp.Lines.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
+                            solPedComp.Lines.UnitPrice = solPedComp.Lines.Price
+                            solPedComp.Lines.Quantity = order.DoubleParseAdvanced
+                            solPedComp.Lines.RequiredQuantity = solPedComp.Lines.Quantity
+                            solPedComp.Lines.CostingCode = GetCostCenter(solPedComp.Lines.WarehouseCode)
+                            solPedComp.Lines.RequiredDate = docDatePed
+                            solPedComp.Lines.ShipDate = docDatePed
+                        Next
+
+                        Dim responsePedComp = solPedComp.Add()
+                        Dim msgResp = String.Empty
+                        If (responsePedComp = 0) Then
+                            msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                        Else
+                            msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                        End If
+
+                        tupleResult.Add(New Tuple(Of Integer, String)(responsePedComp, msgResp))
+                    Next
+#End Region
+                    If (shouldCreateTransfer = 1) Then
+#Region "Creacion de Traslado"
+
+                        Dim trasDict = New Dictionary(Of String, List(Of MembersTransferRequest))
+                        For i As Integer = 0 To rowsSelected.Count - 1
+
+                            'For x As Integer = 0 To rowsGrouped(x).Count - 1
+                            Dim fechaPrev = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Fecha Prev.")).First().LastNode, XElement).Value
+                                Dim itemCode = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("EUROCODE")).First().LastNode, XElement).Value
+                                Dim order = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("Order")).First().LastNode, XElement).Value
+                                Dim al0 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL0")).First().LastNode, XElement).Value
+                                Dim al7 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL7")).First().LastNode, XElement).Value
+                                Dim al8 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL8")).First().LastNode, XElement).Value
+                                Dim al14 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL14")).First().LastNode, XElement).Value
+                                Dim al16 = CType(rowsSelected(i).Descendants("Cell").Where(Function(attr) CType(attr.FirstNode, XElement).Name.ToString().Equals("ColumnUid") And CType(attr.FirstNode, XElement).Value.ToString.Equals("AL16")).First().LastNode, XElement).Value
+
+                                For j As Integer = 0 To columns.Count - 1
+                                    If (gridData.Columns.Item(columns(j)).Editable = True) Then
+                                        Dim qty As Double = 0
+                                        Dim isValueMoreThanZero = False
+
+                                        Select Case columns(j)
+                                            Case "AL0"
+                                                If (Not whsDef.Equals(columns(j))) Then
+                                                    If (al0.DoubleParseAdvanced > 0) Then
+                                                        isValueMoreThanZero = True
+                                                        qty = al0.DoubleParseAdvanced
+                                                    End If
+                                                End If
+                                            Case "AL7"
+                                                If (Not whsDef.Equals(columns(j))) Then
+                                                    If (al7.DoubleParseAdvanced > 0) Then
+                                                        isValueMoreThanZero = True
+                                                        qty = al7.DoubleParseAdvanced
+                                                    End If
+                                                End If
+                                            Case "AL8"
+                                                If (Not whsDef.Equals(columns(j))) Then
+                                                    If (al8.DoubleParseAdvanced > 0) Then
+                                                        isValueMoreThanZero = True
+                                                        qty = al8.DoubleParseAdvanced
+                                                    End If
+                                                End If
+                                            Case "AL14"
+                                                If (Not whsDef.Equals(columns(j))) Then
+                                                    If (al14.DoubleParseAdvanced > 0) Then
+                                                        isValueMoreThanZero = True
+                                                        qty = al14.DoubleParseAdvanced
+                                                    End If
+                                                End If
+                                            Case "AL16"
+                                                If (Not whsDef.Equals(columns(j))) Then
+                                                    If (al16.DoubleParseAdvanced > 0) Then
+                                                        isValueMoreThanZero = True
+                                                        qty = al16.DoubleParseAdvanced
+                                                    End If
+                                                End If
+                                        End Select
+
+                                        If (isValueMoreThanZero) Then
+                                            Dim line = New MembersTransferRequest
+                                            line.ItemCode = itemCode
+                                            line.FromWarehouseCode = columns(j)
+                                            line.WarehouseCode = whsDef
+                                            line.Quantity = qty
+
+                                            If (Not trasDict.ContainsKey(columns(j) & "-" & whsDef)) Then
+                                                Dim lst = New List(Of MembersTransferRequest)
+                                                lst.Add(line)
+                                                trasDict.Add(columns(j) & "-" & whsDef, lst)
+                                            Else
+                                                trasDict(columns(j) & "-" & whsDef).Add(line)
+                                            End If
+                                        End If
+                                    End If
+                                Next
+                            'Next
+                        Next
+
+                        For i As Integer = 0 To trasDict.Count - 1
+                            Dim keyVal = trasDict.ElementAt(i).Key
+                            Dim linesTransfer = trasDict(keyVal)
+                            Dim solTras = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oStockTransferDraft), SAPbobsCOM.StockTransfer)
+                            solTras.DocObjectCode = SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest
+                            solTras.UserFields.Fields.Item("U_EXO_TIPO").Value = "ITC"
+                            solTras.FromWarehouse = linesTransfer(0).FromWarehouseCode
+                            solTras.ToWarehouse = linesTransfer(0).WarehouseCode
+
+                            For j As Integer = 0 To trasDict(keyVal).Count - 1
+                                solTras.Lines.ItemCode = linesTransfer(j).ItemCode
+                                solTras.Lines.FromWarehouseCode = linesTransfer(j).FromWarehouseCode
+                                solTras.Lines.WarehouseCode = linesTransfer(j).WarehouseCode
+                                solTras.Lines.Quantity = linesTransfer(j).Quantity
+                                solTras.Lines.Add()
+                            Next
+
+                            Dim responseTrasl = solTras.Add()
+                            Dim msgRespTras = String.Empty
+
+                            If (responseTrasl = 0) Then
+                                msgRespTras = $"Solicitud de traslado de borrador creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                            Else
+                                msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
+                            End If
+
+                            tupleResult.Add(New Tuple(Of Integer, String)(responseTrasl, msgRespTras))
+                        Next
+
+#End Region
+                    End If
+
+                End If
+            End If
+
+            gridData.DataTable = dtResp
+            For i As Integer = 0 To tupleResult.Count - 1
+                dtResp.Rows.Add()
+                dtResp.SetValue(0, i, tupleResult(i).Item1.ToString)
+                dtResp.SetValue(1, i, tupleResult(i).Item2.ToString)
+            Next
+
+            For i As Integer = 0 To gridData.Columns.Count - 1
+                gridData.Columns.Item(i).Editable = False
+            Next
+
+            gridData.Columns.Item(0).TitleObject.Caption = "Codigo de Respuesta"
+            gridData.Columns.Item(1).TitleObject.Caption = "Mensaje"
+            oForm.Items.Item("btnGen").Enabled = False
+            Return 0
+        Finally
+            oForm.Freeze(False)
+        End Try
+    End Function
+    Private Function GetPrice(ByVal cardCode As String, ByVal itemCode As String, ByVal amount As Single, ByVal refDate As Date) As Double
+        Try
+            Dim errResult As String
+            Dim vObj = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoBridge), SAPbobsCOM.SBObob)
+            Dim rs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+            rs = vObj.GetItemPrice(cardCode, itemCode, amount, refDate)
+
+            Return Double.Parse(rs.Fields.Item(0).Value.ToString)
+        Catch ex As Exception
+            Return 0
+        End Try
+    End Function
+    Private Function GetCostCenter(ByVal whsCode As String) As String
+        Dim query As String = $"SELECT T1.""PrcCode"" FROM OWHS T0 Left Join OPRC t1 ON T1.""U_EXO_DELEGA"" = T0.""U_EXO_SUCURSAL"" WHERE T0.""WhsCode"" = '{whsCode}'"
+        Dim rs = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        rs.DoQuery(query)
+
+        If (rs.RecordCount > 0) Then
+            Return rs.Fields.Item("PrcCode").Value.ToString
+        Else
+            Return String.Empty
+        End If
     End Function
     Private Sub Filtra_Sel(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form, ByVal pVal As ItemEvent, ByVal Valor As String)
         Try
@@ -1180,7 +1672,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             Throw ex
         End Try
     End Function
-    Private Sub FormateaGridDOC(ByRef oform As SAPbouiCOM.Form)
+    Private Sub FormateaGridDOC(ByRef oform As SAPbouiCOM.Form, ByVal sAlmacenes As String, ByVal isMultiple As Boolean)
         Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
         Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
         Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
@@ -1203,7 +1695,15 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                     oColumnTxt.LinkedObjectType = "4"
                 ElseIf sTitulo.Contains("ORDER") Or sTitulo.Contains("TRASLADO") Then
                     oColumnTxt.RightJustified = True
-                    oColumnTxt.Editable = True
+                    If (sTitulo.Contains("ORDER")) Then
+                        If (Not isMultiple) Then
+                            oColumnTxt.Editable = True
+                        Else
+                            oColumnTxt.Editable = False
+                        End If
+                    Else
+                            oColumnTxt.Editable = True
+                    End If
                 ElseIf sTitulo.Contains("PROV.PEDIDO") Then
                     oColumnTxt.Editable = True
                     oColumnTxt.ChooseFromListUID = "CFLPPED"
@@ -1220,17 +1720,72 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                 ElseIf sTitulo.Contains("PRECIO") Then
                     oColumnTxt.Editable = True
                     oColumnTxt.RightJustified = True
-                ElseIf sTitulo.Contains("VA") Or sTitulo.Contains("VM_") Or sTitulo.Contains("STT") Or sTitulo.Contains("PDTE") Or sTitulo.Contains("T-") Or sTitulo.Contains("PEDIR") Or sTitulo.Contains("UC") Then
+                ElseIf sTitulo.Contains("VA") Or sTitulo.Contains("VM_") Or sTitulo.Contains("ST") Or sTitulo.Contains("PDTE") Or sTitulo.Contains("T-") Or sTitulo.Contains("PEDIR") Or sTitulo.Contains("UC") Then
                     oColumnTxt.RightJustified = True
                 ElseIf Left(sTitulo, 2) = "N " Then
                     oColumnTxt.RightJustified = True
                 ElseIf sTitulo.Contains("FECHA PREV.") Then
                     oColumnTxt.Editable = True
+                ElseIf sTitulo.Contains("AL0") Or sTitulo.Contains("AL7") Or sTitulo.Contains("AL8") Or sTitulo.Contains("AL14") Or sTitulo.Contains("AL16") Then
+                    If (isMultiple) Then
+                        If sAlmacenes.Contains(sTitulo) Then
+                            oColumnTxt.Editable = True
+                        End If
+                    Else
+                        If sAlmacenes.Contains(sTitulo) Then
+                            oColumnTxt.Editable = False
+                        Else
+                            oColumnTxt.Editable = True
+                        End If
+                    End If
                 End If
+
+                oColumnTxt.TitleObject.Sortable = True
             Next
 
-            CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("OrigOrder").Visible = False
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Traslado").Visible = False
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Alm.Origen").Visible = False
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Alm.Destino").Visible = False
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Descripción").Width = 200
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item(If(Not isMultiple, "Familia", "Grupo")).Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VA").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("ST").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A0").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A0").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A7").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A7").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A8").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A8").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A14").Width = 45
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A14").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A16").Width = 45
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("S_A16").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("PT").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("PT").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A0").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A0").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A7").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A7").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A8").Width = 40
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A8").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A14").Width = 60
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A14").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A16").Width = 60
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("P_A16").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VM_A0").Width = 50
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VM_A7").Width = 50
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VM_A8").Width = 50
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VM_A14").Width = 60
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("VM_A16").Width = 60
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("AL0").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("AL7").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("AL8").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("AL14").RightJustified = True
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("AL16").RightJustified = True
 
+            CType(CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Order"), EditTextColumn).ColumnSetting.SumType = BoColumnSumType.bst_Manual
+            CType(CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Order"), EditTextColumn).ColumnSetting.SumValue = "0"
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
         Catch ex As Exception
@@ -1302,28 +1857,28 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             oForm.DataSources.DataTables.Item("DTCLAS").ExecuteQuery(sSQL)
             FormateaGridCLAS(oForm)
 
-            sSQL = "SELECT 'N' as ""Sel"", ""ItmsGrpCod"" ""Cod."", ""ItmsGrpNam"" ""Familia"" FROM OITB WHERE ""U_EXO_GESNEC""='Si'"
+            sSQL = "SELECT 'N' as ""Sel"", ""ItmsGrpCod"" ""Cod."", ""ItmsGrpNam"" ""Familia"" FROM OITB WHERE ""U_EXO_GESNEC""='Si' ORDER BY ""ItmsGrpNam"""
             oForm.DataSources.DataTables.Item("DTGRU").ExecuteQuery(sSQL)
             FormateaGridGRU(oForm)
 
-            sSQL = "Select 'N' as ""Sel"", ""WhsCode"" ""Cod."", ""WhsName"" ""Almacén"" FROM ""OWHS"" order by ""WhsCode"" "
+            sSQL = "Select 'N' as ""Sel"", ""WhsCode"" ""Cod."", ""WhsName"" ""Almacén"" FROM ""OWHS"" order by ""WhsName"""
             'Cargamos grid
             oForm.DataSources.DataTables.Item("DTALM").ExecuteQuery(sSQL)
             FormateaGridALM(oForm)
 
 #Region "Lista de precios de compras"
-            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='Si' "
+            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='Si' ORDER BY ""ListName"""
             oForm.DataSources.DataTables.Item("DTCOMP").ExecuteQuery(sSQL)
             FormateaGridCOMP(oForm)
 #End Region
 #Region "Lista de precios de Ventas"
-            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='No' "
+            sSQL = "SELECT 'N' as ""Sel"", ""ListNum"" ""LST"", ""ListName"" ""Nombre"" FROM OPLN WHERE ""U_EXO_TARCOM""='No' ORDER BY ""ListName"""
             oForm.DataSources.DataTables.Item("DTVENT").ExecuteQuery(sSQL)
             FormateaGridVENT(oForm)
 #End Region
 
             oForm.DataSources.UserDataSources.Item("UDDIAS").ValueEx = "7"
-            oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = "0"
+            oForm.DataSources.UserDataSources.Item("UDTSM").ValueEx = "1"
             oForm.Items.Item("btnGen").Enabled = False
             'CType(oForm.Items.Item("txtARTD").Specific, SAPbouiCOM.EditText).Active = True
             CargarForm = True
@@ -1488,3 +2043,24 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
         End Try
     End Sub
 End Class
+
+Module StringExtension
+    <Extension()>
+    Function DoubleParseAdvanced(ByVal strDouble As String) As Double
+        Dim strDoubleNormalized As String
+        If String.IsNullOrEmpty(strDouble) Then Return 0
+
+        If strDouble.Contains(",") Then
+            Dim strReplaced = strDouble.Replace(",", ".")
+            Dim decimalSeparatorPos = strReplaced.LastIndexOf("."c)
+            Dim strInteger = strReplaced.Substring(0, decimalSeparatorPos)
+            Dim strFractional = strReplaced.Substring(decimalSeparatorPos)
+            strInteger = strInteger.Replace(".", String.Empty)
+            strDoubleNormalized = strInteger & strFractional
+        Else
+            strDoubleNormalized = strDouble
+        End If
+
+        Return Double.Parse(strDoubleNormalized, NumberStyles.Any, CultureInfo.InvariantCulture)
+    End Function
+End Module
