@@ -682,6 +682,7 @@ Public Class EXO_LSTEMB
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
+                oForm.Freeze(True)
 #Region "Botón Imprimir Etiqueta"
                 oItem = oForm.Items.Add("btnET", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
                 oItem.Left = oForm.Items.Item("2").Left + 80
@@ -712,10 +713,13 @@ Public Class EXO_LSTEMB
             EventHandler_Form_Visible = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
+            oForm.Freeze(False)
             objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Catch ex As Exception
+            oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
+            oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oItem, Object))

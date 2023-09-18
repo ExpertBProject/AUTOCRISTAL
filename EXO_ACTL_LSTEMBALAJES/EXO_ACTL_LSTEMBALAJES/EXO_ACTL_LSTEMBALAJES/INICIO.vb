@@ -9,8 +9,18 @@ Public Class INICIO
 
         If actualizar Then
             cargaDatos()
+            ParametrizacionGeneral()
         End If
         cargamenu()
+    End Sub
+    Private Sub ParametrizacionGeneral()
+        If Not objGlobal.refDi.OGEN.existeVariable("EXO_ETPARRILLA") Then
+            objGlobal.refDi.OGEN.fijarValorVariable("EXO_ETPARRILLA", "RCRI0016")
+        End If
+
+        If Not objGlobal.refDi.OGEN.existeVariable("EXO_MANIFIESTO") Then
+            objGlobal.refDi.OGEN.fijarValorVariable("EXO_MANIFIESTO", "RCRI0015")
+        End If
     End Sub
     Private Sub cargaDatos()
         Dim sXML As String = ""
