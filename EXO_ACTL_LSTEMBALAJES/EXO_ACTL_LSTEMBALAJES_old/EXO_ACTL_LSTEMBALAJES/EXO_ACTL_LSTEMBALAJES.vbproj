@@ -72,18 +72,6 @@
     <WarningsAsErrors>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CrystalDecisions.CrystalReports.Engine, Version=14.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.CrystalReports.Engine\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
-    </Reference>
-    <Reference Include="CrystalDecisions.ReportSource, Version=14.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportSource.dll</HintPath>
-    </Reference>
-    <Reference Include="CrystalDecisions.Shared, Version=14.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.Shared\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.Shared.dll</HintPath>
-    </Reference>
     <Reference Include="EXO_BasicDLL, Version=10.0.1.4, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\EXO_Kernel_10.0.1.8\x64\Desarrollo\EXO_BasicDLL.dll</HintPath>
@@ -110,8 +98,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -212,12 +198,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>rem copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
-rem copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"
-
-copy "$(TargetPath)" "C:\OSCAR\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
-
-copy "$(TargetPath)" "\\10.10.1.13\b1_shf\Ficheros\10.Dll_64\EXT\$(TargetFileName)"
+    <PostBuildEvent>copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
+copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

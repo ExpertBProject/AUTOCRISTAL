@@ -1,8 +1,6 @@
 ﻿Imports System.IO
 Imports System.Xml
 Imports SAPbouiCOM
-Imports CrystalDecisions.CrystalReports.Engine
-Imports CrystalDecisions.Shared
 Public Class EXO_LSTEMB
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
@@ -112,9 +110,9 @@ Public Class EXO_LSTEMB
                                         Return False
                                     End If
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-                                    If EventHandler_ItemPressed_After(infoEvento) = False Then
-                                        Return False
-                                    End If
+                                    'If EventHandler_ItemPressed_After(infoEvento) = False Then
+                                    '    Return False
+                                    'End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
 
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
@@ -191,219 +189,6 @@ Public Class EXO_LSTEMB
             Return False
         End Try
     End Function
-    Private Function EventHandler_ItemPressed_After(ByVal pVal As ItemEvent) As Boolean
-        Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim sSQL As String = ""
-
-        EventHandler_ItemPressed_After = False
-
-        Try
-            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-
-            Select Case pVal.ItemUID
-                Case "btnET" 'Impresión de etiquetas
-                    'Calculando datos
-                    objGlobal.SBOApp.StatusBar.SetText("Imprimiendo Etiquetas... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                    If Impresion_ET(oForm, objGlobal) = False Then
-                        Exit Function
-                    End If
-                    objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            End Select
-
-            EventHandler_ItemPressed_After = True
-
-        Catch ex As Exception
-            oForm.Freeze(False)
-            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
-        Finally
-            oForm.Freeze(False)
-            EXO_CleanCOM.CLiberaCOM.Form(oForm)
-        End Try
-    End Function
-    Public Shared Function Impresion_ET(ByRef oForm As SAPbouiCOM.Form, ByRef oobjGlobal As EXO_UIAPI.EXO_UIAPI) As Boolean
-        Impresion_ET = False
-#Region "VARIABLES"
-        Dim oCmpSrv As SAPbobsCOM.CompanyService = oobjGlobal.compañia.GetCompanyService()
-        Dim oReportLayoutService As SAPbobsCOM.ReportLayoutsService = CType(oCmpSrv.GetBusinessService(SAPbobsCOM.ServiceTypes.ReportLayoutsService), SAPbobsCOM.ReportLayoutsService)
-        Dim oPrintParam As SAPbobsCOM.ReportLayoutPrintParams = CType(oReportLayoutService.GetDataInterface(SAPbobsCOM.ReportLayoutsServiceDataInterfaces.rlsdiReportLayoutPrintParams), SAPbobsCOM.ReportLayoutPrintParams)
-        Dim sTIPODOC As String = "" : Dim sDocEntry As String = "" : Dim sDocNum As String = ""
-        Dim sLayout As String = "" : Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = Nothing
-        Dim sDocEntryLstEmbalaje As String = ""
-#End Region
-
-        Try
-            oRs = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-
-            sDocEntryLstEmbalaje = oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").GetValue("DocEntry", 0).ToString.Trim
-
-            sLayout = oobjGlobal.funcionesUI.refDi.OGEN.valorVariable("EXO_ETPARRILLA")
-            If sLayout = "" Then
-                oobjGlobal.SBOApp.StatusBar.SetText("Parámetro [EXO_ETPARRILLA] no tiene valor. Revise los datos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-            Else
-                sSQL = "SELECT DISTINCT ""DocEntry"",""U_EXO_IDBULTO"" FROM ""@EXO_LSTEMBL"" WHERE ""DocEntry""=" & sDocEntryLstEmbalaje
-                oRs.DoQuery(sSQL)
-                If oRs.RecordCount > 0 Then
-                    Dim sDirExportar As String = oobjGlobal.path & "\05.Rpt\PARRILLADOC\"
-                    Dim sRutaFicheros As String = oobjGlobal.path & "\05.Rpt\PARRILLADOC\ET_CREADAS\"
-                    If IO.Directory.Exists(sDirExportar) = False Then
-                        IO.Directory.CreateDirectory(sDirExportar)
-                    End If
-                    If IO.Directory.Exists(sRutaFicheros) = False Then
-                        IO.Directory.CreateDirectory(sRutaFicheros)
-                    End If
-                    Dim sCrystal As String = "ETIQUETASBULTOS.rpt"
-                    EXO_GLOBALES.GetCrystalReportFile(oobjGlobal, sDirExportar & sCrystal, sLayout)
-                    oobjGlobal.SBOApp.StatusBar.SetText("Layout " & sDirExportar & sCrystal, BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
-
-                    For p = 0 To oRs.RecordCount - 1
-                        Dim sDocEntryLstEmb As String = oRs.Fields.Item("DocEntry").Value.ToString.Trim
-                        Dim sIDBulto As String = oRs.Fields.Item("U_EXO_IDBULTO").Value.ToString.Trim
-
-                        Dim sTipoImp As String = "IMP"
-                        'Imprimimos la etiqueta
-                        GenerarImpCrystalET(oobjGlobal, sDirExportar, sCrystal, sDocEntryLstEmb, sIDBulto, sTipoImp, sRutaFicheros, "")
-
-                        oRs.MoveNext()
-                    Next
-                Else
-                    oobjGlobal.SBOApp.StatusBar.SetText("No tiene Lista de embalajes. No puede imprimir la etiqueta.", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
-                End If
-            End If
-
-            Impresion_ET = True
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
-        Finally
-            oReportLayoutService = Nothing
-            oCmpSrv = Nothing
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
-        End Try
-    End Function
-    Public Shared Sub GenerarImpCrystalET(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal rutaCrystal As String, ByVal sCrystal As String,
-                                       ByVal sDocEntry As String, ByVal sIDBULTO As String, ByVal sTIPOIMP As String, ByVal sDir As String, ByRef sReport As String)
-
-        Dim oCRReport As ReportDocument = Nothing
-        Dim oFileDestino As DiskFileDestinationOptions = Nothing
-        Dim sServer As String = ""
-        Dim sDriver As String = ""
-        Dim sBBDD As String = ""
-        Dim sUser As String = ""
-        Dim sPwd As String = ""
-        Dim sConnection As String = ""
-        Dim oLogonProps As NameValuePairs2 = Nothing
-
-        Dim conrepor As DataSourceConnections = Nothing
-        Dim sImpresora As String = "" : Dim nCopias As Integer = 1
-        Dim sSQL As String = ""
-        Try
-
-            oCRReport = New ReportDocument()
-
-            oCRReport.Load(rutaCrystal & sCrystal)
-
-            oCRReport.DataSourceConnections.Clear()
-
-            oObjGlobal.SBOApp.StatusBar.SetText("DocEntry: " & sDocEntry & " - IDBULTO: " & sIDBULTO, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-
-            'Establecemos las conexiones a la BBDD
-            sServer = oObjGlobal.funcionesUI.refDi.OGEN.valorVariable("SERVIDOR_HANA") ' objGlobal.compañia.Server
-            'sServer = objGlobal.refDi.SQL.dameCadenaConexion.ToString
-            sBBDD = oObjGlobal.compañia.CompanyDB
-            sUser = oObjGlobal.refDi.SQL.usuarioSQL
-            sPwd = oObjGlobal.refDi.SQL.claveSQL
-
-            sDriver = "HDBODBC"
-            sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
-            'sConnection = "DRIVER={" & sDriver & "};" & sServer & ";DATABASE=" & sBBDD & ";"
-            oObjGlobal.SBOApp.StatusBar.SetText("Conectando: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
-            oLogonProps = oCRReport.DataSourceConnections(0).LogonProperties
-            oLogonProps.Set("Provider", sDriver)
-            oLogonProps.Set("Connection String", sConnection)
-
-
-            'Establecemos los parámetros para el report.
-            oCRReport.SetParameterValue("DocEntry", sDocEntry)
-            oCRReport.SetParameterValue("ID_Bulto", sIDBULTO)
-            'oCRReport.SetParameterValue("Schema@", sBBDD)
-
-
-            oCRReport.DataSourceConnections(0).SetLogonProperties(oLogonProps)
-            oCRReport.DataSourceConnections(0).SetConnection(sServer, sBBDD, False)
-            oObjGlobal.SBOApp.StatusBar.SetText("Connection String: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-
-            For Each oSubReport As ReportDocument In oCRReport.Subreports
-                For Each oConnection As IConnectionInfo In oSubReport.DataSourceConnections
-                    oConnection.SetConnection(sServer, sBBDD, False)
-                    oConnection.SetLogon(sUser, sPwd)
-                Next
-            Next
-            oObjGlobal.SBOApp.StatusBar.SetText("Actualizado conect Subreport...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-
-            Select Case sTIPOIMP
-                Case "PDF"
-#Region "Exportar a PDF"
-                    'Preparamos para la exportación
-                    If IO.Directory.Exists(sDir) = False Then
-                        IO.Directory.CreateDirectory(sDir)
-                    End If
-                    sReport = sDir & "Et_Bultos_" & sDocEntry & ".pdf"
-                    'Compruebo si existe y lo borro
-                    If IO.File.Exists(sReport) Then
-                        IO.File.Delete(sReport)
-                    End If
-                    oObjGlobal.SBOApp.StatusBar.SetText("Generando pdf para envio impresión...Espere por favor", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
-
-                    oCRReport.ExportOptions.ExportFormatType = CrystalDecisions.Shared.ExportFormatType.PortableDocFormat
-
-                    oFileDestino = New CrystalDecisions.Shared.DiskFileDestinationOptions
-                    oFileDestino.DiskFileName = sReport
-
-                    'Le pasamos al reporte el parámetro destino del reporte (ruta)
-                    oCRReport.ExportOptions.DestinationOptions = oFileDestino
-
-                    'Le indicamos que el reporte no es para mostrarse en pantalla, sino, que es para guardar en disco
-                    oCRReport.ExportOptions.ExportDestinationType = CrystalDecisions.Shared.ExportDestinationType.DiskFile
-
-                    'Finalmente exportamos el reporte a PDF
-                    oCRReport.Export()
-                    '            oCRReport.ExportToDisk(ExportFormatType.PortableDocFormat, sReport)
-#End Region
-                Case "IMP"
-#Region "Imprimir a impresora"
-                    'Buscamos la impresora por defecto
-                    'Dim instance As New Printing.PrinterSettings
-                    'sImpresora = instance.PrinterName
-                    sImpresora = oObjGlobal.refDi.SQL.sqlStringB1("SELECT ""U_EXO_IMPBUL"" FROM OUSR WHERE ""USERID""='" & oObjGlobal.compañia.UserSignature.ToString & "' ")
-                    'oObjGlobal.SBOApp.StatusBar.SetText("Impresora: " & sImpresora, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-                    oObjGlobal.SBOApp.StatusBar.SetText("Buscando Impresora " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
-                    If EXO_GLOBALES.IsPrinterOnline(sImpresora) = True Then
-                        oObjGlobal.SBOApp.StatusBar.SetText("Imprimiendo en " & sImpresora & "...Espere por favor", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Warning)
-                        oCRReport.PrintOptions.NoPrinter = False
-                        oCRReport.PrintOptions.PrinterName = sImpresora
-                        oCRReport.PrintToPrinter(nCopias, False, 0, 9999)
-                    Else
-                        oObjGlobal.SBOApp.StatusBar.SetText("La impresora seleccionada en el usuario no se encuentra o está offline. Por favor verifique la parametrización.", BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning)
-                    End If
-#End Region
-            End Select
-
-            'Cerramos
-            oCRReport.Close()
-            oCRReport.Dispose()
-
-        Catch exCOM As System.Runtime.InteropServices.COMException
-            Throw exCOM
-        Catch ex As Exception
-            Throw ex
-        Finally
-            oObjGlobal.SBOApp.StatusBar.SetText("Fin del proceso de impresión.", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success)
-            oCRReport = Nothing
-            oFileDestino = Nothing
-        End Try
-    End Sub
     Private Function EventHandler_ItemPressed_Before(ByVal pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
@@ -682,29 +467,12 @@ Public Class EXO_LSTEMB
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_LSTEMB" Then
-#Region "Botón Imprimir Etiqueta"
-                oItem = oForm.Items.Add("btnET", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
-                oItem.Left = oForm.Items.Item("2").Left + 80
-                oItem.Width = oForm.Items.Item("2").Width + 25
-                oItem.Top = oForm.Items.Item("2").Top
-                oItem.Height = oForm.Items.Item("2").Height
-                oItem.Enabled = False
-                Dim oBtnAct As SAPbouiCOM.Button
-                oBtnAct = CType(oItem.Specific, Button)
-                oBtnAct.Caption = "Imprimir Bulto"
-                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
-                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
-                oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
-#End Region
                 Cargar_Combos(oForm)
                 If oForm.Mode = BoFormMode.fm_ADD_MODE Then
                     EXO_GLOBALES.Modo_Anadir(oForm, objGlobal)
                 End If
 
                 If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
-                    If oForm.Mode <> BoFormMode.fm_OK_MODE Then
-                        oForm.Mode = BoFormMode.fm_OK_MODE
-                    End If
                     objGlobal.SBOApp.ActivateMenuItem("1304")
                 End If
             End If
@@ -777,7 +545,7 @@ Public Class EXO_LSTEMB
             sSQL = " Select '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
             sSQL &= " UNION ALL "
             sSQL &= "SELECT CAST(""DocEntry"" as nVARCHAR),CAST(""DocNum"" as nVARCHAR) FROM ""@EXO_ENVTRANS"" WHERE ""Status""='O' "
-            'sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
+            sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
             objGlobal.funcionesUI.cargaCombo(CType(oform.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oform.Items.Item("1_U_Cb").DisplayDesc = True
 
@@ -847,7 +615,7 @@ Public Class EXO_LSTEMB
             sSQL = " Select '-'  ""DocEntry"", ' ' ""DocNum"" FROM DUMMY"
             sSQL &= " UNION ALL "
             sSQL &= "SELECT CAST(""DocEntry"" as nVARCHAR),CAST(""DocNum"" as nVARCHAR) FROM ""@EXO_ENVTRANS"" WHERE ""Status""='O' "
-            'sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
+            sSQL &= " and ""U_EXO_DOCDATE""='" & sFecha & "' and ""U_EXO_CEXP""='" & sClaseExp & "' "
             objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("1_U_Cb").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             oForm.Items.Item("1_U_Cb").DisplayDesc = True
 
