@@ -8,17 +8,17 @@ Imports System.Runtime.InteropServices
 
 ' Revisar los valores de los atributos del ensamblado
 
-<Assembly: AssemblyTitle("EXO_ACTL_PLNECESIDAD")> 
+<Assembly: AssemblyTitle("EXO_ACTL_LSTEMBALAJES")> 
 <Assembly: AssemblyDescription("")>
 <Assembly: AssemblyCompany("EXPERT ONE")>
-<Assembly: AssemblyProduct("EXO_ACTL_PLNECESIDAD")>
+<Assembly: AssemblyProduct("EXO_ACTL_LSTEMBALAJES")>
 <Assembly: AssemblyCopyright("Copyright ©  2023")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
 
 'El siguiente GUID sirve como id. de typelib si este proyecto se expone a COM.
-<Assembly: Guid("d2bf4c1c-aa9f-4642-8bbd-91ea051ca541")>
+<Assembly: Guid("2bc35a0e-4342-4a79-bf05-32218c9d7c61")>
 
 ' La información de versión de un ensamblado consta de los cuatro valores siguientes:
 '
@@ -31,5 +31,5 @@ Imports System.Runtime.InteropServices
 ' mediante el carácter '*', como se muestra a continuación:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("10.1.8.042")>
-<Assembly: AssemblyFileVersion("10.1.8.042")>
+<Assembly: AssemblyVersion("10.1.8.022")>
+<Assembly: AssemblyFileVersion("10.1.8.022")>

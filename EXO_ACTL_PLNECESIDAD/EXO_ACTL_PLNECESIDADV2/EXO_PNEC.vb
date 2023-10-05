@@ -126,11 +126,16 @@ Public Class EXO_PNEC
             Select Case pVal.ItemUID
                 Case "grd_DOC"
                     Dim gridData = CType(oForm.Items.Item("grd_DOC").Specific, Grid)
-                    If pVal.Row = 0 Then
-                        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
-                    Else
-                        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "112"
+                    If gridData.Columns.Item(0).TitleObject.Caption = "Codigo de Respuesta" Then
+                        sTipo = CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).DataTable.GetValue("ObjType", pVal.Row).ToString
+                        CType(gridData.Columns.Item(3), SAPbouiCOM.EditTextColumn).LinkedObjectType = sTipo
+                        '    If pVal.Row = 0 Then
+                        '        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
+                        '    Else
+                        '        CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "112"
+                        '    End If
                     End If
+
             End Select
 
             EventHandler_MATRIX_LINK_PRESSED = True
@@ -1064,7 +1069,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             Dim columns() As String = {"AL0", "AL7", "AL8", "AL14", "AL16"}
             Dim gridData = CType(oForm.Items.Item("grd_DOC").Specific, Grid)
             Dim qwewq = gridData.DataTable
-            Dim tupleResult = New List(Of Tuple(Of Integer, String, String))
+            Dim tupleResult = New List(Of Tuple(Of Integer, String, String, String))
             Dim dtResp = oForm.DataSources.DataTables.Item("DT_Res")
             dtResp.Rows.Clear()
 
@@ -1146,7 +1151,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
                     End If
 
-                    tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, objGlobal.compañia.GetNewObjectKey()))
+                    tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", objGlobal.compañia.GetNewObjectKey()))
                 Next
 
 #End Region
@@ -1246,7 +1251,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                         msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
                     End If
 
-                    tupleResult.Add(New Tuple(Of Integer, String, String)(responseTrasl, msgRespTras, sDocEntry))
+                    tupleResult.Add(New Tuple(Of Integer, String, String, String)(responseTrasl, msgRespTras, "112", sDocEntry))
                 Next
 
 #End Region
@@ -1364,7 +1369,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                 sDocEntry = ""
                             End If
 
-                            tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, sDocEntry))
+                            tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
                         Next
                     Next
 #End Region
@@ -1425,7 +1430,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             sDocEntry = ""
                         End If
 
-                        tupleResult.Add(New Tuple(Of Integer, String, String)(responsePedComp, msgResp, sDocEntry))
+                        tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
                     Next
 #End Region
                     If (shouldCreateTransfer = 1) Then
@@ -1535,7 +1540,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                 msgRespTras = $"Error creando la solicitud de traslado {objGlobal.compañia.GetLastErrorDescription}"
                             End If
 
-                            tupleResult.Add(New Tuple(Of Integer, String, String)(responseTrasl, msgRespTras, sDocEntry))
+                            tupleResult.Add(New Tuple(Of Integer, String, String, String)(responseTrasl, msgRespTras, "112", sDocEntry))
                         Next
 
 #End Region
@@ -1550,6 +1555,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                 dtResp.SetValue(0, i, tupleResult(i).Item1.ToString)
                 dtResp.SetValue(1, i, tupleResult(i).Item2.ToString)
                 dtResp.SetValue(2, i, tupleResult(i).Item3.ToString)
+                dtResp.SetValue(3, i, tupleResult(i).Item4.ToString)
             Next
 
             For i As Integer = 0 To gridData.Columns.Count - 1
@@ -1558,8 +1564,10 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
             gridData.Columns.Item(0).TitleObject.Caption = "Codigo de Respuesta"
             gridData.Columns.Item(1).TitleObject.Caption = "Mensaje"
-            gridData.Columns.Item(2).TitleObject.Caption = "Documento"
-            CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
+            gridData.Columns.Item(2).TitleObject.Caption = "Tipo"
+            CType(gridData.Columns.Item(3), SAPbouiCOM.EditTextColumn).Visible = False
+            gridData.Columns.Item(3).TitleObject.Caption = "Documento"
+            CType(gridData.Columns.Item(3), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
 
             oForm.Items.Item("btnGen").Enabled = False
             Return 0

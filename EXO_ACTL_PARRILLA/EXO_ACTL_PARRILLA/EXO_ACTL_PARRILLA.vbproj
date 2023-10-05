@@ -240,6 +240,7 @@
     <EmbeddedResource Include="FORMS\EXO_PSTOCK.srf" />
     <EmbeddedResource Include="FORMS\EXO_PSTOCKCOMP.srf" />
     <EmbeddedResource Include="FORMS\EXO_BTOS.srf" />
+    <EmbeddedResource Include="SQLHANA\VEXO_PARRILLA_ESTADO_SALCOMP.sql" />
     <Content Include="SQLHANA\VEXO_TRASLADOS.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
