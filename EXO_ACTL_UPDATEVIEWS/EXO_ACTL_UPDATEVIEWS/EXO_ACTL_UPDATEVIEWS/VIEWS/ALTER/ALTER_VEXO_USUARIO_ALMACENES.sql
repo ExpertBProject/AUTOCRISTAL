@@ -1,0 +1,12 @@
+﻿ALTER VIEW "BBDD"."VEXO_USUARIO_ALMACENES" ( "USER_CODE",
+	 "WhsCode",
+	 "branch",
+	 "Name" ) AS SELECT
+	 T1."USER_CODE",
+	 T2."WhsCode",
+	 T0."branch",
+	 T3."Name" 
+FROM OHEM AS T0 
+INNER JOIN OUSR AS T1 ON T0."userId" = T1."USERID" 
+INNER JOIN OUBR AS T3 ON T1."Branch" = T3."Code" 
+INNER JOIN OWHS AS T2 ON T2."U_EXO_SUCURSAL" = T1."Branch" WITH READ ONLY
