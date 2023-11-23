@@ -1,6 +1,7 @@
 ﻿Imports SAPbouiCOM
 Public Class EXO_BTOS
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
+
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
         Me.objGlobal = objG
     End Sub
@@ -23,7 +24,9 @@ Public Class EXO_BTOS
                                 Case SAPbouiCOM.BoEventTypes.et_COMBO_SELECT
 
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
-
+                                    If EventHandler_ITEM_PRESSED_AFTER(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_VALIDATE
 
                                 Case SAPbouiCOM.BoEventTypes.et_KEY_DOWN
@@ -95,8 +98,41 @@ Public Class EXO_BTOS
             Return False
         End Try
     End Function
-    Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
+    Private Function EventHandler_ITEM_PRESSED_AFTER(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Dim sSQL As String = ""
 
+        EventHandler_ITEM_PRESSED_AFTER = False
+
+        Try
+            oForm = Me.objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+
+            Select Case pVal.ItemUID
+                Case "chkPdte"
+                    If oForm.DataSources.UserDataSources.Item("UDCHK").Value = "Y" Then
+                        sSQL = "SELECT * FROM ("
+                        sSQL &= oForm.DataSources.UserDataSources.Item("UDSQL").Value.Trim
+                        sSQL &= ") T WHERE T.""Pdte. Reubicar"" <>0"
+
+                    Else
+                        sSQL = oForm.DataSources.UserDataSources.Item("UDSQL").Value.Trim
+                    End If
+                    oForm.DataSources.UserDataSources.Item("UDSQLACT").Value = sSQL
+                    oForm.DataSources.UserDataSources.Item("UDPDTE").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDPDTE"))
+                    oForm.DataSources.UserDataSources.Item("UDREC").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREC"))
+                    oForm.DataSources.UserDataSources.Item("UDREU").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREU"))
+                    oForm.DataSources.DataTables.Item("DTSTOCK").ExecuteQuery(sSQL)
+            End Select
+
+            EventHandler_ITEM_PRESSED_AFTER = True
+
+        Catch ex As Exception
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+        End Try
+    End Function
+    Private Function EventHandler_MATRIX_LINK_PRESSED(ByVal pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
         Dim sTipo As String = ""

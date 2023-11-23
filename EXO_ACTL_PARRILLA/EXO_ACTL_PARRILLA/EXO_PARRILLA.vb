@@ -5,6 +5,7 @@ Public Class EXO_PARRILLA
     Private objGlobal As EXO_UIAPI.EXO_UIAPI
     Public Shared _ClaseExp As String = ""
 
+
     Public Sub New(ByRef objG As EXO_UIAPI.EXO_UIAPI)
         Me.objGlobal = objG
     End Sub
@@ -629,16 +630,20 @@ Public Class EXO_PARRILLA
                     sSQL &= ")T "
 
                     oForm.DataSources.DataTables.Item("DTSTOCK").ExecuteQuery(sSQL)
-
+                    oForm.DataSources.UserDataSources.Item("UDSQL").Value = sSQL
+                    oForm.DataSources.UserDataSources.Item("UDSQLACT").Value = sSQL
                     If (oForm.DataSources.DataTables.Item("DTSTOCK").Rows.Count = 1) Then
                         If (oForm.DataSources.DataTables.Item("DTSTOCK").GetValue(1, 0).ToString.Equals("0")) Then
                             sSQL = "SELECT 'No hay articulos para bultos' AS ""Message"" FROM DUMMY"
                             oForm.DataSources.DataTables.Item("DTSTOCK").ExecuteQuery(sSQL)
+                            oForm.Items.Item("chkPdte").Enabled = False
                         End If
                     End If
 
                     FormateaGrid_PSTOCKBULTOS(oForm)
-
+                    oForm.DataSources.UserDataSources.Item("UDPDTE").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDPDTE"))
+                    oForm.DataSources.UserDataSources.Item("UDREC").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREC"))
+                    oForm.DataSources.UserDataSources.Item("UDREU").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREU"))
                 End If
 
             Else
@@ -1577,9 +1582,10 @@ Public Class EXO_PARRILLA
             sUser = oObjGlobal.refDi.SQL.usuarioSQL
             sPwd = oObjGlobal.refDi.SQL.claveSQL
 
-            sDriver = "HDBODBC"
-            sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
-            'sConnection = "DRIVER={" & sDriver & "};" & sServer & ";DATABASE=" & sBBDD & ";"
+            'sDriver = "HDBODBC"
+            'sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
+            sDriver = "B1CRHPROXY"
+            sConnection = "DRIVER={B1CRHPROXY};UID=B1SLDUSER;PWD=Aut0Cr1Sb01;SERVERNODE=10.10.1.13:30015;DATABASE=SBO_AUTOCRISTAL_PRUEBAS;"
             oObjGlobal.SBOApp.StatusBar.SetText("Conectando: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
             oLogonProps = oCRReport.DataSourceConnections(0).LogonProperties
             oLogonProps.Set("Provider", sDriver)
@@ -2539,35 +2545,42 @@ Public Class EXO_PARRILLA
                         sDocNum = oForm.DataSources.DataTables.Item(sData).GetValue("Nº DOCUMENTO", grid.GetDataTableRowIndex(i)).ToString
                         cardCode = oForm.DataSources.DataTables.Item(sData).GetValue("CÓDIGO", grid.GetDataTableRowIndex(i)).ToString
                         deleg = oForm.DataSources.DataTables.Item(sData).GetValue("DELEGACIÓN", grid.GetDataTableRowIndex(i)).ToString
-
                         bActualiza = False
-                        Select Case sTIPODOC
-                            Case "PEDVTA" ' Pedido de venta
-                                oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
-                                If oDocuments.GetByKey(sDocEntry) = True Then
+                        sSQL = "SELECT ""Name"" FROm OWHS INNER JOIN OUBR ON OWHS.""U_EXO_SUCURSAL""=OUBR.""Code"" WHERE ""WhsCode""='" & oForm.DataSources.UserDataSources.Item("UDALM").Value.Trim & "' "
+                        Dim sSucurAlm As String = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                        If sSucurAlm <> deleg Then
+                            Select Case sTIPODOC
+                                Case "PEDVTA" ' Pedido de venta
+                                    oDocuments = CType(oobjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders), SAPbobsCOM.Documents)
+                                    If oDocuments.GetByKey(sDocEntry) = True Then
 
-                                    For lin = 0 To oDocuments.Lines.Count - 1
-                                        oDocuments.Lines.SetCurrentLine(lin)
-                                        sSQL = "SELECT OWHS.""WhsCode"" FROM OCRD JOIN OWHS ON OCRD.""U_EXO_DELE"" = OWHS.""U_EXO_SUCURSAL"" WHERE OCRD.""CardCode"" = '" & cardCode & "'"
-                                        sDelALM = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        oDocuments.Lines.WarehouseCode = sDelALM
+                                        For lin = 0 To oDocuments.Lines.Count - 1
+                                            oDocuments.Lines.SetCurrentLine(lin)
+                                            sSQL = "SELECT OWHS.""WhsCode"" FROM OCRD JOIN OWHS ON OCRD.""U_EXO_DELE"" = OWHS.""U_EXO_SUCURSAL"" WHERE OCRD.""CardCode"" = '" & cardCode & "'"
+                                            sDelALM = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                            oDocuments.Lines.WarehouseCode = sDelALM
 
-                                        sSQL = "SELECT ""OcrCode"" FROm OOCR Where ""OcrName""='" & deleg & "' "
-                                        Dim sOcrdCode = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                        oDocuments.Lines.CostingCode = sOcrdCode
-                                        oDocuments.Lines.ShippingMethod = -1
-                                    Next
+                                            sSQL = "SELECT ""OcrCode"" FROm OOCR Where ""OcrName""='" & deleg & "' "
+                                            Dim sOcrdCode = oobjGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                            oDocuments.Lines.CostingCode = sOcrdCode
+                                            oDocuments.Lines.ShippingMethod = -1
+                                        Next
 
-                                    If oDocuments.Update() <> 0 Then
-                                        oobjGlobal.SBOApp.StatusBar.SetText("Error modificar  el pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        If oDocuments.Update() <> 0 Then
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Error modificar  el pedido Nº: " & sDocNum & ". " & oobjGlobal.compañia.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        Else
+                                            oobjGlobal.SBOApp.StatusBar.SetText("Pedido modificado Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                        End If
+
                                     Else
-                                        oobjGlobal.SBOApp.StatusBar.SetText("Pedido modificado Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                                        oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el pedido para cambiar el almacén con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                     End If
+                            End Select
+                        Else
+                            oobjGlobal.SBOApp.StatusBar.SetText("El almacen y el pedido tienen la misma delegación.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                        End If
 
-                                Else
-                                    oobjGlobal.SBOApp.StatusBar.SetText("No se encuentra el pedido para cambiar el almacén con Nº: " & sDocNum, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                End If
-                        End Select
+
                     End If
                 Next
             End If
@@ -2702,7 +2715,7 @@ Public Class EXO_PARRILLA
             Throw ex
         End Try
     End Function
-    Private Function ComprobarDOCENT(ByRef oForm As SAPbouiCOM.Form, ByVal sTABLA As String, ByRef dtDatos As System.Data.DataTable, ByRef dt As SAPbouiCOM.DataTable, ByRef sTipo As String) As System.Data.DataTable
+    Public Shared Function ComprobarDOCENT(ByRef oForm As SAPbouiCOM.Form, ByVal sTABLA As String, ByRef dtDatos As System.Data.DataTable, ByRef dt As SAPbouiCOM.DataTable, ByRef sTipo As String) As System.Data.DataTable
 
         Try
             Dim dtDatosNoSelected As System.Data.DataTable = New System.Data.DataTable
@@ -4277,8 +4290,14 @@ Public Class EXO_PARRILLA
                 grid.Columns.Item("Interno Entrada").Visible = False
                 grid.Columns.Item("Interno Emb").Visible = False
                 grid.Columns.Item("Pdte. Recibir").RightJustified = True
+                oColumnTxt = CType(grid.Columns.Item("Pdte. Recibir"), EditTextColumn)
+                oColumnTxt.ColumnSetting.SumType = BoColumnSumType.bst_Auto
                 grid.Columns.Item("Recibido").RightJustified = True
+                oColumnTxt = CType(grid.Columns.Item("Recibido"), EditTextColumn)
+                oColumnTxt.ColumnSetting.SumType = BoColumnSumType.bst_Auto
                 grid.Columns.Item("Pdte. Reubicar").RightJustified = True
+                oColumnTxt = CType(grid.Columns.Item("Pdte. Reubicar"), EditTextColumn)
+                oColumnTxt.ColumnSetting.SumType = BoColumnSumType.bst_Auto
             End If
 
             CType(oform.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).AutoResizeColumns()

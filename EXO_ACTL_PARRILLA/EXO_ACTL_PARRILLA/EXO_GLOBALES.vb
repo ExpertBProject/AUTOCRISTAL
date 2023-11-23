@@ -148,6 +148,31 @@ Public Class EXO_GLOBALES
         End Try
     End Function
 #End Region
+
+    Public Shared Function TotalesBultosPdtes(ByVal sSQLUS As String, ByVal sCampo As String) As String
+        Dim sSQL As String = ""
+        TotalesBultosPdtes = sSQLUS
+        Try
+            sSQL = "SELECT Count(""Id Bulto"") ""Cuenta"" FROM ("
+            sSQL &= "SELECT DISTINCT ""Id Bulto"" FROM ("
+            sSQL &= sSQLUS
+            sSQL &= ") T "
+            Select Case sCampo
+                Case "UDREC"
+                    sSQL &= " WHERE ""Recibido""<>0 "
+                Case "UDREU"
+                    sSQL &= " WHERE ""Pdte. Reubicar""<>0 "
+                Case "UDPDTE"
+                    sSQL &= " WHERE ""Pdte. Recibir""<>0 "
+            End Select
+            sSQL &= " GROUP BY ""Tipo"", ""Nº Documento"", ""Id Bulto"" "
+            sSQL &= ") T "
+
+            TotalesBultosPdtes = sSQL
+        Catch ex As Exception
+            Throw ex
+        End Try
+    End Function
     Public Shared Function CargarUDO(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal sUDO As String, ByVal sCode As String) As Boolean
         CargarUDO = False
 

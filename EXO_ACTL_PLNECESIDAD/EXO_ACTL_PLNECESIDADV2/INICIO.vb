@@ -20,6 +20,9 @@ Public Class INICIO
     Public Shared _HeightVENT As Integer = 149
 
     Public Shared _dtDatos As New System.Data.DataTable
+
+    Public Shared _iRowGrid As Integer = -1
+
 #End Region
     Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
         MyBase.New(oObjGlobal, actualizar, False, idAddOn)

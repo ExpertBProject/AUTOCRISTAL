@@ -686,6 +686,11 @@ Public Class EXO_PNEC
                     If pVal.ColUID = "Sel." Then
                         CalculateGridCheckValues(oForm, pVal.Row)
                     End If
+                    If INICIO._iRowGrid <> pVal.Row And pVal.Row <> -1 Then
+                        INICIO._iRowGrid = pVal.Row
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item("RowsHeader").Click(pVal.Row)
+                    End If
+
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
 #Region "Comprobar si ha elegido un almacen"
@@ -752,7 +757,7 @@ Public Class EXO_PNEC
                         sSQLGrid = "Select 
                                         'N' ""Sel."", 
                                         T0.""ItemCode"" ""EUROCODE"", 
-                                        T0.""ItemName"" ""Descripción"",  
+                                        LEFT(T0.""ItemName"",35) ""Descripción"",  
                                         CASE WHEN TX.""24Q"" > 3 then 'A'
 	                                         WHEN TX.""24Q"" <= 3 and TX.""24Q"">0 and TX.""8Q"" > 0 Then 'B' 
 	                                         WHEN TX.""24Q"" <= 3 and  TX.""A_8Q"" > 0 Then 'D'
@@ -1104,6 +1109,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             If (whsSelected.Count = 1) Then
                 'Proceso Simple 
 #Region "Creacion de solicitud de Compra"
+                Dim dSumaCantidad As Double = 0
                 For i As Integer = 0 To rowsGrouped.Count - 1
                     Dim prov = rowsGrouped(i).Key.Value
                     Dim solPedComp = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
@@ -1131,27 +1137,33 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             DateTime.ParseExact(fechaPrev, "yyyyMMdd", CultureInfo.InvariantCulture)
                         End If
 
-                        solPedComp.Lines.ItemCode = itemCode
-                        solPedComp.Lines.RequiredDate = docDatePed
-                        solPedComp.Lines.ShipDate = docDatePed
-                        solPedComp.Lines.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
-                        solPedComp.Lines.UnitPrice = solPedComp.Lines.Price
-                        solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
-                        solPedComp.Lines.Quantity = order.DoubleParseAdvanced
-                        solPedComp.Lines.RequiredQuantity = solPedComp.Lines.Quantity
-                        solPedComp.Lines.CostingCode = GetCostCenter(solPedComp.Lines.WarehouseCode)
-                        solPedComp.Lines.Add()
+                        If order.DoubleParseAdvanced > 0 Then
+                            solPedComp.Lines.ItemCode = itemCode
+                            solPedComp.Lines.RequiredDate = docDatePed
+                            solPedComp.Lines.ShipDate = docDatePed
+                            solPedComp.Lines.Price = GetPrice(prov, itemCode, Single.Parse(order), docDatePed)
+                            solPedComp.Lines.UnitPrice = solPedComp.Lines.Price
+                            solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
+                            solPedComp.Lines.Quantity = order.DoubleParseAdvanced
+                            solPedComp.Lines.RequiredQuantity = solPedComp.Lines.Quantity
+                            dSumaCantidad += solPedComp.Lines.Quantity
+                            solPedComp.Lines.CostingCode = GetCostCenter(solPedComp.Lines.WarehouseCode)
+                            If solPedComp.Lines.Quantity <> 0 Then
+                                solPedComp.Lines.Add()
+                            End If
+                        End If
                     Next
-
-                    Dim responsePedComp = solPedComp.Add()
-                    Dim msgResp = String.Empty
-                    If (responsePedComp = 0) Then
-                        msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
-                    Else
-                        msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                    Dim responsePedComp As Integer = -1
+                    If dSumaCantidad > 0 Then
+                        responsePedComp = solPedComp.Add()
+                        Dim msgResp = String.Empty
+                        If (responsePedComp = 0) Then
+                            msgResp = $"Solicitud de pedido creado exitosamente {objGlobal.compañia.GetNewObjectKey()}"
+                        Else
+                            msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                        End If
+                        tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", objGlobal.compañia.GetNewObjectKey()))
                     End If
-
-                    tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", objGlobal.compañia.GetNewObjectKey()))
                 Next
 
 #End Region
@@ -1337,7 +1349,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                 End If
                             Next
                         Next
-
+                        Dim dSumaCantidad As Double = 0
                         For x As Integer = 0 To dicPed.Count - 1
                             Dim key = dicPed.ElementAt(x).Key
                             Dim linesPed = dicPed(key)
@@ -1353,23 +1365,28 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                                 solPedComp.Lines.UnitPrice = linesPed(line).UnitPrice
                                 solPedComp.Lines.Quantity = linesPed(line).Quantity
                                 solPedComp.Lines.RequiredQuantity = linesPed(line).RequiredQuantity
+                                dSumaCantidad += solPedComp.Lines.Quantity
                                 solPedComp.Lines.CostingCode = linesPed(line).CostingCode
                                 solPedComp.Lines.RequiredDate = linesPed(line).RequiredDate
                                 solPedComp.Lines.ShipDate = linesPed(line).ShipDate
-                                solPedComp.Lines.Add()
+                                If solPedComp.Lines.Quantity <> 0 Then
+                                    solPedComp.Lines.Add()
+                                End If
                             Next
 
-                            Dim responsePedComp = solPedComp.Add()
-                            Dim msgResp = String.Empty
-                            Dim sDocEntry As String = ""
-                            If (responsePedComp = 0) Then
-                                msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
-                            Else
-                                msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
-                                sDocEntry = ""
-                            End If
+                            If dSumaCantidad > 0 Then
+                                Dim responsePedComp = solPedComp.Add()
+                                Dim msgResp = String.Empty
+                                Dim sDocEntry As String = objGlobal.compañia.GetNewObjectKey()
+                                If (responsePedComp = 0) Then
+                                    msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
+                                Else
+                                    msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                                    sDocEntry = ""
+                                End If
 
-                            tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
+                                tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
+                            End If
                         Next
                     Next
 #End Region
@@ -1377,6 +1394,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                     'Proceso Multiple Agrupado
                     Dim shouldCreateTransfer = objGlobal.SBOApp.MessageBox("Desea crear los traslados para los pedidos seleccionados?", 1, "Si", "No")
 #Region "Creacion de solicitud de Compra"
+                    Dim dSumaCantidad As Double = 0
                     For i As Integer = 0 To rowsGrouped.Count - 1
                         Dim prov = rowsGrouped(i).Key.Value
                         Dim solPedComp = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseQuotations), SAPbobsCOM.Documents)
@@ -1406,7 +1424,9 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             If bprimeralinea Then
                                 bprimeralinea = False
                             Else
-                                solPedComp.Lines.Add()
+                                If solPedComp.Lines.Quantity <> 0 Then
+                                    solPedComp.Lines.Add()
+                                End If
                             End If
                             solPedComp.Lines.ItemCode = itemCode
                             solPedComp.Lines.WarehouseCode = CType(CType(whsSelected.First().FirstNode.NextNode, XElement).LastNode, XElement).Value
@@ -1414,23 +1434,26 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             solPedComp.Lines.UnitPrice = solPedComp.Lines.Price
                             solPedComp.Lines.Quantity = order.DoubleParseAdvanced
                             solPedComp.Lines.RequiredQuantity = solPedComp.Lines.Quantity
+                            dSumaCantidad += solPedComp.Lines.Quantity
                             solPedComp.Lines.CostingCode = GetCostCenter(solPedComp.Lines.WarehouseCode)
                             solPedComp.Lines.RequiredDate = docDatePed
                             solPedComp.Lines.ShipDate = docDatePed
                         Next
+                        If dSumaCantidad > 0 Then
+                            Dim responsePedComp = solPedComp.Add()
+                            Dim msgResp = String.Empty
+                            Dim sDocEntry As String = ""
+                            If (responsePedComp = 0) Then
+                                sDocEntry = objGlobal.compañia.GetNewObjectKey()
+                                msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
+                            Else
+                                msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
+                                sDocEntry = ""
+                            End If
 
-                        Dim responsePedComp = solPedComp.Add()
-                        Dim msgResp = String.Empty
-                        Dim sDocEntry As String = ""
-                        If (responsePedComp = 0) Then
-                            sDocEntry = objGlobal.compañia.GetNewObjectKey()
-                            msgResp = $"Solicitud de pedido creado exitosamente {sDocEntry}"
-                        Else
-                            msgResp = $"Error creando la solicitud de pedido {objGlobal.compañia.GetLastErrorDescription}"
-                            sDocEntry = ""
+                            tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
                         End If
 
-                        tupleResult.Add(New Tuple(Of Integer, String, String, String)(responsePedComp, msgResp, "540000006", sDocEntry))
                     Next
 #End Region
                     If (shouldCreateTransfer = 1) Then
@@ -1565,7 +1588,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
             gridData.Columns.Item(0).TitleObject.Caption = "Codigo de Respuesta"
             gridData.Columns.Item(1).TitleObject.Caption = "Mensaje"
             gridData.Columns.Item(2).TitleObject.Caption = "Tipo"
-            CType(gridData.Columns.Item(3), SAPbouiCOM.EditTextColumn).Visible = False
+            CType(gridData.Columns.Item(2), SAPbouiCOM.EditTextColumn).Visible = False
             gridData.Columns.Item(3).TitleObject.Caption = "Documento"
             CType(gridData.Columns.Item(3), SAPbouiCOM.EditTextColumn).LinkedObjectType = "540000006"
 
@@ -1759,7 +1782,7 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
                             oColumnTxt.Editable = False
                         End If
                     Else
-                            oColumnTxt.Editable = True
+                        oColumnTxt.Editable = True
                     End If
                 ElseIf sTitulo.Contains("PROV.PEDIDO") Then
                     oColumnTxt.Editable = True
@@ -1843,11 +1866,13 @@ WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
             CType(CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Order"), EditTextColumn).ColumnSetting.SumType = BoColumnSumType.bst_Manual
             CType(CType(oform.Items.Item("grd_DOC").Specific, Grid).Columns.Item("Order"), EditTextColumn).ColumnSetting.SumValue = "0"
+            CType(oform.Items.Item("grd_DOC").Specific, Grid).AutoResizeColumns()
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
         Catch ex As Exception
             Throw ex
         Finally
+
             oform.Freeze(False)
         End Try
     End Sub
