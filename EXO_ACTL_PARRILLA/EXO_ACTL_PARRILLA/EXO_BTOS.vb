@@ -122,6 +122,7 @@ Public Class EXO_BTOS
                     oForm.DataSources.UserDataSources.Item("UDREC").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREC"))
                     oForm.DataSources.UserDataSources.Item("UDREU").Value = objGlobal.refDi.SQL.sqlNumericaB1(EXO_GLOBALES.TotalesBultosPdtes(oForm.DataSources.UserDataSources.Item("UDSQLACT").Value.Trim, "UDREU"))
                     oForm.DataSources.DataTables.Item("DTSTOCK").ExecuteQuery(sSQL)
+                    EXO_PARRILLA.FormateaGrid_PSTOCKBULTOS(oForm)
             End Select
 
             EventHandler_ITEM_PRESSED_AFTER = True

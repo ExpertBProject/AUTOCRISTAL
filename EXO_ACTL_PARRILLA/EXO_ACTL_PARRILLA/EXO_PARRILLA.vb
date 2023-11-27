@@ -4268,7 +4268,7 @@ Public Class EXO_PARRILLA
             oform.Freeze(False)
         End Try
     End Sub
-    Private Sub FormateaGrid_PSTOCKBULTOS(ByRef oform As SAPbouiCOM.Form)
+    Public Shared Sub FormateaGrid_PSTOCKBULTOS(ByRef oform As SAPbouiCOM.Form)
         Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
         Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
         Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
