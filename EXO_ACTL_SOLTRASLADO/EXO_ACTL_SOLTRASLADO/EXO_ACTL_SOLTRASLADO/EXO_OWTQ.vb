@@ -128,7 +128,7 @@ Public Class EXO_OWTQ
             'Recuperar el formulario
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
-            oForm.Visible = False
+            oForm.Freeze(True)
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
             oItem = oForm.Items.Add("cbTipoSol", SAPbouiCOM.BoFormItemTypes.it_COMBO_BOX)
@@ -171,31 +171,34 @@ Public Class EXO_OWTQ
             oItem.LinkTo = "cbStatusP"
             CType(oItem.Specific, SAPbouiCOM.StaticText).Caption = "Status Picking"
 
-            oItem = oForm.Items.Add("btnUS", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
-            oItem.Left = oForm.Items.Item("2").Left + 175
-            oItem.Width = oForm.Items.Item("2").Width + 70
-            oItem.Top = oForm.Items.Item("2").Top
-            oItem.Height = oForm.Items.Item("2").Height
-            oItem.Enabled = False
-            Dim oBtnAct As SAPbouiCOM.Button
-            oBtnAct = CType(oItem.Specific, Button)
-            oBtnAct.Caption = "Usuarios asignados"
-            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
-            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
-            oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
-            oForm.Visible = True
+            'oItem = oForm.Items.Add("btnUS", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
+            'oItem.Left = oForm.Items.Item("2").Left + 175
+            'oItem.Width = oForm.Items.Item("2").Width + 70
+            'oItem.Top = oForm.Items.Item("2").Top
+            'oItem.Height = oForm.Items.Item("2").Height
+            'oItem.Enabled = False
+            'Dim oBtnAct As SAPbouiCOM.Button
+            'oBtnAct = CType(oItem.Specific, Button)
+            'oBtnAct.Caption = "Usuarios asignados"
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Find, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Add, SAPbouiCOM.BoModeVisualBehavior.mvb_False)
+            'oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
+            oForm.Freeze(False)
 
             EventHandler_Form_Load = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw exCOM
         Catch ex As Exception
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw ex
         Finally
+            oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function

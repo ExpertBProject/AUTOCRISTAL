@@ -112,10 +112,10 @@ Public Class EXO_OWTQ
             'Recuperar el formulario
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
-            oForm.Visible = False
+            oForm.Freeze(True)
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             oItem = oForm.Items.Add("btnPL", SAPbouiCOM.BoFormItemTypes.it_BUTTON)
-            oItem.Left = oForm.Items.Item("17").Left + 100
+            oItem.Left = oForm.Items.Item("2").Left + 5
             oItem.Width = oForm.Items.Item("2").Width + 100
             oItem.Top = oForm.Items.Item("2").Top
             oItem.Height = oForm.Items.Item("2").Height
@@ -142,19 +142,25 @@ Public Class EXO_OWTQ
             oItem.SetAutoManagedAttribute(SAPbouiCOM.BoAutoManagedAttr.ama_Editable, SAPbouiCOM.BoAutoFormMode.afm_Ok, SAPbouiCOM.BoModeVisualBehavior.mvb_True)
 
 
-            oForm.Visible = True
+            oForm.Freeze(False)
 
             EventHandler_Form_Load = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
+            oForm.Freeze(False)
+
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw exCOM
         Catch ex As Exception
+            oForm.Freeze(False)
+
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw ex
         Finally
+            oForm.Freeze(False)
+
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function

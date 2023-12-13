@@ -315,9 +315,10 @@ Public Class EXO_LSTEMB
             sUser = oObjGlobal.refDi.SQL.usuarioSQL
             sPwd = oObjGlobal.refDi.SQL.claveSQL
 
-            sDriver = "HDBODBC"
-            sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
-            'sConnection = "DRIVER={" & sDriver & "};" & sServer & ";DATABASE=" & sBBDD & ";"
+            'sDriver = "HDBODBC"
+            'sConnection = "DRIVER={" & sDriver & "};UID=" & sUser & ";PWD=" & sPwd & ";SERVERNODE=" & sServer & ";DATABASE=" & sBBDD & ";"
+            sDriver = "B1CRHPROXY"
+            sConnection = "DRIVER={B1CRHPROXY};UID=B1SLDUSER;PWD=Aut0Cr1Sb01;SERVERNODE=10.10.1.13:30015;DATABASE=SBO_AUTOCRISTAL_PRUEBAS;"
             oObjGlobal.SBOApp.StatusBar.SetText("Conectando: " & sConnection, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
             oLogonProps = oCRReport.DataSourceConnections(0).LogonProperties
             oLogonProps.Set("Provider", sDriver)

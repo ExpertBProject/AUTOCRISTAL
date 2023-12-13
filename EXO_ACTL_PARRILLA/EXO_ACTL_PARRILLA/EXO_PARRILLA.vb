@@ -597,15 +597,15 @@ Public Class EXO_PARRILLA
                         LEFT JOIN WTQ1 X3 ON X4.""DocEntry"" = X3.""DocEntry"" 
 	                    LEFT JOIN ""@EXO_PACKING""  T0 On T0.""U_EXO_OBJTYPE""='1250000001' and T0.""Code"" = X4.""U_EXO_PACKING""
 	                    Left Join ""@EXO_PACKINGL"" T1 On T0.""Code"" = T1.""Code"" And T1.""U_EXO_LINEA"" = X3.""LineNum"" 
-	                    left JOIN OWTR X0 ON X0.""U_EXO_PACKING"" = T0.""Code"" and X0.""CANCELED"" = 'N'      
-                        LEFT JOIN WTR1 X1 ON X1.""DocEntry"" = X0.""DocEntry"" AND X1.""BaseLine"" = X3.""LineNum"" AND X1.""BaseType"" = X3.""ObjType""
+	                    LEFT JOIN WTR1 X1 ON X1.""BaseEntry"" = X3.""DocEntry"" AND X1.""BaseLine"" = X3.""LineNum"" AND X1.""BaseType"" = X3.""ObjType""
+	                    left JOIN OWTR X0 ON X0.""U_EXO_PACKING"" = T0.""Code"" and X0.""CANCELED"" = 'N' and  X1.""DocEntry"" = X0.""DocEntry""     
                         LEFT JOIN (select  T0.""U_EXO_PACKING"", T1.""ItemCode"", T1.""U_EXO_LOT_ID"", IFNULL(SUM(T1.""Quantity""), 0) as ""Cant_REUBICADA""  
                                            from OWTR               T0
                                            LEFT JOIN WTR1 T1 ON T0.""DocEntry"" = T1.""DocEntry"" 
                                            where T1.""U_EXO_LOT_ID"" is not null 
                                            GROUP by  T0.""U_EXO_PACKING"", T1.""ItemCode"", T1.""U_EXO_LOT_ID"") T
                                   ON  T.""U_EXO_PACKING"" = T0.""Code"" and  T.""ItemCode"" = T1.""U_EXO_CODE"" AND T.""U_EXO_LOT_ID"" = T1.""U_EXO_IDBULTO""  
-                        WHERE X4.""DocEntry"" IN   "
+                        WHERE X4.""U_EXO_TIPO""<>'INT' and X4.""DocEntry"" IN   "
 
 
                     If responseDataSel3.Rows.Count > 0 Then
@@ -3615,7 +3615,9 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
                     sSQL &= " LEFT JOIN RDN1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
                     sSQL &= " Left JOIN ORDN T4 ON T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
-                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
+                    sSQL &= " LEFT JOIN RDN21 t5 oN t5.""DocEntry"" = T4.""DocEntry"" and ""RefObjType"" = '1250000001' "
+                    sSQL &= " Left JOIN OWTQ  t6 On T6.""DocEntry"" = T5.""RefDocEntr"" and t6.""CANCELED""='N' "
+                    sSQL &= " WHERE ((T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') and T6.""DocStatus"" = 'O' "
                     sSQL &= " ) "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "
@@ -3746,7 +3748,9 @@ Public Class EXO_PARRILLA
                     sSQL &= " LEFT JOIN OTER TT ON T1.""Territory""=TT.""territryID"" "
                     sSQL &= " LEFT JOIN RDN1 T3 ON T0.""DocEntry""=T3.""BaseEntry"" and T0.""ObjType""=T3.""BaseType"" "
                     sSQL &= " Left JOIN ORDN T4 ON T3.""DocEntry""=T4.""DocEntry"" AND T4.""CANCELED"" = 'N' "
-                    sSQL &= " WHERE ((TL.""LineStatus""='O' and T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') "
+                    sSQL &= " LEFT JOIN RDN21 t5 oN t5.""DocEntry"" = T4.""DocEntry"" and ""RefObjType"" = '1250000001' "
+                    sSQL &= " Left JOIN OWTQ  t6 On T6.""DocEntry"" = T5.""RefDocEntr"" and t6.""CANCELED""='N' "
+                    sSQL &= " WHERE (( T0.""DocDueDate""<='" & dateBack.Year.ToString("0000") & dateBack.Month.ToString("00") & dateBack.Day.ToString("00") & "') and T6.""DocStatus"" = 'O'  "
                     sSQL &= " ) "
                     If CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected IsNot Nothing Then
                         sSQL &= " and TL.""WhsCode""='" & CType(oForm.Items.Item("cbALM").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' "

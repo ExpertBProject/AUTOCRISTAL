@@ -154,11 +154,14 @@ Public Class EXO_BTOS
                 Case "Nº Documento"
                     Select Case sTipo
                         Case "Pedido" 'Pedido
-                            objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_Order, "", nroInt)
+                            objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_PurchaseOrder, "", nroInt)
+                            Return False
                         Case "Sol. Traslado" 'Sol de traslado
                             objGlobal.SBOApp.OpenForm(BoFormObjectEnum.fo_StockTransfersRequest, "", nroInt)
+                            Return False
                         Case "Sol. Devolución" 'Sol Dev.
                             objGlobal.SBOApp.OpenForm("234000031", "", nroInt)
+                            Return False
                     End Select
                 Case "ARTÍCULO"
                     CType(CType(oForm.Items.Item("grdRSTOCK").Specific, SAPbouiCOM.Grid).Columns.Item("ARTÍCULO"), SAPbouiCOM.EditTextColumn).LinkedObjectType = "4"

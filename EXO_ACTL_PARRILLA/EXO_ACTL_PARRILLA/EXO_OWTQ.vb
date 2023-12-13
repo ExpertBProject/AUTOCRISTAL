@@ -101,7 +101,7 @@ Public Class EXO_OWTQ
         Try
             'Recuperar el formulario
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
-            oForm.Visible = False
+            oForm.Freeze(True)
 
             'Buscar XML de update
             objGlobal.SBOApp.StatusBar.SetText("Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
@@ -134,14 +134,15 @@ Public Class EXO_OWTQ
             CargaCombo(oForm)
 #End Region
 
-            oForm.Visible = True
+            oForm.Freeze(False)
 
             EventHandler_Form_Load = True
 
         Catch ex As Exception
-            oForm.Visible = True
+            oForm.Freeze(False)
             objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
+            oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function

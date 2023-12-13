@@ -83,7 +83,9 @@ Public Class EXO_PNEC
                                         Return False
                                     End If
                                 Case SAPbouiCOM.BoEventTypes.et_GOT_FOCUS
-
+                                    If EventHandler_GOT_FOCUS_After(infoEvento) = False Then
+                                        Return False
+                                    End If
                                 Case SAPbouiCOM.BoEventTypes.et_ITEM_PRESSED
 
                             End Select
@@ -615,6 +617,24 @@ Public Class EXO_PNEC
             EXO_CleanCOM.CLiberaCOM.Form(oForm)
         End Try
     End Function
+    Private Function EventHandler_GOT_FOCUS_After(ByVal pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = Nothing
+        Try
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
+            Select Case pVal.ItemUID
+                Case "grd_DOC"
+                    If INICIO._iRowGrid <> pVal.Row And pVal.Row <> -1 Then
+                        INICIO._iRowGrid = pVal.Row
+                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item("RowsHeader").Click(pVal.Row)
+                    End If
+            End Select
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.Form(oForm)
+
+        End Try
+    End Function
     Private Function EventHandler_ItemPressed_After(ByVal pVal As ItemEvent) As Boolean
 #Region "variables"
         Dim oForm As SAPbouiCOM.Form = Nothing
@@ -686,10 +706,10 @@ Public Class EXO_PNEC
                     If pVal.ColUID = "Sel." Then
                         CalculateGridCheckValues(oForm, pVal.Row)
                     End If
-                    If INICIO._iRowGrid <> pVal.Row And pVal.Row <> -1 Then
-                        INICIO._iRowGrid = pVal.Row
-                        CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item("RowsHeader").Click(pVal.Row)
-                    End If
+                    'If INICIO._iRowGrid <> pVal.Row And pVal.Row <> -1 Then
+                    '    INICIO._iRowGrid = pVal.Row
+                    '    CType(oForm.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item("RowsHeader").Click(pVal.Row)
+                    'End If
 
                 Case "btnCARGAR"
                     If ComprobarALM(oForm, "DTALM") = True Then
