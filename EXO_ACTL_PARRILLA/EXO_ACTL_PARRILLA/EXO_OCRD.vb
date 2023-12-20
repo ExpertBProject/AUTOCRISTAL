@@ -101,7 +101,7 @@ Public Class EXO_OCRD
             'Recuperar el formulario
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
-            oForm.Visible = False
+            oForm.Freeze(True)
             objGlobal.SBOApp.StatusBar.SetText("(EXO) - Presentando información...Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
 #Region "Delegación"
@@ -156,19 +156,20 @@ Public Class EXO_OCRD
             'Introducimos los valores en los combos
             CargarCombos(objGlobal, oForm)
 
-            oForm.Visible = True
-
             EventHandler_Form_Load = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw exCOM
         Catch ex As Exception
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw ex
         Finally
+            oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function

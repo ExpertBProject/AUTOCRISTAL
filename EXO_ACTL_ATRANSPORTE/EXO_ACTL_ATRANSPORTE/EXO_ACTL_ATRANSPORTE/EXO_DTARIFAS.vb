@@ -65,9 +65,12 @@ Public Class EXO_DTARIFAS
                         If oForm.Visible = True Then
 #Region "Buscamos el número siguiente para poner al code"
                             Try
-                                sSQL = "SELECT ifnull(MAX(CAST(""Code"" as INT)),'0')+1 ""CODIGO"" FROM ""@EXO_DTARIFAS"" "
-                                sCode = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                                CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = sCode
+                                If oForm.TypeEx = "UDO_FT_EXO_DTARIFAS" And oForm.Visible = True Then
+                                    sSQL = "SELECT ifnull(MAX(CAST(""Code"" as INT)),'0')+1 ""CODIGO"" FROM ""@EXO_DTARIFAS"" "
+                                    sCode = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                    CType(oForm.Items.Item("0_U_E").Specific, SAPbouiCOM.EditText).Value = sCode
+                                End If
+
                             Catch ex As Exception
                                 Throw ex
                             End Try

@@ -119,41 +119,46 @@ Public Class EXO_ENVTRANS
                     For Each MiDataRow As DataRow In dtDatos.Rows
                         If sDocEntryCerrar <> MiDataRow("DocEntry").ToString Then
                             sDocEntryCerrar = MiDataRow("DocEntry").ToString
-                            sSQL = "SELECT ""DocNum"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
-                            sDocNumCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                            sSQL = "SELECT ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
-                            sStatusCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                            If sStatusCerrar = "O" Then
-                                objGlobal.SBOApp.StatusBar.SetText("Cerrando Lista de embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
-                                'Cerramos el UDO
-                                'Get a handle to the SM_MOR UDO
-                                oGeneralService = oCompService.GetGeneralService("EXO_LSTEMB")
-                                'Close UDO record
-                                oGeneralParams = CType(oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams), SAPbobsCOM.GeneralDataParams)
-                                oGeneralParams.SetProperty("DocEntry", sDocEntryCerrar)
-                                oGeneralService.Close(oGeneralParams)
-                                objGlobal.SBOApp.StatusBar.SetText("Se ha cerrado la Lista de Embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
-                            End If
-#Region "Lineas"
-                            sSQL = "SELECT L.* FROM ""@EXO_PAQL"" L INNER JOIN ""@EXO_PAQ"" C ON C.""Code""=L.""Code"" WHERE C.""Name""='" & MiDataRow("BULTO").ToString & "' ORDER BY L.""LineId"" "
-                            oRs.DoQuery(sSQL)
-                            For i = 0 To oRs.RecordCount - 1
-                                If iLinea <> 0 Then
-                                    Omercancias.Lines.Add()
+                            If sDocEntryCerrar = "" Then
+                                objGlobal.SBOApp.StatusBar.SetText("DocEntry a cerrar Vacío...", BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                            Else
+                                sSQL = "SELECT ""DocNum"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
+                                sDocNumCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                sSQL = "SELECT ""Status"" FROM ""@EXO_LSTEMB"" WHERE ""DocEntry""=" & sDocEntryCerrar
+                                sStatusCerrar = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                                If sStatusCerrar = "O" Then
+                                    objGlobal.SBOApp.StatusBar.SetText("Cerrando Lista de embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Warning)
+                                    'Cerramos el UDO
+                                    'Get a handle to the SM_MOR UDO
+                                    oGeneralService = oCompService.GetGeneralService("EXO_LSTEMB")
+                                    'Close UDO record
+                                    oGeneralParams = CType(oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralDataParams), SAPbobsCOM.GeneralDataParams)
+                                    oGeneralParams.SetProperty("DocEntry", sDocEntryCerrar)
+                                    oGeneralService.Close(oGeneralParams)
+                                    objGlobal.SBOApp.StatusBar.SetText("Se ha cerrado la Lista de Embalaje Nº: " & sDocNumCerrar, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success)
                                 End If
-                                Omercancias.Lines.ItemCode = oRs.Fields.Item("U_EXO_ITEMCODE").Value.ToString
-                                Omercancias.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Cantidad").ToString) * EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oRs.Fields.Item("U_EXO_CANT").Value.ToString)
-                                Omercancias.Lines.WarehouseCode = sAlmacen
-                                ' Omercancias.Lines.BatchNumbers.BatchNumber = ""
-                                'Omercancias.Lines.BatchNumbers.Quantity = Omercancias.Lines.Quantity
-                                ' Omercancias.Lines.BatchNumbers.Add()
-                                Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDE").Value = sDocEntryCerrar
-                                Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDN").Value = sDocNumCerrar
-                                iLinea += 1
+#Region "Lineas"
+                                sSQL = "SELECT L.* FROM ""@EXO_PAQL"" L INNER JOIN ""@EXO_PAQ"" C ON C.""Code""=L.""Code"" WHERE C.""Name""='" & MiDataRow("BULTO").ToString & "' ORDER BY L.""LineId"" "
+                                oRs.DoQuery(sSQL)
+                                For i = 0 To oRs.RecordCount - 1
+                                    If iLinea <> 0 Then
+                                        Omercancias.Lines.Add()
+                                    End If
+                                    Omercancias.Lines.ItemCode = oRs.Fields.Item("U_EXO_ITEMCODE").Value.ToString
+                                    Omercancias.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, MiDataRow("Cantidad").ToString) * EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oRs.Fields.Item("U_EXO_CANT").Value.ToString)
+                                    Omercancias.Lines.WarehouseCode = sAlmacen
+                                    ' Omercancias.Lines.BatchNumbers.BatchNumber = ""
+                                    ' Omercancias.Lines.BatchNumbers.Quantity = Omercancias.Lines.Quantity
+                                    ' Omercancias.Lines.BatchNumbers.Add()
+                                    Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDE").Value = sDocEntryCerrar
+                                    Omercancias.Lines.UserFields.Fields.Item("U_EXO_ENVTRDN").Value = sDocNumCerrar
+                                    iLinea += 1
 
-                                oRs.MoveNext()
-                            Next
+                                    oRs.MoveNext()
+                                Next
 #End Region
+                            End If
+
                         End If
 
                     Next

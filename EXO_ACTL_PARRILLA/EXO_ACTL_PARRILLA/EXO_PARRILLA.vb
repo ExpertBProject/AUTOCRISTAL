@@ -1153,7 +1153,6 @@ Public Class EXO_PARRILLA
                     ElseIf (pVal.ColUID = "Picking" Or pVal.ColUID = "CÓDIGO") Then
                         Return True
                     End If
-                    Return False
                 Case "grdSLIB"
                     oColumnTxt = CType(CType(oForm.Items.Item(pVal.ItemUID.ToString.Trim).Specific, SAPbouiCOM.Grid).Columns.Item(2), SAPbouiCOM.EditTextColumn)
                     sTipo = grid.DataTable.GetValue("T. SALIDA", grid.GetDataTableRowIndex(pVal.Row)).ToString
@@ -1174,7 +1173,6 @@ Public Class EXO_PARRILLA
                     ElseIf (pVal.ColUID = "Picking") Then
                         Return True
                     End If
-                    Return False
                 Case "grdSCOM"
                     oColumnTxt = CType(CType(oForm.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).Columns.Item(2), SAPbouiCOM.EditTextColumn)
                     sTipo = CType(oForm.Items.Item("grdSCOM").Specific, SAPbouiCOM.Grid).DataTable.GetValue("T. SALIDA", grid.GetDataTableRowIndex(pVal.Row)).ToString

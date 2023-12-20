@@ -197,7 +197,7 @@ Public Class EXO_GLOBALES
                             If sCatalogo = "" And sArticulo = "" Then
                                 sMensaje = "En la línea " & iLinea.ToString & " no puede estar vacío el artículo y el catálogo. Revise el fichero."
                                 objglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                oSboApp.MessageBox(sMensaje)
+                                'oSboApp.MessageBox(sMensaje)
                             Else
                                 If sCatalogo <> "" Then
                                     'Buscamos el artículo en un catálago de proveedor.
@@ -207,7 +207,7 @@ Public Class EXO_GLOBALES
                                 If sArticulo = "" Then
                                     sMensaje = "Para el Catálogo " & sCatalogo & " y Artículo " & sArticulo & ", no puede actualizar el precio. Revise el fichero."
                                     objglobal.SBOApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                    oSboApp.MessageBox(sMensaje)
+                                    ' oSboApp.MessageBox(sMensaje)
                                 Else
                                     'Actualizamos el artículo en la lista de precios
                                     Tarifa_UPDATE(objglobal, objglobal.compañia, EXO_OPLN._iRegistros, EXO_OPLN._mTarifas, sArticulo, sPrecio)
@@ -220,7 +220,7 @@ Public Class EXO_GLOBALES
                         Catch ex As Microsoft.VisualBasic.
                             FileIO.MalformedLineException
                             objglobal.SBOApp.StatusBar.SetText("(EXO) - Línea " & ex.Message & " no es válida y se omitirá.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                            oSboApp.MessageBox("Línea " & ex.Message & " no es válida y se omitirá.")
+                            'oSboApp.MessageBox("Línea " & ex.Message & " no es válida y se omitirá.")
                         End Try
                     End While
                 End Using
