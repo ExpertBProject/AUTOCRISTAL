@@ -301,11 +301,12 @@ Public Class EXO_GLOBALES
                 Case "UDO_FT_EXO_LSTEMB"
                     iNum = oForm.BusinessObject.GetNextSerialNumber(sSerie, oForm.BusinessObject.Type.ToString)
                     oForm.DataSources.DBDataSources.Item("@EXO_LSTEMB").SetValue("DocNum", 0, iNum.ToString)
+                    oObjglobal.SBOApp.StatusBar.SetText("Serie:" & sSerie & " - " & iNum.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                 Case "UDO_FT_EXO_ENVTRANS"
-                    iNum = oForm.BusinessObject.GetNextSerialNumber(sSerie, oForm.BusinessObject.Type.ToString)
-                    oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
+                    'iNum = oForm.BusinessObject.GetNextSerialNumber(sSerie, oForm.BusinessObject.Type.ToString)
+                    'oForm.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("DocNum", 0, iNum.ToString)
             End Select
-            oObjglobal.SBOApp.StatusBar.SetText("Serie:" & sSerie & " - " & iNum.ToString, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
         Catch ex As Exception
             Throw ex
         End Try

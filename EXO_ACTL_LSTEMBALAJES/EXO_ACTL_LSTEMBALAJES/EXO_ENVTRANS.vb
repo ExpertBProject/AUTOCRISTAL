@@ -840,7 +840,7 @@ Public Class EXO_ENVTRANS
         Try
             oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True And oForm.Mode = BoFormMode.fm_ADD_MODE Then
-                If pVal.ItemUID = "4_U_Cb" Then
+                If pVal.ItemUID = "4_U_Cb" Then 'And pVal.ItemChanged = True Then
                     If CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value IsNot Nothing Then
                         Dim sSerie As String = CType(oForm.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString
                         Dim iNum As Integer
@@ -1054,20 +1054,20 @@ Public Class EXO_ENVTRANS
                 End If
 
                 'Poner serie por defecto y el num. de documento
+                'If oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").GetValue("Series", 0) = "" Then
                 sSQL = " SELECT ""DfltSeries"" FROM ONNM WHERE ""ObjectCode""='EXO_ENVTRANS' "
-                sSerieDef = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                CType(oform.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
-
-                EXO_GLOBALES.Poner_DocNum(oform, sSerieDef, objGlobal)
+                    sSerieDef = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    CType(oform.Items.Item("4_U_Cb").Specific, SAPbouiCOM.ComboBox).Select(sSerieDef, BoSearchKey.psk_ByValue)
+                'End If
 
                 'Como en la expedición tenemos la agencia, pues tenemos que rellenarlo automático
                 sSQL = "SELECT IFNULL(""U_EXO_AGE"",'') FROM OSHP WHERE ""TrnspCode""='" & sExpedicion & "' "
-                Dim sAgeCod As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTCODE", 0, sAgeCod)
-                sSQL = "SELECT ""CardName"" FROM OCRD WHERE ""CardCode""='" & sAgeCod & "' "
-                Dim sAgeNom As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTNAME", 0, sAgeNom)
-            End If
+                    Dim sAgeCod As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTCODE", 0, sAgeCod)
+                    sSQL = "SELECT ""CardName"" FROM OCRD WHERE ""CardCode""='" & sAgeCod & "' "
+                    Dim sAgeNom As String = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+                    oform.DataSources.DBDataSources.Item("@EXO_ENVTRANS").SetValue("U_EXO_AGTNAME", 0, sAgeNom)
+                End If
         Catch ex As Exception
             Throw ex
         End Try

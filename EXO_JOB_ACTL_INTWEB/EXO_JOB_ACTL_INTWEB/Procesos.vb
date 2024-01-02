@@ -5,6 +5,32 @@ Imports System.Xml
 Imports SAPbobsCOM
 
 Public Class Procesos
+#Region "Borrar LOG"
+    Public Shared Sub Borrar_Log(ByRef oLog As EXO_Log.EXO_Log, ByVal sPath As String)
+        Dim sError As String = ""
+        Try
+            'Borramos los ficheros más antiguos a X días
+            Dim Fecha As DateTime = DateTime.Now
+            Dim sDias = Conexiones.Datos_Confi("GUARDAR", "DIAS")
+            oLog.escribeMensaje("Borrando Ficheros Log de más de " & sDias & " día(s)", EXO_Log.EXO_Log.Tipo.informacion)
+            For Each archivo As String In My.Computer.FileSystem.GetFiles(sPath, FileIO.SearchOption.SearchTopLevelOnly)
+                Dim Fecha_Archivo As DateTime = My.Computer.FileSystem.GetFileInfo(archivo).LastWriteTime
+                Dim diferencia = (CType(Fecha, DateTime) - CType(Fecha_Archivo, DateTime)).TotalDays
+
+                If diferencia >= CDbl(sDias) Then ' Nº de días
+                    File.Delete(archivo)
+                End If
+            Next
+
+        Catch ex As Exception
+            sError = ex.Message
+            oLog.escribeMensaje(sError, EXO_Log.EXO_Log.Tipo.error)
+        Finally
+            oLog.escribeMensaje("Fin del proceso.", EXO_Log.EXO_Log.Tipo.informacion)
+        End Try
+    End Sub
+
+#End Region
     Public Shared Sub LecturaTabla(ByRef db As HanaConnection, ByRef dbWEB As HanaConnection, ByRef oCompany As SAPbobsCOM.Company, ByRef oLog As EXO_Log.EXO_Log)
 #Region "Variables"
         Dim sError As String = ""

@@ -168,17 +168,17 @@ Public Class EXO_OCRD
             EventHandler_Form_Load = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            oForm.Freeze(True)
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw exCOM
         Catch ex As Exception
-            oForm.Freeze(True)
+            oForm.Freeze(False)
             If oForm IsNot Nothing Then oForm.Visible = True
 
             Throw ex
         Finally
-            oForm.Freeze(True)
+            oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function

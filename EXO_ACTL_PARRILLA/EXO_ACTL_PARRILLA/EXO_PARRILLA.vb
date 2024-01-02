@@ -182,12 +182,29 @@ Public Class EXO_PARRILLA
                                  ""U_EXO_ITEMCODE"",
                                  ""U_EXO_LINNUM"",
                                  ""U_EXO_ORIGEN""
-                        ) ""EMBL"" ON ODLN.""DocEntry"" =  ""EMBL"".""U_EXO_DOCENTRY"" AND  DLN1.""ItemCode"" = ""EMBL"".""U_EXO_ITEMCODE"" AND ""EMBL"".""U_EXO_LINNUM"" = DLN1.""LineNum"" AND ""U_EXO_ORIGEN"" = 'ALBVTA'
+                        ) ""EMBL"" ON ODLN.""DocEntry"" =  ""EMBL"".""U_EXO_DOCENTRY"" AND  DLN1.""ItemCode"" = ""EMBL"".""U_EXO_ITEMCODE"" AND ""EMBL"".""U_EXO_LINNUM"" = DLN1.""LineNum"" 
+                            AND ""U_EXO_ORIGEN"" = 'ALBVTA'
                         WHERE 
 	                        OITM.""InvntItem"" = 'Y' AND
-	                        IFNULL(""EMBL"".""Cant"",0) < DLN1.""Quantity"" AND
-	                        ODLN.""DocEntry"" IN "
+	                        IFNULL(""EMBL"".""Cant"",0) < DLN1.""Quantity"" "
+                        sSQL &= " And 'ALBVTA' IN "
+                        If responseDataSel.Rows.Count > 0 Then
+                            sSQL &= "("
+                            Dim bComa As Boolean = False
+                            For Each MiDataRow As DataRow In responseDataSel.Rows
+                                If bComa = True Then
+                                    sSQL &= ", "
+                                Else
+                                    bComa = True
+                                End If
+                                sSQL &= "'" & MiDataRow("T. SALIDA").ToString & "' "
+                            Next
+                            sSQL &= ") "
+                        Else
+                            sSQL &= "('ALBVTA')"
+                        End If
 
+                        sSQL &= " And ODLN.""DocEntry"" IN "
                         If responseDataSel.Rows.Count > 0 Then
                             sSQL &= "("
                             Dim bComa As Boolean = False
@@ -228,9 +245,9 @@ Public Class EXO_PARRILLA
                         ) ""EMBL"" ON OWTQ.""DocEntry"" =  ""EMBL"".""U_EXO_DOCENTRY"" AND  WTQ1.""ItemCode"" = ""EMBL"".""U_EXO_ITEMCODE"" AND ""EMBL"".""U_EXO_LINNUM"" = WTQ1.""LineNum"" 
                         WHERE 
 	                        OITM.""InvntItem"" = 'Y' AND
-	                        IFNULL(""EMBL"".""Cant"",0) < WTQ1.""Quantity"" AND
-	                        WTQ1.""DocEntry"" IN "
+	                        IFNULL(""EMBL"".""Cant"",0) < WTQ1.""Quantity"" "
 
+                        sSQL &= " And WTQ1.""DocEntry"" IN "
                         If responseDataSel.Rows.Count > 0 Then
                             sSQL &= "("
                             Dim bComa As Boolean = False
@@ -314,12 +331,29 @@ Public Class EXO_PARRILLA
                                  ""U_EXO_ITEMCODE"",
                                  ""U_EXO_LINNUM"",
                                  ""U_EXO_ORIGEN""
-                        ) ""EMBL"" ON ODLN.""DocEntry"" =  ""EMBL"".""U_EXO_DOCENTRY"" AND  DLN1.""ItemCode"" = ""EMBL"".""U_EXO_ITEMCODE"" AND ""EMBL"".""U_EXO_LINNUM"" = DLN1.""LineNum"" AND ""U_EXO_ORIGEN"" = 'ALBVTA'
+                        ) ""EMBL"" ON ODLN.""DocEntry"" =  ""EMBL"".""U_EXO_DOCENTRY"" AND  DLN1.""ItemCode"" = ""EMBL"".""U_EXO_ITEMCODE"" AND ""EMBL"".""U_EXO_LINNUM"" = DLN1.""LineNum"" 
+                            AND ""U_EXO_ORIGEN"" = 'ALBVTA'
                         WHERE 
 	                        OITM.""InvntItem"" = 'Y' AND
-	                        IFNULL(""EMBL"".""Cant"",0) < DLN1.""Quantity"" AND
-	                        ODLN.""DocEntry"" IN "
+	                        IFNULL(""EMBL"".""Cant"",0) < DLN1.""Quantity"""
+                        sSQL &= " And 'ALBVTA' IN "
+                        If responseDataSel.Rows.Count > 0 Then
+                            sSQL &= "("
+                            Dim bComa As Boolean = False
+                            For Each MiDataRow As DataRow In responseDataSel.Rows
+                                If bComa = True Then
+                                    sSQL &= ", "
+                                Else
+                                    bComa = True
+                                End If
+                                sSQL &= "'" & MiDataRow("T. SALIDA").ToString & "' "
+                            Next
+                            sSQL &= ") "
+                        Else
+                            sSQL &= "('ALBVTA')"
+                        End If
 
+                        sSQL &= " And ODLN.""DocEntry"" IN "
                         If responseDataSel.Rows.Count > 0 Then
                             sSQL &= "("
                             Dim bComa As Boolean = False

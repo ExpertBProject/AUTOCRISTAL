@@ -303,6 +303,7 @@ Public Class EXO_GLOBALES
                                     oSboApp.MessageBox(sMensaje)
                                     Exit Sub
                                 Else
+
                                     'Ponemos la fecha según sistema.
                                     If sFFab <> "" Then
                                         Dim dFecha As Date = New Date(CInt(Right(sFFab, 4)), CInt(Mid(sFFab, 4, 2)), CInt(Left(sFFab, 2)))
@@ -354,6 +355,7 @@ Public Class EXO_GLOBALES
 #Region "Variables"
         Dim oDtLinFichero As System.Data.DataTable = New System.Data.DataTable
         Dim oDtLin As System.Data.DataTable = New System.Data.DataTable
+        Dim oDtLinArt As System.Data.DataTable = New System.Data.DataTable
         Dim sSQL As String = "" : Dim sMensaje As String = "" '
         Dim iTabla As Integer = 1
         Dim sDocNumPedido As String = ""
@@ -370,9 +372,17 @@ Public Class EXO_GLOBALES
             sSQL = "SELECT * FROM ""POR1"" where ""LineStatus""='O' and ""DocEntry""=" & EXO_GLOBALES._sPedido & " Order by ""LineNum"" "
             oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
             If oDtLin.Rows.Count > 0 Then
-                sSQL = "SELECT ""ObjType"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
+                sSQL = "SELECT DISTINCT ""U_EXO_CODE"" FROM ""@EXO_TMPPACKINGL"" L 
+                        LEFT JOIN POR1 P ON L.""U_EXO_CODE""=P.""ItemCode"" and P.""DocEntry""=" & EXO_GLOBALES._sPedido & "
+                        WHERE L.""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and IFNULL(P.""ItemCode"",'')=''"
+                oDtLinArt.Clear()
+                oDtLinArt = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+                For iLin As Integer = 0 To oDtLinArt.Rows.Count - 1
+                    oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - El artículo " & oDtLinArt.Rows.Item(iLin).Item("U_EXO_CODE").ToString & " no se encuentra en el pedido.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                Next
+                sSQL = "Select ""ObjType"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
                 sObjType = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
-                sSQL = "SELECT ""DocNum"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
+                sSQL = "Select ""DocNum"" FROM OPOR WHERE ""DocEntry""=" & EXO_GLOBALES._sPedido
                 sDocNumPedido = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
                 'Insertamos la cabecera
                 sSQL = "DELETE FROM ""@EXO_PACKING"" WHERE ""Code""='" & EXO_GLOBALES._sPedido & sObjType & "' "

@@ -40,6 +40,7 @@ Module JOB
                     oLog.escribeMensaje("##################################################################", EXO_Log.EXO_Log.Tipo.informacion)
                     Procesos.Actualizar_Campos(oLog, oDBSAP, oCompany, False)
                 Else
+                    Procesos.Borrar_Log(oLog, sPath & "\Logs\")
                     Procesos.LecturaTabla(oDBSAP, oDBWEB, oCompany, oLog)
                     Procesos.REPROCESAR(oDBSAP, oDBWEB, oCompany, oLog)
                     Procesos.Conciliar_Factura_Cobros(oDBSAP, oCompany, oLog)
