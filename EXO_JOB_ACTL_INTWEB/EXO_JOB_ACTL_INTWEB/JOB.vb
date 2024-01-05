@@ -1,4 +1,5 @@
-﻿Imports Sap.Data.Hana
+﻿Imports System.Threading
+Imports Sap.Data.Hana
 Module JOB
     Public Sub Main()
 #Region "Variables"
@@ -53,6 +54,7 @@ Module JOB
 
             End If
 
+            Thread.Sleep(5000)
         Catch ex As Exception
             If ex.InnerException IsNot Nothing AndAlso ex.InnerException.Message <> "" Then
                 sError = ex.InnerException.Message
