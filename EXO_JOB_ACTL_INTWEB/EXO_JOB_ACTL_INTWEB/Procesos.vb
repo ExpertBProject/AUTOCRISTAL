@@ -186,7 +186,7 @@ Public Class Procesos
                     sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
 
                     'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' ""NUMPEDIDO""=" & sDocEntry & " "
                     Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -276,7 +276,7 @@ Public Class Procesos
 
                 'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                 sSubject = sError
-                sTIPO = "Pedido WEB. Creación de cobro. "
+                sTIPO = "Pedido WEB " & sPedido & ". Creación de cobro. "
                 EnviarAlerta(oLog, oCompany, "", "", "", sSubject, sTIPO, sError, "", "")
                 Return False
             End If
@@ -286,7 +286,7 @@ Public Class Procesos
             If sAccount <> "" Then
                 If ORCT.Add() = 0 Then
                     oCompany.GetNewObjectCode(sDocEntryORCT)
-                    oLog.escribeMensaje("Creado cobro a cuenta. Se procede a actualizar la pedido...", EXO_Log.EXO_Log.Tipo.advertencia)
+                    oLog.escribeMensaje("Creado cobro a cuenta. Se procede a actualizar el pedido " & sPedido & "...", EXO_Log.EXO_Log.Tipo.advertencia)
 
                     'sSQL = "Select ""DocNum"" FROM """ & oCompany.CompanyDB & """.""ORCT"" WHERE ""DocEntry""=" & sDocEntryORCT
                     sDocNumORCT = Conexiones.GetValueDB(db, """" & oCompany.CompanyDB & """.""ORCT""", """DocNum""", """DocEntry""=" & sDocEntryORCT, oLog)
@@ -340,6 +340,7 @@ Public Class Procesos
             oLog.escribeMensaje("Reprocesar el carrito...", EXO_Log.EXO_Log.Tipo.informacion)
             sSQL = "SELECT * FROM """ & sBBDDWEB & """.""CARRITO""  WHERE ""NPEDIDO""<>0 AND ""REPROCESAR""=1 ORDER BY ""ID"" "
             oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
+            odtDatosWeb.Clear()
             Conexiones.FillDtDB(dbWEB, odtDatosWeb, sSQL)
             If odtDatosWeb.Rows.Count > 0 Then
                 For iCab As Integer = 0 To odtDatosWeb.Rows.Count - 1
@@ -369,7 +370,7 @@ Public Class Procesos
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
                                         'udpate BBDD
-                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""NUMPEDIDO""=" & sDocEntry & " "
                                         Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                                         'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
@@ -396,7 +397,7 @@ Public Class Procesos
                                         EnviarAlerta(oLog, oCompany, sDocNum, sDocEntry, "17", sSubject, sTipo, sComen, "", sDELEGACION)
                                     Else
                                         'udpate BBDD
-                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                                        sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""REPROCESAR""=0 WHERE ""USUARIO""='" & sCliente & "' and ""NUMPEDIDO""=" & sDocEntry & " "
                                         Conexiones.ExecuteSqlDB(dbWEB, sSQL)
 
                                         'OK
@@ -468,6 +469,8 @@ Public Class Procesos
                     Crear_Reconciliacion(oCompany, odtDatos.Rows.Item(iCab).Item("ATO_FACTURA").ToString, odtDatos.Rows.Item(iCab).Item("LIN_FACT").ToString, odtDatos.Rows.Item(iCab).Item("ATO_COBRO").ToString,
 odtDatos.Rows.Item(iCab).Item("LIN_COBRO").ToString, DblTextToNumber(odtDatos.Rows.Item(iCab).Item("IMPFACT").ToString, oCompany), DblTextToNumber(odtDatos.Rows.Item(iCab).Item("IMPCOB").ToString, oCompany), oLog)
                 Next
+            Else
+                oLog.escribeMensaje("No existen facturas para reconciliar", EXO_Log.EXO_Log.Tipo.informacion)
             End If
         Catch exCOM As System.Runtime.InteropServices.COMException
             sError = exCOM.Message
