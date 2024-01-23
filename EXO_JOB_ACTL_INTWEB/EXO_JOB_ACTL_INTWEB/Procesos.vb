@@ -67,7 +67,7 @@ Public Class Procesos
                             Else
                                 oCompany.GetNewObjectCode(sDocEntry)
                                 sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
-
+                                oLog.escribeMensaje("Se ha creado para el cliente " & sCliente & "el pedido Nº " & sDocNum & " con Nº Interno = " & sDocEntry & "ID(" & sID & ")", EXO_Log.EXO_Log.Tipo.informacion)
                                 'udpate BBDD
                                 sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
                                 oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
@@ -184,11 +184,12 @@ Public Class Procesos
                 Else
                     oCompany.GetNewObjectCode(sDocEntry)
                     sDocNum = Conexiones.GetValueDB(db, " """ & oCompany.CompanyDB & """.""ORDR""", """DocNum""", """DocEntry"" = " & sDocEntry & "", oLog)
-
+                    oLog.escribeMensaje("Se ha creado para el cliente " & sCliente & "el pedido Nº " & sDocNum & " con Nº Interno = " & sDocEntry & "ID(" & sID & ")", EXO_Log.EXO_Log.Tipo.informacion)
                     'udpate BBDD
-                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' ""NUMPEDIDO""=" & sDocEntry & " "
+                    sSQL = "UPDATE """ & sBBDDWEB & """.""CARRITO"" SET ""NPEDIDO""='" & sDocNum & "',""NUMPEDIDO""='" & sDocEntry & "' WHERE ""USUARIO""='" & sCliente & "' and ""ID"" IN(" & sID & ") "
+                    oLog.escribeMensaje("SQL: " & sSQL, EXO_Log.EXO_Log.Tipo.informacion)
                     Conexiones.ExecuteSqlDB(dbWEB, sSQL)
-
+                    oLog.escribeMensaje("Se ha Actualizado la tabla de la BBDD " & sBBDDWEB, EXO_Log.EXO_Log.Tipo.informacion)
                     'Enviamos alerta a los usuarios que estén marcados en la ficha del usuario con el campo Alertas
                     sSubject = "Pedido WEB de Venta " & sDocNum & " se ha registrado correctamente con el cliente " & sCliente
                     sTipo = "Pedido de Cliente WEB"

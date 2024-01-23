@@ -203,6 +203,7 @@ Public Class EXO_OWTQ
                             objGlobal.SBOApp.MessageBox(sMensaje)
                         Else
                             'Cargamos el Packing list segín lista de embalaje
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Generando Packing List de la Sol. de traslado " & sDocEntry, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             GEN_PACKINGLIST(objGlobal.compañia, objGlobal, sListaEmbalaje, sDocEntry, sDocNumSolTraslado, sObjType, sIC)
                         End If
                     Else
