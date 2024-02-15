@@ -212,4 +212,206 @@ Public Class EXO_GLOBALES
         Return retorno
     End Function
 #End Region
+    Public Shared Sub CrearQuerys(ByRef oCompany As SAPbobsCOM.Company)
+        Dim sSQL As String = ""
+        Dim oOUQR As SAPbobsCOM.UserQueries = Nothing
+        Dim oRs As SAPbobsCOM.Recordset = Nothing
+
+        Try
+            oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+
+            'Comprobamos si existe la query dentro de la categoría General, que muestra el log de los partes de trabajo automáticos
+            oRs.DoQuery("SELECT t1.""IntrnalKey"" " &
+                        "FROM ""OUQR"" t1 " &
+                        "WHERE t1.""QCategory"" = -1 " &
+                        "AND t1.""QName"" = 'Nueva Ubicación Principal'")
+
+            If oRs.RecordCount = 0 Then
+                'Creamos la query dentro de la categoría General, que muestra el log de de los partes de trabajo automáticos
+                oOUQR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oUserQueries), SAPbobsCOM.UserQueries)
+
+                sSQL = "SELECT ""BinCode"" FROM OBIN B 
+                            LEFT JOIN (SELECT ""ItemCode"",""WhsCode"", ""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                            FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""= $[$grd_DOC.Artículo.0]
+                            and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
+                            WHERE B.""WhsCode""= $[$txtALM.0] and B.""Attr2Val"" ='Picking'
+                            And IFNULL(S.""OnHand"",0)>= 0
+                            And ""BinCode"" Not In (SELECT  T1.""BinCode"" FROM OITW T0 
+                            LEFT JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry""
+                            Where T0.""WhsCode"" = $[$txtALM.0] and T1.""BinCode"" is not null)"
+                oOUQR.Query = sSQL
+                oOUQR.QueryCategory = -1 'General
+                oOUQR.QueryDescription = "Nueva Ubicación Principal"
+                oOUQR.QueryType = SAPbobsCOM.UserQueryTypeEnum.uqtWizard
+
+                If oOUQR.Add <> 0 Then
+                    Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                End If
+            End If
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oOUQR, Object))
+        End Try
+    End Sub
+    Public Shared Sub CrearConsultasFormateadas(ByRef oCompany As SAPbobsCOM.Company)
+        Dim sSQL As String = ""
+        Dim oXml As Xml.XmlDocument = Nothing
+        Dim oNodes As System.Xml.XmlNodeList = Nothing
+        Dim oNode As System.Xml.XmlNode = Nothing
+        Dim oOUQR As SAPbobsCOM.UserQueries = Nothing
+        Dim oCSHS As SAPbobsCOM.FormattedSearches = Nothing
+        Dim oRs As SAPbobsCOM.Recordset = Nothing
+        Dim sIntrnalKey As String = "0"
+
+        Try
+            oRs = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+
+            If oCompany.InTransaction = True Then
+                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+            oCompany.StartTransaction()
+
+            'Comprobamos si existe la consulta formateada dentro de la categoría General, que devuelve las OTs abiertas
+            oRs.DoQuery("SELECT t1.""IntrnalKey"" " &
+                        "FROM ""OUQR"" t1 " &
+                        "WHERE t1.""QCategory"" = -1 " &
+                        "AND t1.""QName"" = 'Nueva Ubicación Principal'")
+
+            If oRs.RecordCount = 0 Then
+                'Creamos la consulta formateada dentro de la categoría General, que devuelve las OTs abiertas
+                oOUQR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oUserQueries), SAPbobsCOM.UserQueries)
+
+                sSQL = "SELECT ""BinCode"" FROM OBIN B 
+                            LEFT JOIN (SELECT ""ItemCode"",""WhsCode"", ""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                            FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""= $[$grd_DOC.Artículo.0]
+                            and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
+                            WHERE B.""WhsCode""= $[$txtALM.0] and B.""Attr2Val"" ='Picking'
+                            And IFNULL(S.""OnHand"",0)>= 0
+                            And ""BinCode"" Not In (SELECT  T1.""BinCode"" FROM OITW T0 
+                            LEFT JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry""
+                            Where T0.""WhsCode"" = $[$txtALM.0] and T1.""BinCode"" is not null)"
+                oOUQR.Query = sSQL
+                oOUQR.QueryCategory = -1 'General
+                oOUQR.QueryDescription = "Nueva Ubicación Principal"
+                oOUQR.QueryType = SAPbobsCOM.UserQueryTypeEnum.uqtWizard
+
+                If oOUQR.Add <> 0 Then
+                    Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                End If
+
+                oCompany.GetNewObjectCode(sIntrnalKey)
+                sIntrnalKey = sIntrnalKey.Split(vbTab.ToCharArray)(0)
+            Else
+                sIntrnalKey = oRs.Fields.Item("IntrnalKey").Value.ToString
+            End If
+
+            If sIntrnalKey <> "" AndAlso sIntrnalKey <> "0" Then
+                oCSHS = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oFormattedSearches), SAPbobsCOM.FormattedSearches)
+
+                'Comprobamos si hay una consulta formateada asiganada al campo Orden de trabajo
+                oRs.DoQuery("SELECT t1.""IndexID"" " &
+                            "FROM ""CSHS"" t1 " &
+                            "WHERE t1.""FormID"" = 'EXO_OPUBIC' " &
+                            "AND t1.""ItemID"" = 'grd_DOC'
+                             AND t1.""ColID"" = 'Nueva Ub. Principal' ")
+
+                'Si hay una consulta formateada asiganada al campo Orden de trabajo, la actualizamos por si a caso,
+                'y si no la asignamos.
+                If oRs.RecordCount = 0 Then
+                    oCSHS.FormID = "EXO_OPUBIC"
+                    oCSHS.ItemID = "grd_DOC"
+                    oCSHS.ColumnID = "Nueva Ub. Principal"
+                    oCSHS.Action = SAPbobsCOM.BoFormattedSearchActionEnum.bofsaQuery
+                    oCSHS.QueryID = CInt(sIntrnalKey)
+                    oCSHS.Refresh = SAPbobsCOM.BoYesNoEnum.tNO
+
+                    If oCSHS.Add <> 0 Then
+                        Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                    End If
+                Else
+                    If oCSHS.GetByKey(CInt(oRs.Fields.Item("IndexID").Value.ToString)) = True Then
+                        oCSHS.FormID = "EXO_OPUBIC"
+                        oCSHS.ItemID = "grd_DOC"
+                        oCSHS.ColumnID = "Nueva Ub. Principal"
+                        oCSHS.Action = SAPbobsCOM.BoFormattedSearchActionEnum.bofsaQuery
+                        oCSHS.QueryID = CInt(sIntrnalKey)
+                        oCSHS.Refresh = SAPbobsCOM.BoYesNoEnum.tNO
+
+                        If oCSHS.Update <> 0 Then
+                            Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                        End If
+                    End If
+                End If
+            End If
+
+
+            If sIntrnalKey <> "" AndAlso sIntrnalKey <> "0" Then
+                oCSHS = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oFormattedSearches), SAPbobsCOM.FormattedSearches)
+
+                'Comprobamos si hay una consulta formateada asiganada al campo Orden de trabajo
+                oRs.DoQuery("SELECT t1.""IndexID"" " &
+                            "FROM ""CSHS"" t1 " &
+                            "WHERE t1.""FormID"" = 'EXO_OPUBI' " &
+                            "AND t1.""ItemID"" = 'grd_DOC'
+                             AND t1.""ColID"" = 'Nueva Ub. Principal' ")
+
+                'Si hay una consulta formateada asiganada al campo Orden de trabajo, la actualizamos por si a caso,
+                'y si no la asignamos.
+                If oRs.RecordCount = 0 Then
+                    oCSHS.FormID = "EXO_OPUBI"
+                    oCSHS.ItemID = "grd_DOC"
+                    oCSHS.ColumnID = "Nueva Ub. Principal"
+                    oCSHS.Action = SAPbobsCOM.BoFormattedSearchActionEnum.bofsaQuery
+                    oCSHS.QueryID = CInt(sIntrnalKey)
+                    oCSHS.Refresh = SAPbobsCOM.BoYesNoEnum.tNO
+
+                    If oCSHS.Add <> 0 Then
+                        Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                    End If
+                Else
+                    If oCSHS.GetByKey(CInt(oRs.Fields.Item("IndexID").Value.ToString)) = True Then
+                        oCSHS.FormID = "EXO_OPUBI"
+                        oCSHS.ItemID = "grd_DOC"
+                        oCSHS.ColumnID = "Nueva Ub. Principal"
+                        oCSHS.Action = SAPbobsCOM.BoFormattedSearchActionEnum.bofsaQuery
+                        oCSHS.QueryID = CInt(sIntrnalKey)
+                        oCSHS.Refresh = SAPbobsCOM.BoYesNoEnum.tNO
+
+                        If oCSHS.Update <> 0 Then
+                            Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                        End If
+                    End If
+                End If
+            End If
+            If oCompany.InTransaction = True Then
+                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
+            End If
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            If oCompany.InTransaction = True Then
+                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+
+            Throw exCOM
+        Catch ex As Exception
+            If oCompany.InTransaction = True Then
+                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+
+            Throw ex
+        Finally
+            If oCompany.InTransaction = True Then
+                oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
+            End If
+
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oOUQR, Object))
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCSHS, Object))
+        End Try
+    End Sub
 End Class

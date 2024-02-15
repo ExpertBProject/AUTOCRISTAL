@@ -80,6 +80,41 @@ Public Class EXO_OPUBI
             'oFP.XmlData = oFP.XmlData.Replace("modality=""0""", "modality=""1""")
             Try
                 oForm = objGlobal.SBOApp.Forms.AddEx(oFP)
+                sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"" , ""OnHand"" ""Cantidad"", ""UBSTANDARD"" ""Ubicación actual"", ""ZonaRota"" ""Zona Alm. Actual"", 
+                    ""Rotación"", ""CMAX"" ""Traslado"", ""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
+                    FROM (
+                        SELECT I.""ItemCode"" ""Artículo"",IFNULL(I.""ItemName"",'') ""Descripción"" , S.""OnHand"" , 
+                        IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(W.""U_EXO_CLASIF"",'') ""ZonaRota"", 
+                        CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'E'
+                         WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'D' 
+                         WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'C' 
+                         WHEN IFNULL(""Ventas"",0)>=10 and IFNULL(""Ventas"",0)<=19 THEN 'B' 
+                         WHEN IFNULL(""Ventas"",0)>=20  THEN 'A'END ""Rotación"",
+                         CASE WHEN (IFNULL(W.""U_EXO_CNEC"",0) > (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))) THEN  IFNULL(W.""U_EXO_CNEC"",0)
+                            Else (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))End ""Traslado"", IFNULL(W.""U_EXO_CMIN"",0) ""CMIN"", IFNULL(B.""MaxLevel"",0) ""CMAX""
+                        FROM ""OITM"" I
+                        INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='ZZZZ'
+                        LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
+                        LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                                FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
+                        LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
+                                                                  SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
+                                                                  WHERE C.""DocDate""<='19900101' and C.""DocDate"">='19900101' GROUP BY ""ItemCode""
+                                                                  UNION ALL
+                                                                  SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
+                                                                  WHERE C.""DocDate""<='19900101' and C.""DocDate"">='19900101' GROUP BY ""ItemCode""
+                                                                  )S GROUP BY ""ItemCode""
+                         )V ON V.""ItemCode""=I.""ItemCode""
+                    WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
+                )T
+                LEFT JOIN (SELECT  ""BinCode"", ""Attr3Val"" 
+                                FROM OBIN B 
+                                LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='ZZZZZZ' 
+                                And IFNULL(V.""ItemQty"",0)=0 )UB ON ""BinCode"" not in (""UBSTANDARD"") And UB.""Attr3Val"" =T.""Rotación""
+                ORDER BY ""Descripción"" "
+                'Cargamos grid
+                oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
+                FormateaGrid(oForm)
 
             Catch ex As Exception
                 If ex.Message.StartsWith("Form - already exists") = True Then
@@ -281,59 +316,93 @@ Public Class EXO_OPUBI
             sFechaH = Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00")
             Limpiar_Grid(oform)
 #Region "Cargar datos tabla temporal"
-            'Tengo que buscar en la tabla el último numero de documento
+            ''Tengo que buscar en la tabla el último numero de documento
 
-            sSQL = "SELECT I.""ItemCode"",IFNULL(I.""ItemName"",'') ""ItemName"" ,S.""OnHand"", IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(B.""Attr3Val"",'') ""ZonaRota"", 
-                    CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'D'
-	                     WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'C' 
-	                     WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'B' 
-	                     WHEN IFNULL(""Ventas"",0)>=10  THEN 'A'END ""Clasificacion"", ' ' ""DESTINO""
-                    FROM ""OITM"" I
-                    INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
-                    LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
-                    LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
-                                FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
-                    LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
-						                                                            SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
-						                                                            WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
-						                                                            UNION ALL
-						                                                            SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
-						                                                            WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
-						                                                            )S GROUP BY ""ItemCode""
-		                       )V ON V.""ItemCode""=I.""ItemCode""
-                    WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
-                    ORDER BY I.""ItemName"""
-            dtDatos = New System.Data.DataTable
-            dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-            If dtDatos.Rows.Count > 0 Then
-                iDoc = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""Code"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" ")
-                For Each MiDataRow As DataRow In dtDatos.Rows
-                    iDocLin = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""LineId"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" WHERE ""Code""='" & iDoc.ToString & "'")
-                    sUBDestinoTotal &= ", '" & MiDataRow("UBSTANDARD").ToString & "' "
-                    sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr3Val"" ='" & MiDataRow("Clasificacion").ToString & "' 
-                            And IFNULL(V.""ItemQty"",0)=0 and ""BinCode"" not in (" & sUBDestinoTotal & ")"
-                    sUbDestino = objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            'sSQL = "SELECT I.""ItemCode"",IFNULL(I.""ItemName"",'') ""ItemName"" ,S.""OnHand"", IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(B.""Attr3Val"",'') ""ZonaRota"", 
+            '        CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'E'
+            '          WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'D' 
+            '             WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'C' 
+            '          WHEN IFNULL(""Ventas"",0)>=10 and IFNULL(""Ventas"",0)<=19 THEN 'B' 
+            '          WHEN IFNULL(""Ventas"",0)>=20  THEN 'A'END ""Clasificacion"", ' ' ""DESTINO""
+            '        FROM ""OITM"" I
+            '        INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
+            '        LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
+            '        LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+            '                    FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
+            '        LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
+            '                                                      SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
+            '                                                      WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+            '                                                      UNION ALL
+            '                                                      SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
+            '                                                      WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+            '                                                      )S GROUP BY ""ItemCode""
+            '             )V ON V.""ItemCode""=I.""ItemCode""
+            '        WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
+            '        ORDER BY I.""ItemName"""
+            'dtDatos = New System.Data.DataTable
+            'dtDatos = objGlobal.refDi.SQL.sqlComoDataTable(sSQL)
+            'If dtDatos.Rows.Count > 0 Then
+            '    iDoc = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""Code"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" ")
+            '    For Each MiDataRow As DataRow In dtDatos.Rows
+            '        iDocLin = objGlobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(cast(""LineId"" as int)),0)+1 FROM ""@EXO_TMPOPUBI"" WHERE ""Code""='" & iDoc.ToString & "'")
+            '        sUBDestinoTotal &= ", '" & MiDataRow("UBSTANDARD").ToString & "' "
+            '        sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr3Val"" ='" & MiDataRow("Clasificacion").ToString & "' 
+            '                And IFNULL(V.""ItemQty"",0)=0 and ""BinCode"" not in (" & sUBDestinoTotal & ")"
+            '        sUbDestino = objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
-                    sUBDestinoTotal &= ", '" & sUbDestino & "' "
+            '        sUBDestinoTotal &= ", '" & sUbDestino & "' "
 
-                    sSQL = "INSERT INTO ""@EXO_TMPOPUBI"" values('" & iDoc.ToString & "'," & iDocLin.ToString & ",'EXO_TMPOPUBI',0,'" & MiDataRow("ItemCode").ToString & "',
-                            '" & MiDataRow("ItemName").ToString.Replace("'", "") & " '," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
-                            ",'" & MiDataRow("UBSTANDARD").ToString & "',
-                            '" & MiDataRow("ZonaRota").ToString & "','" & MiDataRow("Clasificacion").ToString & "'," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
-                            ", '" & sUbDestino & "','" & objGlobal.compañia.UserName.ToString & "')"
-                    objGlobal.refDi.SQL.sqlStringB1(sSQL)
-                Next
-            End If
+            '        sSQL = "INSERT INTO ""@EXO_TMPOPUBI"" values('" & iDoc.ToString & "'," & iDocLin.ToString & ",'EXO_TMPOPUBI',0,'" & MiDataRow("ItemCode").ToString & "',
+            '                '" & MiDataRow("ItemName").ToString.Replace("'", "") & " '," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
+            '                ",'" & MiDataRow("UBSTANDARD").ToString & "',
+            '                '" & MiDataRow("ZonaRota").ToString & "','" & MiDataRow("Clasificacion").ToString & "'," & EXO_GLOBALES.DblNumberToText(objGlobal.compañia, MiDataRow("OnHand").ToString, EXO_GLOBALES.FuenteInformacion.Otros) &
+            '                ", '" & sUbDestino & "','" & objGlobal.compañia.UserName.ToString & "')"
+            '        objGlobal.refDi.SQL.sqlStringB1(sSQL)
+            '    Next
+            'End If
 
 #End Region
 #Region "Cargar Datos Grid"
             objGlobal.SBOApp.StatusBar.SetText("Cargando en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            sSQL = "SELECT 'Y' ""Sel"",""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
-            sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
-            sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
-            sSQL &= " From ""@EXO_TMPOPUBI"" "
-            sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
-            sSQL &= " ORDER BY ""Code"", ""LineId"" "
+            'sSQL = "SELECT 'Y' ""Sel"",""U_EXO_ITEMCODE"" ""Artículo"", ""U_EXO_ITEMNAME"" ""Descripción"",""U_EXO_CANT"" ""Cantidad"", ""U_EXO_UBACT"" ""Ubicación actual"", "
+            'sSQL &= " ""U_EXO_ZONAACT"" as ""Zona Almacén Actual"", ""U_EXO_CLAACT"" as ""Rotación"" , ""U_EXO_TRASLADO"" as ""Traslado"", "
+            'sSQL &= " ""U_EXO_UBIDES"" ""Ubicación destino"" "
+            'sSQL &= " From ""@EXO_TMPOPUBI"" "
+            'sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
+            'sSQL &= " ORDER BY ""Code"", ""LineId"" "
+
+            sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"" , ""OnHand"" ""Cantidad"", ""UBSTANDARD"" ""Ubicación actual"", ""ZonaRota"" ""Zona Alm. Actual"", 
+                    ""Rotación"", ""CMAX"" ""Traslado"", ""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
+                    FROM (
+                        SELECT I.""ItemCode"" ""Artículo"",IFNULL(I.""ItemName"",'') ""Descripción"" , S.""OnHand"" , 
+                        IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(W.""U_EXO_CLASIF"",'') ""ZonaRota"", 
+                        CASE WHEN IFNULL(""Ventas"",0)>=0 and IFNULL(""Ventas"",0)<=1 THEN 'E'
+                         WHEN IFNULL(""Ventas"",0)>=2 and IFNULL(""Ventas"",0)<=4 THEN 'D' 
+                         WHEN IFNULL(""Ventas"",0)>=5 and IFNULL(""Ventas"",0)<=9 THEN 'C' 
+                         WHEN IFNULL(""Ventas"",0)>=10 and IFNULL(""Ventas"",0)<=19 THEN 'B' 
+                         WHEN IFNULL(""Ventas"",0)>=20  THEN 'A'END ""Rotación"",
+                         CASE WHEN (IFNULL(W.""U_EXO_CNEC"",0) > (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))) THEN  IFNULL(W.""U_EXO_CNEC"",0)
+                            Else (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))End ""Traslado"", IFNULL(W.""U_EXO_CMIN"",0) ""CMIN"", IFNULL(B.""MaxLevel"",0) ""CMAX""
+                        FROM ""OITM"" I
+                        INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
+                        LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
+                        LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                                FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
+                        LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
+                                                                  SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
+                                                                  WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+                                                                  UNION ALL
+                                                                  SELECT ""ItemCode"",SUM(-""Quantity"") ""Ventas"" FROM RIN1 L INNER JOIN ORIN C ON C.""DocEntry""=L.""DocEntry"" 
+                                                                  WHERE C.""DocDate""<='" & sFechaH & "' and C.""DocDate"">='" & sFechaD & "' GROUP BY ""ItemCode""
+                                                                  )S GROUP BY ""ItemCode""
+                         )V ON V.""ItemCode""=I.""ItemCode""
+                    WHERE S.""OnHand""<>0 and IFNULL(B.""BinCode"",'')<>''
+                )T
+                LEFT JOIN (SELECT  ""BinCode"", ""Attr3Val"" 
+                                FROM OBIN B 
+                                LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
+                                And IFNULL(V.""ItemQty"",0)=0 )UB ON ""BinCode"" not in (""UBSTANDARD"") And UB.""Attr3Val"" =T.""Rotación""
+                ORDER BY ""Descripción"" "
             'Cargamos grid
             oform.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
             FormateaGrid(oform)
@@ -392,40 +461,52 @@ Public Class EXO_OPUBI
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
-            For i = 1 To 8
-                If i = 5 Or i = 6 Then
-                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
-                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
-                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
-                    oColumnCb.ValidValues.Add("", "")
-                    oColumnCb.ValidValues.Add("A", "Alta rotación")
-                    oColumnCb.ValidValues.Add("B", "Media rotación")
-                    oColumnCb.ValidValues.Add("C", "Baja rotación")
-                    oColumnCb.ValidValues.Add("D", "Muy baja rotación")
-                    oColumnCb.Editable = False
-                ElseIf i = 8 Then
-                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
-                    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
-                    'oColumnTxt.ChooseFromListAlias = "BinCode"
-                    'oColumnTxt.ChooseFromListUID = "CFLUBI"
-
-                    'sSQL = "SELECT  ""BinCode"" FROM OBIN B LEFT JOIN ""VBIN_Qty"" V ON B.""AbsEntry""=V.""BinAbs"" WHERE B.""WhsCode""='" & sAlmacen & "' 
-                    ' And IFNULL(V.""ItemQty"",0)=0 "
-                    'objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
-                    ' oColumnCb.DisplayType = BoComboDisplayType.cdt_Value
-                    ' oColumnCb.Editable = True
-                    oColumnTxt.Editable = True
-                ElseIf i = 1 Then
+            For i = 1 To 9
+                If i = 1 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                     oColumnTxt.Editable = False
                     oColumnTxt.LinkedObjectType = 4
+                ElseIf i = 5 Or i = 6 Then
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
+                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
+                    oColumnCb.DisplayType = BoComboDisplayType.cdt_Description
+                    oColumnCb.ValidValues.Add("", "")
+                    oColumnCb.ValidValues.Add("-", "")
+                    oColumnCb.ValidValues.Add("A", "Muy Alta rotación")
+                    oColumnCb.ValidValues.Add("B", "Alta rotación")
+                    oColumnCb.ValidValues.Add("C", "Media rotación")
+                    oColumnCb.ValidValues.Add("D", "Baja rotación")
+                    oColumnCb.ValidValues.Add("E", "Muy baja rotación")
+                    oColumnCb.Editable = False
+                ElseIf i = 9 Then
+                    CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
+                    oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
+                    oColumnCb.Editable = True
+                    'Cargar Datos
+                    sSQL = " SELECT * FROM (
+                                                SELECT ' ' ""BinCode"" FROM DUMMY UNION ALL 
+                                                SELECT DISTINCT ""BinCode"" FROM OBIN  WHERE ""WhsCode""='" & sAlmacen & "' and ""Attr2Val"" ='Picking'
+                                                                    and ""BinCode"" not in (SELECT DISTINCT T1.""BinCode"" FROM OITW T0 
+                                                                                                LEFT JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry"" 
+                                                                                                WHERE T0.""WhsCode"" = '" & sAlmacen & "' and IFNULL(T1.""BinCode"",'')<>'')
+                                                ) ORDER BY ""BinCode"" "
+                    objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
+
+                    oColumnCb.ExpandType = BoExpandType.et_DescriptionOnly
+
+                    EXO_GLOBALES.CrearConsultasFormateadas(objGlobal.compañia)
+                    objGlobal.SBOApp.StatusBar.SetText("Consulta formateada: Nueva Ubicación Principal", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                 Else
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                     oColumnTxt.Editable = False
-                    If i = 3 Or i = 7 Then
+                    If i = 3 Or i = 7 Or i = 8 Then
                         oColumnTxt.RightJustified = True
+
+                    End If
+                    If i = 8 Then
+                        oColumnTxt.Editable = True
                     End If
                 End If
             Next
@@ -508,6 +589,7 @@ Public Class EXO_OPUBI
         Dim sAlmacen As String = ""
         Dim sSQL As String = ""
         Dim sUbStandard As String = ""
+        Dim bPrimeraLinea As Boolean = True
 #End Region
 
         Try
@@ -523,20 +605,22 @@ Public Class EXO_OPUBI
             oDocStockTransfer.FromWarehouse = sAlmacen
             oDocStockTransfer.ToWarehouse = sAlmacen
             oDocStockTransfer.UserFields.Fields.Item("U_EXO_STATUSP").Value = "P"
-            oDocStockTransfer.UserFields.Fields.Item("U_EXO_TIPO").Value = "INU"
+            oDocStockTransfer.UserFields.Fields.Item("U_EXO_TIPO").Value = "INT"
             oDocStockTransfer.Comments = "Generado automáticamente a través de Optimización de ubicaciones por rotación."
             For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
                 If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
-                    If (i > 0) Then
+                    If bPrimeraLinea = False Then
                         oDocStockTransfer.Lines.Add()
+                    Else
+                        bPrimeraLinea = False
                     End If
                     oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString
                     oDocStockTransfer.Lines.ItemDescription = oForm.DataSources.DataTables.Item(sData).GetValue("Descripción", i).ToString
                     oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación actual", i).ToString
-                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
-                    oDocStockTransfer.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item(sData).GetValue("Traslado", i).ToString)
+                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Nueva Ub. Principal", i).ToString
+                    oDocStockTransfer.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item(sData).GetValue("Cant. Real Traslado", i).ToString)
 #Region "Actualizamos los campos en OITW Ubicación standard, Fecha y clasificación"
-                    sSQL = "SELECT ""AbsEntry"" FROM OBIN WHERE ""WhsCode""='" & sAlmacen & "' and ""BinCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString & "' "
+                    sSQL = "SELECT ""AbsEntry"" FROM OBIN WHERE ""WhsCode""='" & sAlmacen & "' and ""BinCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Nueva Ub. Principal", i).ToString & "' "
                     sUbStandard = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                     If sUbStandard <> "" Then
                         sSQL = "UPDATE OITW SET ""DftBinAbs""='" & sUbStandard & "', 
