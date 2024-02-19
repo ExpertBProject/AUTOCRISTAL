@@ -371,8 +371,8 @@ Public Class EXO_OPUBI
             'sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
             'sSQL &= " ORDER BY ""Code"", ""LineId"" "
 
-            sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"" , ""OnHand"" ""Cantidad"", ""UBSTANDARD"" ""Ubicación actual"", ""ZonaRota"" ""Zona Alm. Actual"", 
-                    ""Rotación"", ""CMAX"" ""Traslado"", ""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
+            sSQL = "SELECT DISTINCT 'N' ""Sel"", ""Artículo"", ""Descripción"" , ""OnHand"" ""Cantidad"", ""UBSTANDARD"" ""Ubicación actual"", ""ZonaRota"" ""Zona Alm. Actual"", 
+                    ""Rotación"", ""OnHand"" ""Traslado"", ""OnHand"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
                     FROM (
                         SELECT I.""ItemCode"" ""Artículo"",IFNULL(I.""ItemName"",'') ""Descripción"" , S.""OnHand"" , 
                         IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL(W.""U_EXO_CLASIF"",'') ""ZonaRota"", 
@@ -461,12 +461,14 @@ Public Class EXO_OPUBI
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
+            oColumnChk.TitleObject.Sortable = True
             For i = 1 To 9
                 If i = 1 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                     oColumnTxt.Editable = False
                     oColumnTxt.LinkedObjectType = 4
+                    oColumnTxt.TitleObject.Sortable = True
                 ElseIf i = 5 Or i = 6 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                     oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
@@ -479,6 +481,7 @@ Public Class EXO_OPUBI
                     oColumnCb.ValidValues.Add("D", "Baja rotación")
                     oColumnCb.ValidValues.Add("E", "Muy baja rotación")
                     oColumnCb.Editable = False
+                    oColumnCb.TitleObject.Sortable = True
                 ElseIf i = 9 Then
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                     oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
@@ -497,17 +500,18 @@ Public Class EXO_OPUBI
 
                     EXO_GLOBALES.CrearConsultasFormateadas(objGlobal.compañia)
                     objGlobal.SBOApp.StatusBar.SetText("Consulta formateada: Nueva Ubicación Principal", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                    oColumnCb.TitleObject.Sortable = True
                 Else
                     CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                     oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                     oColumnTxt.Editable = False
                     If i = 3 Or i = 7 Or i = 8 Then
                         oColumnTxt.RightJustified = True
-
                     End If
                     If i = 8 Then
                         oColumnTxt.Editable = True
                     End If
+                    oColumnTxt.TitleObject.Sortable = True
                 End If
             Next
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).AutoResizeColumns()

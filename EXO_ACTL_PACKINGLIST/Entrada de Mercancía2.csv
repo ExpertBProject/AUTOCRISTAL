@@ -1,22 +1,2 @@
-Nº Catálogo;Cod. Artículo;Cantidad;Lote;F. Fabricación;Id. Bulto;Tipo Bulto
-;2015AGN;10;CAT1A200;25/04/2022;1;CAJA
-				
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
-						
+Nº Catálogo;Cod. Artículo;Cantidad;Lote;F. Fabricación;Id. Bulto;Tipo Bulto;Precio
+;2015AGN;10;CAT1A200;25/04/2022;1;C1;2,5

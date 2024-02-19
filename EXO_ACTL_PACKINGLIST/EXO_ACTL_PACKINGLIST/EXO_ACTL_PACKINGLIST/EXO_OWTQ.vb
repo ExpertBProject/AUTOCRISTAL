@@ -466,6 +466,7 @@ Public Class EXO_OWTQ
         Dim dStock As Double = 0 : Dim dStockExt As Double = 0
         Dim dStockExt1 As Double = 0 : Dim dStockExt2 As Double = 0 : Dim dStockExt3 As Double = 0 : Dim dStockExt4 As Double = 0 : Dim dStockExt5 As Double = 0
         Dim sUBIDEF As String = "" : Dim sTIPOHUECODEF As String = "" : Dim dCANTMAXDEF As Double = 0 : Dim dSTOCKUBIDEF As Double = 0
+        Dim dVMA As Double = 0 : Dim dVA As Double = 0 : Dim dCober As Double = 0
         Dim sCatalogo As String = ""
 #End Region
         Try
@@ -569,7 +570,163 @@ Public Class EXO_OWTQ
                                                     And T0.""WhsCode"" ='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "'
                                                  )"
                         dSTOCKUBIDEF = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+#Region "Nuevos Campos"
+                        sSQL = " SELECT ""Ventas_Med_Año"" FROM (Select T0.""WhsCode"" as ""Almacen"", T0.""ItemCode"" as ""Artículo"", T0.""OnHand"",
+                                    T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) AS ""STOCK_DENTRO""
+                                    , coalesce(T3.""Stock"",0) as ""Stock_EXT1"" , Coalesce(T4.""Stock"" ,0) as ""Stock_EXT2"", Coalesce(T5.""Stock"" ,0) as ""Stock_EXT3"",
+                                    Coalesce(T6.""Stock"" ,0) as ""Stock_EXT4"", Coalesce(T7.""Stock"" ,0) as ""Stock_EXT5"", 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) as ""ExternoSumaCobertura"",
+                                    T1.""BinCode"" as ""Ubi_Defecto"" ,   T2.""Ventas_Med_Año"" , Coalesce( T2.""Ventas_Ult_Año"",0)as ""VA"",
+                                    case when 
+                                    (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) )
+                                    = 0 or T2.""Ventas_Med_Año"" = 0  then 0 else (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) ) / T2.""Ventas_Med_Año"" end  as ""Cobertura""
+                                    from OITW	T0
+                                    LEFT JOIN  OBIN T1 ON T1.""AbsEntry"" = T0.""DftBinAbs""
+                                    LEFT JOIN ""EXO_MRP_Ventas24Q"" T2 ON T2.""ItemCode"" = T0.""ItemCode"" and T1.""WhsCode"" = T2.""WhsCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI"" = 'Ext1'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T3 ON T3.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T3.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext2'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T4 ON T4.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T4.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs""
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext3'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T5 ON T5.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T5.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""   ,T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext4'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T6 ON T6.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T6.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""  ,  T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext5'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T7 ON T7.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T7.""ItemCode""
+                                    )T WHERE ""Artículo""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' and ""Almacen""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
+                        dVMA = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
 
+                        sSQL = " SELECT ""VA"" FROM (Select T0.""WhsCode"" as ""Almacen"", T0.""ItemCode"" as ""Artículo"", T0.""OnHand"",
+                                    T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) AS ""STOCK_DENTRO""
+                                    , coalesce(T3.""Stock"",0) as ""Stock_EXT1"" , Coalesce(T4.""Stock"" ,0) as ""Stock_EXT2"", Coalesce(T5.""Stock"" ,0) as ""Stock_EXT3"",
+                                    Coalesce(T6.""Stock"" ,0) as ""Stock_EXT4"", Coalesce(T7.""Stock"" ,0) as ""Stock_EXT5"", 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) as ""ExternoSumaCobertura"",
+                                    T1.""BinCode"" as ""Ubi_Defecto"" ,   T2.""Ventas_Med_Año"" , Coalesce( T2.""Ventas_Ult_Año"",0)as ""VA"",
+                                    case when 
+                                    (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) )
+                                    = 0 or T2.""Ventas_Med_Año"" = 0  then 0 else (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) ) / T2.""Ventas_Med_Año"" end  as ""Cobertura""
+                                    from OITW	T0
+                                    LEFT JOIN  OBIN T1 ON T1.""AbsEntry"" = T0.""DftBinAbs""
+                                    LEFT JOIN ""EXO_MRP_Ventas24Q"" T2 ON T2.""ItemCode"" = T0.""ItemCode"" and T1.""WhsCode"" = T2.""WhsCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI"" = 'Ext1'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T3 ON T3.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T3.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext2'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T4 ON T4.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T4.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs""
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext3'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T5 ON T5.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T5.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""   ,T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext4'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T6 ON T6.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T6.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""  ,  T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext5'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T7 ON T7.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T7.""ItemCode""
+                                    )T WHERE ""Artículo""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' and ""Almacen""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
+                        dVA = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+
+                        sSQL = " SELECT ""Cobertura"" FROM (Select T0.""WhsCode"" as ""Almacen"", T0.""ItemCode"" as ""Artículo"", T0.""OnHand"",
+                                    T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) AS ""STOCK_DENTRO""
+                                    , coalesce(T3.""Stock"",0) as ""Stock_EXT1"" , Coalesce(T4.""Stock"" ,0) as ""Stock_EXT2"", Coalesce(T5.""Stock"" ,0) as ""Stock_EXT3"",
+                                    Coalesce(T6.""Stock"" ,0) as ""Stock_EXT4"", Coalesce(T7.""Stock"" ,0) as ""Stock_EXT5"", 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) as ""ExternoSumaCobertura"",
+                                    T1.""BinCode"" as ""Ubi_Defecto"" ,   T2.""Ventas_Med_Año"" , Coalesce( T2.""Ventas_Ult_Año"",0)as ""VA"",
+                                    case when 
+                                    (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) )
+                                    = 0 or T2.""Ventas_Med_Año"" = 0  then 0 else (T0.""OnHand"" -  (coalesce(T3.""Stock"",0) + coalesce(T4.""Stock"",0) + coalesce(T5.""Stock"",0) + coalesce(T6.""Stock"",0) + coalesce(T7.""Stock"",0) ) + 
+                                    (Coalesce(T3.""STOCKCOBERTURA"", 0) + Coalesce(T4.""STOCKCOBERTURA"",0) + Coalesce(T5.""STOCKCOBERTURA"",0) + Coalesce(T6.""STOCKCOBERTURA"",0) + coalesce(T7.""STOCKCOBERTURA"",0) ) ) / T2.""Ventas_Med_Año"" end  as ""Cobertura""
+                                    from OITW	T0
+                                    LEFT JOIN  OBIN T1 ON T1.""AbsEntry"" = T0.""DftBinAbs""
+                                    LEFT JOIN ""EXO_MRP_Ventas24Q"" T2 ON T2.""ItemCode"" = T0.""ItemCode"" and T1.""WhsCode"" = T2.""WhsCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI"" = 'Ext1'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T3 ON T3.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T3.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext2'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T4 ON T4.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T4.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA"", T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs""
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext3'
+			                                    group by t12.""U_EXO_CALCOB"",T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T5 ON T5.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T5.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""   ,T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext4'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T6 ON T6.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T6.""ItemCode""
+                                    LEFT JOIN (Select  case when t12.""U_EXO_CALCOB"" = 'Si' then SUM(T10.""OnHandQty"") else 0 end as ""STOCKCOBERTURA""  ,  T10.""WhsCode"", T10.""ItemCode"", 
+                                                SUM(T10.""OnHandQty"") as ""Stock"", T12.""U_EXO_TIPOUBI"" as ""Zona_Ext"" from OIBQ T10
+    		                                    LEFT JOIN  OBIN T11 ON T11.""AbsEntry"" = T10.""BinAbs"" 
+			                                    INNER JOIN ""@EXO_UBIEXTERNAS"" T12 ON T11.""SL1Code"" = T12.""U_EXO_ZONA"" and T12.""U_EXO_ALM"" = T10.""WhsCode""
+			                                    where T12.""U_EXO_TIPOUBI"" is not null and T12.""U_EXO_TIPOUBI""  = 'Ext5'
+			                                    group by t12.""U_EXO_CALCOB"", T10.""WhsCode"", T10.""ItemCode"",T12.""U_EXO_TIPOUBI""
+                                              ) T7 ON T7.""WhsCode"" = T0.""WhsCode"" and T0.""ItemCode"" = T7.""ItemCode""
+                                    )T WHERE ""Artículo""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' and ""Almacen""='" & oDtLin.Rows.Item(iLin).Item("WhsCode").ToString & "' "
+                        dCober = oObjGlobal.refDi.SQL.sqlNumericaB1(sSQL)
+#End Region
                         sSQL = "Select TOP 1 ""Substitute"" FROM ""OSCN"" WHERE ""ItemCode""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' and ""CardCode""='" & sIc & "' "
                         sCatalogo = oObjGlobal.refDi.SQL.sqlStringB1(sSQL)
 
@@ -579,7 +736,7 @@ Public Class EXO_OWTQ
                         sSQL = "INSERT INTO ""@EXO_PACKINGL"" (""Code"", ""LineId"", ""U_EXO_LINEA"",""Object"", ""LogInst"", ""U_EXO_USUARIO"", ""U_EXO_CAT"", ""U_EXO_CODE"", ""U_EXO_CANT"", 
                                 ""U_EXO_LOTE"", ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ALM"",""U_EXO_STOCK"",""U_EXO_STOCKDENTRO"", 
                                 ""U_EXO_EXT1"", ""U_EXO_EXT2"", ""U_EXO_EXT3"", ""U_EXO_EXT4"",""U_EXO_EXT5"",""U_EXO_UBIDEF"", ""U_EXO_TIPOHUECODEF"",""U_EXO_CANTMAXDEF"", ""U_EXO_STOCKUBIDEF"",
-                                ""U_EXO_UBIORI"") 
+                                ""U_EXO_UBIORI"", ""U_EXO_VMA"", ""U_EXO_VA"", ""U_EXO_COBER"") ) 
                                 Select '" & sDocEntry & sObjType & "' ""Code"", " & sNLineas & "+ ROW_NUMBER ( ) OVER( ORDER BY ""U_EXO_IDBULTO"", ""U_EXO_TBULTO"",""U_EXO_ITEMCODE"",""U_EXO_LOTE"", ""U_EXO_UBICA"" ASC ) AS ""ROW_ID"",
                                 '" & oDtLin.Rows.Item(iLin).Item("LineNum").ToString & "' ""U_EXO_LINEA"", 'EXO_PACKING', '0', 
                                 '" & objGlobal.compañia.UserSignature.ToString & "' ""USUARIO"", '" & sCatalogo & "' ""U_EXO_CAT"", ""U_EXO_ITEMCODE"", SUM(""U_EXO_CANT"") ""U_EXO_CANT"", ""U_EXO_LOTE"",  
@@ -594,6 +751,9 @@ Public Class EXO_OWTQ
                                 , '" & sUBIDEF & "', '" & sTIPOHUECODEF & "', " & EXO_GLOBALES.DblNumberToText(oCompany, dCANTMAXDEF, EXO_GLOBALES.FuenteInformacion.Otros) & "
                                 , " & EXO_GLOBALES.DblNumberToText(oCompany, dSTOCKUBIDEF, EXO_GLOBALES.FuenteInformacion.Otros) & "
                                 , ""U_EXO_UBICA""
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dVMA, EXO_GLOBALES.FuenteInformacion.Otros) & "
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dVA, EXO_GLOBALES.FuenteInformacion.Otros) & "
+                                , " & EXO_GLOBALES.DblNumberToText(oCompany, dCober, EXO_GLOBALES.FuenteInformacion.Otros) & "
                                 FROM ""@EXO_LSTEMBL"" 
                                 where ""DocEntry""=" & sListaEmbalaje & " and ""U_EXO_ITEMCODE""='" & oDtLin.Rows.Item(iLin).Item("ItemCode").ToString & "' 
                                 and ""U_EXO_DOCENTRY""=" & oDtLin.Rows.Item(iLin).Item("DocEntry").ToString & "

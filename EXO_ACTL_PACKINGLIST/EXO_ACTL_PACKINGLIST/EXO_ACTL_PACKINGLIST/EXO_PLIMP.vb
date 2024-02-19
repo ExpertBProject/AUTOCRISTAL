@@ -175,6 +175,10 @@ Public Class EXO_PLIMP
             oForm.Freeze(False)
             oForm.Close()
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
+            If objGlobal.SBOApp.Menus.Item("1304").Enabled = True Then
+                objGlobal.SBOApp.ActivateMenuItem("1304")
+            End If
+
         End Try
     End Function
     Private Sub Limpiar_Grid(ByRef oForm As SAPbouiCOM.Form)

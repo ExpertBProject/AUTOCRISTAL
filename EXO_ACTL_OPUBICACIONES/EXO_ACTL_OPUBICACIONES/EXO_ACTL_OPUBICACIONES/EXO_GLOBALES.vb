@@ -349,7 +349,38 @@ Public Class EXO_GLOBALES
                 End If
             End If
 
+#Region "Por rotación"
+            oRs.DoQuery("SELECT t1.""IntrnalKey"" " &
+                        "FROM ""OUQR"" t1 " &
+                        "WHERE t1.""QCategory"" = -1 " &
+                        "AND t1.""QName"" = 'Nueva Ubicación Principal Rotación'")
+            If oRs.RecordCount = 0 Then
+                'Creamos la consulta formateada dentro de la categoría General, que devuelve las OTs abiertas
+                oOUQR = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oUserQueries), SAPbobsCOM.UserQueries)
 
+                sSQL = "SELECT ""BinCode"" FROM OBIN B 
+                            LEFT JOIN (SELECT ""ItemCode"",""WhsCode"", ""BinAbs"", SUM(""OnHandQty"") ""OnHand""
+                            FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""= $[$grd_DOC.Artículo.0]
+                            and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
+                            WHERE B.""WhsCode""= $[$txtALM.0] and B.""Attr2Val"" ='Picking'
+                            And IFNULL(S.""OnHand"",0)>= 0 and B.""Attr3Val""= $[$grd_DOC.Rotación.0]
+                            And ""BinCode"" Not In (SELECT  T1.""BinCode"" FROM OITW T0 
+                            LEFT JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry""
+                            Where T0.""WhsCode"" = $[$txtALM.0] and T1.""BinCode"" is not null)"
+                oOUQR.Query = sSQL
+                oOUQR.QueryCategory = -1 'General
+                oOUQR.QueryDescription = "Nueva Ubicación Principal Rotación"
+                oOUQR.QueryType = SAPbobsCOM.UserQueryTypeEnum.uqtWizard
+
+                If oOUQR.Add <> 0 Then
+                    Throw New Exception(oCompany.GetLastErrorCode & " " & oCompany.GetLastErrorDescription)
+                End If
+
+                oCompany.GetNewObjectCode(sIntrnalKey)
+                sIntrnalKey = sIntrnalKey.Split(vbTab.ToCharArray)(0)
+            Else
+                sIntrnalKey = oRs.Fields.Item("IntrnalKey").Value.ToString
+            End If
             If sIntrnalKey <> "" AndAlso sIntrnalKey <> "0" Then
                 oCSHS = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oFormattedSearches), SAPbobsCOM.FormattedSearches)
 
@@ -388,6 +419,9 @@ Public Class EXO_GLOBALES
                     End If
                 End If
             End If
+#End Region
+
+
             If oCompany.InTransaction = True Then
                 oCompany.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
             End If

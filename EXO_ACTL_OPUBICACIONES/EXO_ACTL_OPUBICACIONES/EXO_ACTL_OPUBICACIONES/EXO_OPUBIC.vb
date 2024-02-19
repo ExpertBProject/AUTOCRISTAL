@@ -429,28 +429,32 @@ Public Class EXO_OPUBIC
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
-
+            oColumnChk.TitleObject.Sortable = True
             For i = 1 To 9
                 Select Case i
                     Case 1
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
-                    oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
-                    oColumnTxt.Editable = False
-                    oColumnTxt.LinkedObjectType = 4
+                        oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                        oColumnTxt.Editable = False
+                        oColumnTxt.LinkedObjectType = 4
+                        oColumnTxt.TitleObject.Sortable = True
                     Case 2, 3, 6
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False
+                        oColumnTxt.TitleObject.Sortable = True
                     Case 4, 5, 7
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False
                         oColumnTxt.RightJustified = True
+                        oColumnTxt.TitleObject.Sortable = True
                     Case 8
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = True
                         oColumnTxt.RightJustified = True
+                        oColumnTxt.TitleObject.Sortable = True
                     Case 9
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                         oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
@@ -466,7 +470,7 @@ Public Class EXO_OPUBIC
                         objGlobal.funcionesUI.cargaCombo(oColumnCb.ValidValues, sSQL)
 
                         oColumnCb.ExpandType = BoExpandType.et_DescriptionOnly
-
+                        oColumnCb.TitleObject.Sortable = True
                         EXO_GLOBALES.CrearConsultasFormateadas(objGlobal.compañia)
                         objGlobal.SBOApp.StatusBar.SetText("Consulta formateada: Nueva Ubicación Principal", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
                 End Select
@@ -555,10 +559,6 @@ Public Class EXO_OPUBIC
 
         Try
             sAlmacen = oForm.DataSources.UserDataSources.Item("UDALM").Value
-            If objGlobal.compañia.InTransaction = True Then
-                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-            End If
-            objGlobal.compañia.StartTransaction()
             oDocStockTransfer = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryTransferRequest), SAPbobsCOM.StockTransfer)
             oDocStockTransfer.DocDate = Now.Date
             oDocStockTransfer.DueDate = Now.Date
@@ -586,7 +586,7 @@ Public Class EXO_OPUBIC
                         sNuevaUbPrin = objGlobal.refDi.SQL.sqlStringB1(sSQL)
                         If sNuevaUbPrin <> "" Then
                             sSQL = "UPDATE OITW Set ""DftBinAbs""='" & sNuevaUbPrin & "', 
-                                ""U_EXO_FUPDATE""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "', 
+                                ""U_EXO_FUPDATE""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "' 
                                 WHERE ""ItemCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & "' AND 
                                 ""WhsCode""='" & sAlmacen & "' "
                             objGlobal.refDi.SQL.sqlUpdB1(sSQL)
@@ -614,9 +614,6 @@ Public Class EXO_OPUBIC
 
                 objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 
-                If objGlobal.compañia.InTransaction = True Then
-                    objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit)
-                End If
             End If
 
 
@@ -626,9 +623,6 @@ Public Class EXO_OPUBIC
         Catch ex As Exception
             Throw ex
         Finally
-            If objGlobal.compañia.InTransaction = True Then
-                objGlobal.compañia.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack)
-            End If
 
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oDocStockTransfer, Object))
         End Try
