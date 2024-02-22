@@ -291,7 +291,7 @@ Public Class EXO_GLOBALES
                             FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""= $[$grd_DOC.Artículo.0]
                             and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
                             WHERE B.""WhsCode""= $[$txtALM.0] and B.""Attr2Val"" ='Picking'
-                            And IFNULL(S.""OnHand"",0)>= 0
+                            And IFNULL(S.""OnHand"",0)>= 0 and B.""Attr3Val""= $[$grd_DOC.ZONA.0]
                             And ""BinCode"" Not In (SELECT  T1.""BinCode"" FROM OITW T0 
                             LEFT JOIN OBIN T1 ON T0.""DftBinAbs"" = T1.""AbsEntry""
                             Where T0.""WhsCode"" = $[$txtALM.0] and T1.""BinCode"" is not null)"

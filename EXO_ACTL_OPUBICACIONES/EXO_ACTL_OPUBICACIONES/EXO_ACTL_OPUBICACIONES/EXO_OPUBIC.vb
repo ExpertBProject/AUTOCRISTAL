@@ -74,8 +74,8 @@ Public Class EXO_OPUBIC
             'oFP.XmlData = oFP.XmlData.Replace("modality=""0""", "modality=""1""")
             Try
                 oForm = objGlobal.SBOApp.Forms.AddEx(oFP)
-                sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"",""UBSTANDARD"" ""Ub. Principal"", ""Cantidad"", ""CMAX"" ""Cant. Nec."", 
-                    ""UBIORIGEN"" ""Ub. Origen"",  ""CMAX"" ""Traslado"",  ""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
+                sSQL = "SELECT 'N' ""Sel"", T.""Artículo"", T.""Descripción"",T.""UBSTANDARD"" ""Ub. Principal"", ' ' ""ZONA"", T.""Cantidad"", T.""CMAX"" ""Cant. Nec."", 
+                    T.""UBIORIGEN"" ""Ub. Origen"",  T.""CMAX"" ""Traslado"",  T.""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
                     FROM (
                         SELECT I.""ItemCode"" ""Artículo"",IFNULL(I.""ItemName"",'') ""Descripción"" ,IFNULL(S.""OnHand"",0) ""Cantidad"", 
 		                CASE WHEN (IFNULL(W.""U_EXO_CNEC"",0) > (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))) THEN  IFNULL(W.""U_EXO_CNEC"",0)
@@ -349,14 +349,16 @@ Public Class EXO_OPUBIC
             'sSQL &= " From ""@EXO_TMPOPUBIC"" "
             'sSQL &= " WHERE ""U_EXO_USUARIO""='" & objGlobal.compañia.UserName.ToString & "' "
             'sSQL &= " ORDER BY ""Code"", ""LineId"" "
-            sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"",""UBSTANDARD"" ""Ub. Principal"", ""Cantidad"", ""CMAX"" ""Cant. Nec."", 
-                    ""UBIORIGEN"" ""Ub. Origen"",  ""CMAX"" ""Traslado"",  ""CMAX"" ""Cant. Real Traslado"", Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
+            sSQL = "SELECT 'N' ""Sel"", ""Artículo"", ""Descripción"",""UBSTANDARD"" ""Ub. Principal"", ""ZONA"", ""Cantidad"", ""CMAX"" ""Cant. Nec."", 
+                    ""UBIORIGEN"" ""Ub. Origen"",  CASE WHEN ""CMAX""<>0 THEN (CASE WHEN ""CMAX""<=Q.""OnHandQty"" THEN ""CMAX"" ELSE ""OnHandQty"" END )ELSE ""CMAX"" END ""Traslado"",  
+                    CASE WHEN ""CMAX""<>0 THEN (CASE WHEN ""CMAX""<=Q.""OnHandQty"" THEN ""CMAX"" ELSE ""OnHandQty"" END )ELSE ""CMAX"" END  ""Cant. Real Traslado"", 
+                    Cast( '' as NVARCHAR(50)) ""Nueva Ub. Principal""
                     FROM (
                         SELECT I.""ItemCode"" ""Artículo"",IFNULL(I.""ItemName"",'') ""Descripción"" ,IFNULL(S.""OnHand"",0) ""Cantidad"", 
 		                CASE WHEN (IFNULL(W.""U_EXO_CNEC"",0) > (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))) THEN  IFNULL(W.""U_EXO_CNEC"",0)
                             Else (IFNULL(W.""U_EXO_CMIN"",0)-IFNULL(S.""OnHand"",0))End ""Traslado"", 
 		                IFNULL(W.""U_EXO_CMIN"",0) ""CMIN"", IFNULL(B.""MaxLevel"",0) ""CMAX"", IFNULL(W.""U_EXO_CNEC"",0) ""CNEC"",
-                        IFNULL(B.""BinCode"",'') ""UBSTANDARD"", IFNULL( BC.""BinCode"",'') ""UBIORIGEN""
+                        IFNULL(B.""BinCode"",'') ""UBSTANDARD"", B.""Attr3Val"" ""ZONA"", IFNULL( BC.""BinCode"",'') ""UBIORIGEN""
                         FROM ""OITM"" I
                         INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='" & sAlmacen & "'
                         LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
@@ -371,7 +373,11 @@ Public Class EXO_OPUBIC
                                                )BC ON BC.""ItemCode""=I.""ItemCode"" and BC.""BinCode"" not in (IFNULL(B.""BinCode"",''))
                         WHERE I.""validFor""='Y' and IFNULL(B.""BinCode"",'')<>'' and IFNULL(S.""OnHand"",0)<=W.""U_EXO_CMIN"" and IFNULL( BC.""BinCode"",'')<>''
                         ORDER BY I.""ItemName""
-                    )T "
+                    )T 
+                    INNER JOIN (SELECT IFNULL(OIBQ.""OnHandQty"",0) ""OnHandQty"", OIBQ.""WhsCode"", OIBQ.""ItemCode"", OBIN.""BinCode""
+                                    FROM OIBQ 
+                                    INNER JOIN OBIN ON OBIN.""AbsEntry""=OIBQ.""BinAbs""
+                                ) Q ON Q.""WhsCode""='" & sAlmacen & "' and Q.""ItemCode""=T.""Artículo"" and Q.""BinCode""=""UBIORIGEN"" "
             'Cargamos grid
             oform.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
             FormateaGrid(oform)
@@ -430,7 +436,7 @@ Public Class EXO_OPUBIC
             oColumnChk = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0), SAPbouiCOM.CheckBoxColumn)
             oColumnChk.Editable = True
             oColumnChk.TitleObject.Sortable = True
-            For i = 1 To 9
+            For i = 1 To 10
                 Select Case i
                     Case 1
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
@@ -438,24 +444,29 @@ Public Class EXO_OPUBIC
                         oColumnTxt.Editable = False
                         oColumnTxt.LinkedObjectType = 4
                         oColumnTxt.TitleObject.Sortable = True
-                    Case 2, 3, 6
+                    Case 2, 3, 7
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False
                         oColumnTxt.TitleObject.Sortable = True
-                    Case 4, 5, 7
+                    Case 4 'ZONA ROTACION
+                        CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
+                        oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
+                        oColumnTxt.Editable = False
+                        oColumnTxt.Visible = False
+                    Case 5, 6, 8
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = False
                         oColumnTxt.RightJustified = True
                         oColumnTxt.TitleObject.Sortable = True
-                    Case 8
+                    Case 9
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_EditText
                         oColumnTxt = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.EditTextColumn)
                         oColumnTxt.Editable = True
                         oColumnTxt.RightJustified = True
                         oColumnTxt.TitleObject.Sortable = True
-                    Case 9
+                    Case 10
                         CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i).Type = SAPbouiCOM.BoGridColumnType.gct_ComboBox
                         oColumnCb = CType(CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(i), SAPbouiCOM.ComboBoxColumn)
                         oColumnCb.Editable = True
@@ -577,10 +588,14 @@ Public Class EXO_OPUBIC
                     End If
                     oDocStockTransfer.Lines.ItemCode = oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString
                     oDocStockTransfer.Lines.ItemDescription = oForm.DataSources.DataTables.Item(sData).GetValue("Descripción", i).ToString
-                    Dim sUbOrigen As String = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Origen", i).ToString
+
+                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Origen", i).ToString
+
+                    Dim sUbDestino As String = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Principal", i).ToString
+
                     Dim sNuevaUbPrin As String = oForm.DataSources.DataTables.Item(sData).GetValue("Nueva Ub. Principal", i).ToString
-                    If sUbOrigen <> sNuevaUbPrin And sNuevaUbPrin <> "" Then
-                        oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = sNuevaUbPrin
+                    If sUbDestino <> sNuevaUbPrin And sNuevaUbPrin <> "" Then
+                        oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = sNuevaUbPrin
                         'Asignamos esta ubicación como principal
                         sSQL = "SELECT  ""AbsEntry"" FROM OBIN  WHERE ""WhsCode""='" & sAlmacen & "' and ""BinCode""='" & sNuevaUbPrin & "'"
                         sNuevaUbPrin = objGlobal.refDi.SQL.sqlStringB1(sSQL)
@@ -592,10 +607,9 @@ Public Class EXO_OPUBIC
                             objGlobal.refDi.SQL.sqlUpdB1(sSQL)
                         End If
                     Else
-                        oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_OR").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Origen", i).ToString
+                        oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Principal", i).ToString
                     End If
 
-                    oDocStockTransfer.Lines.UserFields.Fields.Item("U_EXO_UBI_DE").Value = oForm.DataSources.DataTables.Item(sData).GetValue("Ub. Principal", i).ToString
                     oDocStockTransfer.Lines.Quantity = EXO_GLOBALES.DblTextToNumber(objGlobal.compañia, oForm.DataSources.DataTables.Item(sData).GetValue("Cant. Real Traslado", i).ToString)
                 End If
             Next
