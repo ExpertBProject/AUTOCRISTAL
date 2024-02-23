@@ -366,10 +366,11 @@ Public Class EXO_OPUBIC
                                     FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""
                                     LEFT JOIN (
                     			                SELECT  ""BinCode"",S.""ItemCode"" FROM OBIN B 
-                                                LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
-                                                            FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
-                                                            WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr2Val"" ='Stock'
-                                                            And IFNULL(S.""OnHand"",0)>= 0 and IFNULL(S.""ItemCode"",'')<>''                                         
+                                                LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",Min(""BinAbs"") as ""BinAbs"", Max(""OnHandQty"") AS ""OnHand""
+                                                           FROM OBBQ GROUP BY ""ItemCode"",""WhsCode""
+                                                          )S ON S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
+                                                WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr2Val"" ='Stock'
+                                                And IFNULL(S.""OnHand"",0)>= 0 and IFNULL(S.""ItemCode"",'')<>''                                         
                                                )BC ON BC.""ItemCode""=I.""ItemCode"" and BC.""BinCode"" not in (IFNULL(B.""BinCode"",''))
                         WHERE I.""validFor""='Y' and IFNULL(B.""BinCode"",'')<>'' and IFNULL(S.""OnHand"",0)<=W.""U_EXO_CMIN"" and IFNULL( BC.""BinCode"",'')<>''
                         ORDER BY I.""ItemName""

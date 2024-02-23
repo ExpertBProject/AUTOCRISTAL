@@ -95,8 +95,8 @@ Public Class EXO_OPUBI
                         FROM ""OITM"" I
                         INNER JOIN ""OITW"" W ON I.""ItemCode""=W.""ItemCode"" and W.""WhsCode""='ZZZZ'
                         LEFT JOIN ""OBIN"" B ON W.""DftBinAbs""=B.""AbsEntry"" and W.""WhsCode""=B.""WhsCode""
-                        LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",	""BinAbs"", SUM(""OnHandQty"") ""OnHand""
-                                FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
+                        LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",Min(""BinAbs"") as ""BinAbs"", Max(""OnHandQty"") AS ""OnHand""
+                                                           FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""                   
                         LEFT JOIN (SELECT ""ItemCode"", SUM(""Ventas"") ""Ventas"" FROM(
                                                                   SELECT ""ItemCode"",SUM(""Quantity"") ""Ventas"" FROM INV1 L INNER JOIN OINV C ON C.""DocEntry""=L.""DocEntry"" 
                                                                   WHERE C.""DocDate""<='19900101' and C.""DocDate"">='19900101' GROUP BY ""ItemCode""
