@@ -636,6 +636,13 @@ Public Class EXO_OPUBI
                             sMensaje = sSQL & " - No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
                             objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                         End If
+                        sSQL = "UPDATE OITW SET ""U_EXO_FUPDATE""='" & Now.Year.ToString("0000") & Now.Month.ToString("00") & Now.Day.ToString("00") & "', 
+                                ""U_EXO_CLASIF""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Rotación", i).ToString & "'
+                                WHERE ""ItemCode""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & "' "
+                        If objGlobal.refDi.SQL.executeNonQuery(sSQL) = False Then
+                            sMensaje = sSQL & " - No se ha podido actualizar la clasificación en el Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & "."
+                            objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        End If
                     Else
                         sMensaje = "No se ha podido actualizar Artículo: " & oForm.DataSources.DataTables.Item(sData).GetValue("Artículo", i).ToString & " - Almacén: " & sAlmacen & " - Ubicación Destino: " & oForm.DataSources.DataTables.Item(sData).GetValue("Ubicación destino", i).ToString
                         objGlobal.SBOApp.StatusBar.SetText(sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)

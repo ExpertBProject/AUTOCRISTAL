@@ -1,5 +1,5 @@
-caTA;Cod. Art¡culo;Cantidad;Lote;F. Fabricaci¢n;Id. Bulto;Tipo Bulto
-;2724AGS1P;3;LOTESAL15112022; ;1;C1
-;2724AGS1P;2;LOTESAL15112022; ;2;C1
+caTA;Cod. Art¡culo;Cantidad;Lote;F. Fabricaci¢n;Id. Bulto;Tipo Bulto;Precio
+;2724AGS1P;3;LOTESAL15112022; ;1;C1;2,5
+;.3541AGNV3P;2;LOTESAL15112022; ;2;C1;50
 
 

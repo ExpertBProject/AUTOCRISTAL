@@ -333,15 +333,16 @@ Public Class EXO_GLOBALES
                                     sSQL &= "'" & sIdBulto & "','" & sTBulto & "'," & EXO_GLOBALES.DblNumberToText(oCompany, EXO_GLOBALES.DblTextToNumber(oCompany, sPrecio), EXO_GLOBALES.FuenteInformacion.Otros) & ")"
                                     objglobal.refDi.SQL.sqlUpdB1(sSQL)
                                     'Al insertarlo actualizamos el precio del artículo.
-#Region "Actualiza el percio en el pedido"
+#Region "Actualiza el precio en el pedido"
                                     Dim oDoc As SAPbobsCOM.Documents = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseOrders), SAPbobsCOM.Documents)
                                     Dim bActualiza As Boolean = False
                                     If oDoc.GetByKey(CInt(EXO_GLOBALES._sPedido)) = True Then
                                         For i = 0 To oDoc.Lines.Count - 1
-                                            oDoc.Lines.SetCurrentLine(0)
+                                            oDoc.Lines.SetCurrentLine(i)
                                             If oDoc.Lines.ItemCode = sArticulo And EXO_GLOBALES.DblTextToNumber(oCompany, sPrecio) <> 0 Then
                                                 oDoc.Lines.UnitPrice = EXO_GLOBALES.DblTextToNumber(oCompany, sPrecio)
                                                 bActualiza = True
+                                                Exit For
                                             End If
                                         Next
                                         If bActualiza = True Then
@@ -350,7 +351,7 @@ Public Class EXO_GLOBALES
                                                 oSboApp.StatusBar.SetText(sErrorDes, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
 
                                             Else
-                                                oSboApp.StatusBar.SetText("(EXO) - Se han actualizado precios en los artículos. Revise el pedido", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                                oSboApp.StatusBar.SetText("(EXO) - Se han actualizado del artículo " & sArticulo & " el precio de " & sPrecio & " en los artículos. Revise el pedido", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                             End If
                                         End If
 
@@ -400,9 +401,9 @@ Public Class EXO_GLOBALES
 
 #Region "Pasamos los datos del fichero a la tabla real"
             oDtLin.Clear()
-            sSQL = "SELECT * FROM ""POR1"" where ""LineStatus""='O' and ""DocEntry""=" & EXO_GLOBALES._sPedido & " Order by ""LineNum"" "
+            sSQL = "Select * FROM ""POR1"" where ""LineStatus""='O' and ""DocEntry""=" & EXO_GLOBALES._sPedido & " Order by ""LineNum"" "
             oDtLin = oObjGlobal.refDi.SQL.sqlComoDataTable(sSQL)
-            If oDtLin.Rows.Count > 0 Then
+                                                If oDtLin.Rows.Count > 0 Then
                 sSQL = "SELECT DISTINCT ""U_EXO_CODE"" FROM ""@EXO_TMPPACKINGL"" L 
                         LEFT JOIN POR1 P ON L.""U_EXO_CODE""=P.""ItemCode"" and P.""DocEntry""=" & EXO_GLOBALES._sPedido & "
                         WHERE L.""U_EXO_USUARIO""='" & oCompany.UserName.ToString & "' and IFNULL(P.""ItemCode"",'')=''"

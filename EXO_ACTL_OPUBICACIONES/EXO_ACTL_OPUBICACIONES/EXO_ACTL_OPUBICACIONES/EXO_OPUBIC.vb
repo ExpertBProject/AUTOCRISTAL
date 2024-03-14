@@ -366,8 +366,18 @@ Public Class EXO_OPUBIC
                                     FROM OBBQ GROUP BY ""ItemCode"",""WhsCode"",""BinAbs"")S ON S.""ItemCode""=W.""ItemCode"" and S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry""
                                     LEFT JOIN (
                     			                SELECT  ""BinCode"",S.""ItemCode"" FROM OBIN B 
-                                                LEFT JOIN (SELECT ""ItemCode"",""WhsCode"",Min(""BinAbs"") as ""BinAbs"", Max(""OnHandQty"") AS ""OnHand""
-                                                           FROM OBBQ GROUP BY ""ItemCode"",""WhsCode""
+                                                LEFT JOIN (SELECT T.""ItemCode"",T.""WhsCode"",T.""BinAbs"",  T.""OnHand"" 
+                                                            FROM (
+							                                        SELECT ""ItemCode"",""WhsCode"",""BinAbs"", Max(""OnHandQty"") AS ""OnHand""
+                                                                        FROM OBBQ 
+                                                                        WHERE  ""WhsCode""='" & sAlmacen & "'
+                                                                        GROUP BY ""ItemCode"",""WhsCode"",""BinAbs""
+             				                                    )T 
+                                                            INNER JOIN (SELECT ""ItemCode"",""WhsCode"", Max(""OnHandQty"") ""MAXQTY""
+                                                                        FROM OBBQ 
+                                                                        WHERE  ""WhsCode"" ='" & sAlmacen & "'
+                                                                        GROUP BY ""ItemCode"",""WhsCode""             
+             			                                    )O ON O.""ItemCode""=T.""ItemCode"" and O.""WhsCode""=T.""WhsCode"" and O.""MAXQTY""=T.""OnHand""
                                                           )S ON S.""WhsCode""=B.""WhsCode"" and S.""BinAbs""=B.""AbsEntry"" 
                                                 WHERE B.""WhsCode""='" & sAlmacen & "' and B.""Attr2Val"" ='Stock'
                                                 And IFNULL(S.""OnHand"",0)>= 0 and IFNULL(S.""ItemCode"",'')<>''                                         
