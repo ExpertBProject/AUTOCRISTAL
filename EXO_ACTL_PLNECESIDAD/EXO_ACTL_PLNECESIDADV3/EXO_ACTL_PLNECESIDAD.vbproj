@@ -236,13 +236,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>rem copy "$(TargetPath)" "C:\OSCAR\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
+    <PostBuildEvent>copy "$(TargetPath)" "C:\OSCAR\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
+ copy "$(TargetPath)" "\\10.10.1.13\b1_shf\Ficheros\10.Dll_64\EXT\$(TargetFileName)"
 
-rem copy "$(TargetPath)" "\\10.10.1.13\b1_shf\Ficheros\10.Dll_64\EXT\$(TargetFileName)"
 
-
-copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
-copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"</PostBuildEvent>
+rem copy "$(TargetPath)" "E:\Desarrollo\EXO_Kernel_10.0.1.8\x64\Desarrollo\DLLs\$(TargetFileName)"
+rem copy "$(TargetPath)" "\\xper-rdpdes02\compartidaB1\AUTOCRISTAL\10.Dll_64\EXT\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

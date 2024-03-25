@@ -854,7 +854,7 @@ Public Class EXO_PNEC
     End Function
     Public Shared Function Cargar_Datos(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef oForm As SAPbouiCOM.Form) As Boolean
 #Region "variables"
-        Dim sAlmacenes As String = "" : Dim sAlmacenes2 As String = "" : Dim sGrupos As String = "" : Dim sCLAS As String = ""
+        Dim sAlmacenesT As String = "" : Dim sAlmacenes As String = "" : Dim sAlmacenes2 As String = "" : Dim sGrupos As String = "" : Dim sCLAS As String = ""
         Dim sMensaje As String = ""
         Dim sTarifas As String = "" : Dim sATarifas() As String = Nothing
         Dim sProveedorPR As String = "" : Dim sNomProveedorPR As String = ""
@@ -915,6 +915,7 @@ Public Class EXO_PNEC
                     objGlobal.SBOApp.MessageBox(sMensaje)
                     Return False
                 Else
+                    sAlmacenesT = sAlmacenes
                     For i As Integer = 0 To oForm.DataSources.DataTables.Item("DTALM2").Rows.Count - 1
                         If oForm.DataSources.DataTables.Item("DTALM2").GetValue("Sel", i).ToString = "Y" Then
                             If sAlmacenes2 = "" Then
@@ -925,6 +926,9 @@ Public Class EXO_PNEC
                             qtyWhs2 = qtyWhs2 + 1
                         End If
                     Next
+                    If sAlmacenes2 <> "" Then
+                        sAlmacenesT &= "," & sAlmacenes2
+                    End If
                 End If
 #End Region
 
@@ -1117,24 +1121,25 @@ Public Class EXO_PNEC
                 sSQLGrid &= queryAl
 
 #Region "Order 2"
+                Dim pedirStr2 As String = ""
                 If sAlmacenes2 <> "" Then
-                    pedirStr = "(0"
+                    pedirStr2 = "(0"
                     If (sAlmacenes2.Contains("AL0")) Then
-                        pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        pedirStr2 &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL0"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL0"",0) - IFNULL(T6.""Pdte_AL0"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
                     End If
                     If (sAlmacenes2.Contains("AL7")) Then
-                        pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        pedirStr2 &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL7"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL7"",0) - IFNULL(T6.""Pdte_AL7"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
                     End If
                     If (sAlmacenes2.Contains("AL8")) Then
-                        pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        pedirStr2 &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL8"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL8"",0) - IFNULL(T6.""Pdte_AL8"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
                     End If
                     If (sAlmacenes2.Contains("AL14")) Then
-                        pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        pedirStr2 &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL14"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL14"",0) - IFNULL(T6.""Pdte_AL14"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
                     End If
                     If (sAlmacenes2.Contains("AL16")) Then
-                        pedirStr &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
+                        pedirStr2 &= "+0+ROUND(ROUND((CASE WHEN IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) < 0 THEN 0 ELSE IFNULL(((IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)*2) + IFNULL((T1.""Ventas_24Q""/24),0) + ((" & sMGS & "+IFNULL(OCRD.""U_EXO_TSUM""," & sTSUM & "))*IFNULL((IFNULL(IFNULL(T4.""24M_Q_AL16"",0)*12, 0)/24),0)) -  IFNULL(T5.""Stock_AL16"",0) - IFNULL(T6.""Pdte_AL16"",0)),0) END),0)/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1)"
                     End If
-                    sSQLGrid &= "CAST((CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) AS INTEGER) ""Order2"","
+                    sSQLGrid &= "CAST((CASE WHEN ROUND(ROUND((" & pedirStr2 & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr2 & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) AS INTEGER) ""Order2"","
                 End If
 
 #End Region
@@ -1189,7 +1194,7 @@ LEFT JOIN (Select X.""ItemCode"" as ""ItemCode"", Sum(X.""24Q"") as ""24Q"", Sum
             Left Join ""EXO_MRP_Ventas8Q""  T2 On T0.""ItemCode"" = T2.""ItemCode"" And T0.""WhsCode""  = T2.""WhsCode""
             Left Join ""EXO_MRP_ComprasSemestre"" T3 On T0.""ItemCode"" = T3.""ItemCode"" And T0.""WhsCode""  = T3.""WhsCode""
             Left Join ""EXO_MRP_VentasA_8Q"" T4 On T0.""ItemCode"" = T4.""ItemCode"" And T0.""WhsCode""  = T4.""WhsCode""
-            Where T0.""WhsCode"" IN (" & sAlmacenes & ") 
+            Where T0.""WhsCode"" IN (" & sAlmacenesT & ") 
 		  ) as X Group by X.""ItemCode"" ) TX  ON TX.""ItemCode"" = T0.""ItemCode""
 LEFT JOIN (select T0.""ItemCode"", Sum(COALESCE(T0.""OnOrder"" - TX.""CantidadSolTraInt"" , 0)) as ""PDTE""
             from OITW T0 
@@ -1197,15 +1202,15 @@ LEFT JOIN (select T0.""ItemCode"", Sum(COALESCE(T0.""OnOrder"" - TX.""CantidadSo
                         from OWTQ T0 
                         LEFT JOIN WTQ1 T1 ON T0.""DocEntry"" = T1.""DocEntry"" 
                         Where T0.""DocStatus"" = 'O' and T1.""LineStatus"" = 'O' and T1.""FromWhsCod"" = T1.""WhsCode"" 
-                        and T1.""WhsCode"" in (" & sAlmacenes & ") group by T1.""ItemCode"" ,   T1.""WhsCode"" 
+                        and T1.""WhsCode"" in (" & sAlmacenesT & ") group by T1.""ItemCode"" ,   T1.""WhsCode"" 
                       )TX ON T0.""ItemCode"" = TX.""ItemCode"" and T0.""WhsCode"" = TX.""WhsCode"" 
             Where  T0.""OnOrder"" > 0  Group BY T0.""ItemCode""
          )PDTE ON PDTE.""ItemCode""= T0.""ItemCode""
 LEFT JOIN (Select T1.""ItemCode"", Sum(T1.""OnHand"") as  ""Stock""
-            From OITW T1 Where T1.""WhsCode"" in (" & sAlmacenes & ") Group by T1.""ItemCode"" 
+            From OITW T1 Where T1.""WhsCode"" in (" & sAlmacenesT & ") Group by T1.""ItemCode"" 
           )STOCK ON STOCK.""ItemCode""= T0.""ItemCode""
 Left Join(Select ""ItemCode"", Sum(""Ventas_Ult_Año"") as ""Ventas_24Q"" 
-          FROM ""EXO_MRP_Ventas24Q""  Where ""WhsCode"" IN (" & sAlmacenes & " ) Group  by ""ItemCode"" 
+          FROM ""EXO_MRP_Ventas24Q""  Where ""WhsCode"" IN (" & sAlmacenesT & " ) Group  by ""ItemCode"" 
           )  T1  On T1.""ItemCode"" = T0.""ItemCode""
 LEFT JOIN (SELECT COUNT(""ID"") ""CUENTA"",""REFERENCIA"" 
             FROM ""INTERNETAC_NEW"".""CONSULTAS"" 
@@ -1238,7 +1243,11 @@ Left Join(Select T0.""ItemCode"",Case WHen T0.""QryGroup1"" = 'Y' then 'STOCK' E
 WHERE  1=1 and T0.""QryGroup2""='N' and T0.""validFor""='Y'"
 
                 If (oForm.DataSources.UserDataSources.Item("UD_Excl").Value = "Y") Then
-                    sSQLGrid &= "and (CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) > 0 "
+                    sSQLGrid &= "and ((CASE WHEN ROUND(ROUND((" & pedirStr & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) > 0 "
+                    If pedirStr2 <> "" Then
+                        sSQLGrid &= " or (CASE WHEN ROUND(ROUND((" & pedirStr2 & " )/IFNULL(OSCN.""U_EXO_UC"",1))*IFNULL(OSCN.""U_EXO_UC"",1))) < 0 THEN 0 ELSE ROUND(ROUND((" & pedirStr2 & ")/IFNULL(OSCN.""U_EXO_UC"", 1))*IFNULL(OSCN.""U_EXO_UC"",1))) END) > 0"
+                    End If
+                    sSQLGrid &= ") "
                 End If
 
                 If sProveedorPR <> "" Then
